@@ -1,6 +1,6 @@
 // Bộ nhớ offline của game.
 // Mỗi lần phát hành bản mới, tăng VERSION để trình duyệt tải lại toàn bộ.
-const VERSION = '0.5.0';
+const VERSION = '0.5.1';
 const CACHE = 'san-thuong-' + VERSION;
 
 // Mọi thứ game cần để chạy khi tắt mạng.
@@ -65,10 +65,12 @@ self.addEventListener('fetch', event => {
   if (req.method !== 'GET') return;
 
   // Mở trang: ưu tiên bản mới trên mạng, mất mạng thì dùng bản đã lưu.
+  // `no-cache`: luôn hỏi lại máy chủ, không dùng bản sao tạm của trình duyệt (GitHub Pages cho giữ tới 10 phút),
+  // để trang và các file mã luôn cùng một phiên bản ngay sau mỗi lần cập nhật.
   if (req.mode === 'navigate') {
     event.respondWith((async () => {
       try {
-        const fresh = await fetch(req);
+        const fresh = await fetch(req.url, { cache: 'no-cache', credentials: 'same-origin' });
         const cache = await caches.open(CACHE);
         cache.put('./index.html', fresh.clone());
         return fresh;
@@ -86,15 +88,15 @@ self.addEventListener('fetch', event => {
   if (!sameOrigin && !isFont) return;
 
   // File của game (mã, giao diện, hình): có mạng thì lấy bản mới và cập nhật bộ nhớ, để trang và mã
-  // luôn cùng một phiên bản; mạng chậm quá 3 giây hoặc mất mạng thì dùng bản đã lưu.
+  // luôn cùng một phiên bản; mạng chậm quá 5 giây hoặc mất mạng thì dùng bản đã lưu.
   // Thư viện Phaser có số phiên bản trong tên file nên dùng bản đã lưu luôn cho nhanh.
   if (sameOrigin && !url.pathname.includes('/vendor/')) {
     event.respondWith((async () => {
       const cache = await caches.open(CACHE);
       try {
         const res = await Promise.race([
-          fetch(req),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('slow')), 3000))
+          fetch(req, { cache: 'no-cache' }),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('slow')), 5000))
         ]);
         if (res.ok) cache.put(req, res.clone());
         return res;
