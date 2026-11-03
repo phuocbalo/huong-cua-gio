@@ -226,6 +226,7 @@ export class UI {
     if (s.grew.length) rows.push([sprout, s.grew.length === 1 ? fmt(T.away_grew_one, { crop: name(s.grew[0]) }) : fmt(T.away_grew_many, { n: s.grew.length })]);
     if (s.eggs) rows.push([itemIcon('trung_ga'), fmt(T.away_eggs, { n: s.eggs })]);
     if (s.hungry) rows.push([itemIcon('thuc_an_ga'), T.away_hungry]);
+    if (s.expired) rows.push(['<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M10 8h20v26H10z" fill="#fffaf0" stroke="#3b2f2a" stroke-width="2.4" stroke-linejoin="round"/><path d="M14 16h12M14 21h12M14 26h8" stroke="#9a8a7a" stroke-width="2"/><rect x="18" y="4" width="4" height="8" fill="#c89a5a" stroke="#3b2f2a" stroke-width="2"/></svg>', fmt(T.away_orders, { n: s.expired })]);
     if (s.dust) rows.push(['<svg viewBox="0 0 40 40" aria-hidden="true"><rect x="18" y="5" width="4" height="17" fill="#c89a5a" stroke="#3b2f2a" stroke-width="2.2"/><path d="M15 21h10l7 14H8z" fill="#e2b65a" stroke="#3b2f2a" stroke-width="2.2" stroke-linejoin="round"/><path d="M15 23h10" stroke="#d8352a" stroke-width="2.4"/></svg>', T.away_dust]);
     if (s.dry.length) rows.push([drop, s.dry.length === 1 ? fmt(T.away_dry_one, { crop: name(s.dry[0]) }) : fmt(T.away_dry_many, { n: s.dry.length })]);
     $('awayTitle').textContent = fmt(T.away_title, { time: duration(s.away) });

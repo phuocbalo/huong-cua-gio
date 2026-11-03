@@ -10,7 +10,7 @@ import { newDust } from './dust.js';
 import { newOrders, newFriends, syncSeen } from './orders.js';
 import * as inv from './inventory.js';
 
-export const SCHEMA_VERSION = 4;
+export const SCHEMA_VERSION = 5;
 
 const DB_NAME = 'san-thuong-xanh';
 const STORE = 'saves';
@@ -59,6 +59,13 @@ const MIGRATIONS = {
     const next = { ...s, schemaVersion: 4, orders: newOrders(), friends: newFriends(), seen: [], bagUpgrades: 0 };
     syncSeen(next);   // những món người chơi cũ đã có sẽ được đặt hàng ngay
     return next;
+  },
+  // 4 → 5 (bản 0.8.1): thêm 5 hàng xóm mở dần, đơn có mốc thời gian để tự đổi sau 3 ngày
+  4: s => {
+    const now = (s.clock && s.clock.gameTime) || 0;
+    const orders = { ...s.orders, delivered: (s.orders && s.orders.delivered) || 0,
+      list: ((s.orders && s.orders.list) || []).map(o => ({ ...o, createdAt: o.createdAt ?? now })) };
+    return { ...s, schemaVersion: 5, orders, friends: { ...newFriends(), ...(s.friends || {}) } };
   }
 };
 

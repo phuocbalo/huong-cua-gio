@@ -62,6 +62,7 @@ async function boot() {
     s.eggs = Math.max(0, state().coop.eggs - (before.eggs || 0));
     s.hungry = coop.status(state(), t).key === 'hungry' && !before.hungry;
     s.dust = state().dust.spots.length > 0 && !before.dust;
+    s.expired = expiredSince; expiredSince = 0;
     state().boxes.forEach((b, i) => {
       const a = before[i] || {};
       if (!b.crop || a.crop !== b.crop) return;            // thùng đổi cây trong lúc vắng: bỏ qua
@@ -79,7 +80,7 @@ async function boot() {
     if (r.away < AWAY_NOTICE_MS) return;
     const s = awaySummary(lastSnapshot, r.away);
     lastSnapshot = snapshot();
-    if (r.away >= AWAY_SUMMARY_MS && (s.ripe.length || s.grew.length || s.dry.length || s.eggs || s.hungry || s.dust)) ui.showAway(s);
+    if (r.away >= AWAY_SUMMARY_MS && (s.ripe.length || s.grew.length || s.dry.length || s.eggs || s.hungry || s.dust || s.expired)) ui.showAway(s);
     else ui.toast(fmt(T.welcome_back, { time: duration(r.away) }));
   }
 
@@ -142,11 +143,19 @@ async function boot() {
   // ----- Chặng 4: tiệm, đơn hàng, mua thùng -----
   const pickLine = arr => arr[Math.floor(Math.random() * arr.length)];
   // Ghi nhận món đã mở và ghim đủ đơn hàng; trả về true nếu có thay đổi cần lưu
-  function syncOrders() {
+  // delta: thời gian vừa trôi trong nhịp đồng hồ này; lớn nghĩa là người chơi vừa quay lại sau khi vắng
+  function syncOrders(delta = 0) {
     const a = orders.syncSeen(state());
-    const b = orders.refill(state()) > 0;
-    return a || b;
+    const b = orders.refill(state(), now()) > 0;
+    const gone = orders.expire(state(), now());
+    if (gone.length) {
+      // Hết hạn lúc đang chơi: báo nhẹ. Hết hạn lúc vắng mặt: để bảng "Trong lúc bạn đi vắng" kể
+      if (delta < AWAY_NOTICE_MS) ui.toast(gone.length === 1 ? fmt(T.order_expired_one, { name: T['name_' + gone[0].from] }) : fmt(T.order_expired_many, { n: gone.length }));
+      else expiredSince += gone.length;
+    }
+    return a || b || gone.length > 0;
   }
+  let expiredSince = 0;
   function renderOrders() {
     if (!scene) return;
     const list = state().orders.list;
@@ -188,14 +197,15 @@ async function boot() {
       afterTrade();
     },
     onDeliver(id) {
-      const r = orders.deliver(state(), id);
+      const r = orders.deliver(state(), id, now());
       if (!r.ok) return;
       const o = r.order;
       ui.toast(fmt(T.delivered, { name: T['name_' + o.from], coins: o.coins, hearts: o.hearts }));
+      if (r.met.length) setTimeout(() => ui.toast(T['met_' + r.met[0]]), 2600);
       afterTrade();
     },
     onSkipOrder(id) {
-      if (!orders.skip(state(), id).ok) return;
+      if (!orders.skip(state(), id, now()).ok) return;
       ui.toast(T.order_skipped);
       afterTrade();
     },
@@ -318,7 +328,7 @@ async function boot() {
     onWaterAll, onPlant, onSkip, onAddSeeds, onFillBag, onSimAway, onNextDay, onAddDust
   });
   ui.init();
-  const eco = new EconomyUI(ui, store, ecoHandlers);
+  const eco = new EconomyUI(ui, store, ecoHandlers, now);
   eco.init();
   // Bảng nào đang mở thì cập nhật theo túi đồ mới (thu hoạch, nhặt trứng…)
   const baseRefresh = ui.refreshOpenSheets.bind(ui);
@@ -326,12 +336,12 @@ async function boot() {
   if (syncOrders()) store.flush();
 
   // Mỗi nhịp đồng hồ: cây lớn theo thời gian game
-  clock.on(type => {
+  clock.on((type, r) => {
     if (type !== 'tick') return;
     farm.updateAll(state(), now());
     if (coop.update(state(), now())) store.markDirty();
     if (dust.update(state(), now())) store.markDirty();
-    if (syncOrders()) store.markDirty();
+    if (syncOrders(r ? r.delta : 0)) store.markDirty();
     renderBoxes();
     renderCoop();
     renderDust();

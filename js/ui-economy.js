@@ -6,6 +6,8 @@ import { T, fmt } from './text.vi.js';
 import { itemIcon } from './icons.js';
 import * as shop from './shop.js';
 import * as inv from './inventory.js';
+import * as orders from './orders.js';
+import { duration } from './util.js';
 
 const $ = id => document.getElementById(id);
 const pick = arr => arr[Math.floor(Math.random() * arr.length)];
@@ -17,6 +19,16 @@ export const AVATARS = {
   // Bà Tư: tóc bạc búi, kính tròn, áo bà ba tím
   ba_tu: `<svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="22" fill="#efe0f3"/><path d="M10 46c1-9 6-13 14-13s13 4 14 13z" fill="#a98ad8" ${S}/><circle cx="24" cy="8" r="5" fill="#d9d6d0" ${S}/><circle cx="24" cy="22" r="10" fill="#f0c9a2" ${S}/><path d="M14 20c1-6 5-9 10-9s9 3 10 9c-3-3-6-4-10-4s-7 1-10 4z" fill="#d9d6d0" ${S}/><circle cx="20" cy="22" r="3" fill="none" ${S}/><circle cx="28" cy="22" r="3" fill="none" ${S}/><path d="M23 22h2" stroke="#3b2f2a" stroke-width="2"/><path d="M20 28c2.5 1.5 5.5 1.5 8 0" stroke="#3b2f2a" stroke-width="2.2" stroke-linecap="round" fill="none"/></svg>`,
   // Bé Na: tóc thắt hai bím, nơ đỏ, má hồng
+  // Cô Mai: tóc dài, áo xanh lá, kẹp tóc hình lá
+  co_mai: `<svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="22" fill="#d9ecd2"/><path d="M12 30c-1-12 4-20 12-20s13 8 12 20z" fill="#3b2a20" ${S}/><path d="M10 46c1-9 6-13 14-13s13 4 14 13z" fill="#6fa35b" ${S}/><circle cx="24" cy="22" r="9.5" fill="#f2cba5" ${S}/><path d="M15 20c1-5 4-8 9-8s8 3 9 8c-3-2-6-4-9-4s-6 2-9 4z" fill="#3b2a20"/><path d="M30 13l4-2-1 4z" fill="#8cc46a" ${S}/><circle cx="20" cy="22" r="1.4" fill="#3b2f2a"/><circle cx="28" cy="22" r="1.4" fill="#3b2f2a"/><path d="M21 27c2 1.4 4 1.4 6 0" stroke="#3b2f2a" stroke-width="2.2" stroke-linecap="round" fill="none"/></svg>`,
+  // Anh Tuấn: kính vuông, tóc bù xù, quai balo
+  anh_tuan: `<svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="22" fill="#dde6f2"/><path d="M10 46c1-9 6-13 14-13s13 4 14 13z" fill="#7a8fb0" ${S}/><path d="M16 35v11M32 35v11" stroke="#3b2f2a" stroke-width="2.4"/><circle cx="24" cy="22" r="10" fill="#efc59c" ${S}/><path d="M14 19c0-7 5-10 10-10s11 3 10 10c-2-2-3-4-5-3-2-2-4-1-5 0-2-2-5-1-6 1-1-1-3 0-4 2z" fill="#2f241d" ${S}/><rect x="16.5" y="19.5" width="6" height="5" rx="1" fill="none" ${S}/><rect x="25.5" y="19.5" width="6" height="5" rx="1" fill="none" ${S}/><path d="M22.5 22h3" stroke="#3b2f2a" stroke-width="2"/><path d="M21 28c2 1.2 4 1.2 6 0" stroke="#3b2f2a" stroke-width="2.2" stroke-linecap="round" fill="none"/></svg>`,
+  // Chú Sáu: mũ bảo hiểm cam, áo khoác xe ôm
+  chu_sau: `<svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="22" fill="#f6e3c8"/><path d="M10 46c1-9 6-13 14-13s13 4 14 13z" fill="#4f9a7a" ${S}/><circle cx="24" cy="23" r="10" fill="#d9a77c" ${S}/><path d="M13 21c0-8 5-12 11-12s11 4 11 12z" fill="#e57d3a" ${S}/><path d="M13 21h22" stroke="#3b2f2a" stroke-width="2.4"/><circle cx="20" cy="25" r="1.4" fill="#3b2f2a"/><circle cx="28" cy="25" r="1.4" fill="#3b2f2a"/><path d="M19 30c3 1.6 7 1.6 10 0" stroke="#3b2f2a" stroke-width="2.2" stroke-linecap="round" fill="none"/></svg>`,
+  // Chị Hoa: nón lá, tạp dề bán bánh mì
+  chi_hoa: `<svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="22" fill="#fbe7d2"/><path d="M10 46c1-9 6-13 14-13s13 4 14 13z" fill="#e57d5a" ${S}/><path d="M18 36h12v10H18z" fill="#fff8ec" ${S}/><circle cx="24" cy="23" r="9.5" fill="#f2c9a2" ${S}/><path d="M8 18L24 6l16 12z" fill="#e8cf8f" ${S}/><path d="M16 14l8 4 8-4" stroke="#c9a85e" stroke-width="1.6" fill="none"/><circle cx="20" cy="23" r="1.4" fill="#3b2f2a"/><circle cx="28" cy="23" r="1.4" fill="#3b2f2a"/><path d="M20 28c2.5 1.8 5.5 1.8 8 0" stroke="#3b2f2a" stroke-width="2.2" stroke-linecap="round" fill="none"/></svg>`,
+  // Ông Ba: đầu hói, râu bạc, áo sơ mi nâu
+  ong_ba: `<svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="22" fill="#e6e1d6"/><path d="M10 46c1-9 6-13 14-13s13 4 14 13z" fill="#a97c4f" ${S}/><circle cx="24" cy="21" r="10" fill="#e8bd94" ${S}/><path d="M14.5 21c0-3 1-5 2-6M33.5 21c0-3-1-5-2-6" stroke="#d9d6d0" stroke-width="3" stroke-linecap="round"/><path d="M17 27c1 6 4 8 7 8s6-2 7-8c-2 2-4 2-7 2s-5 0-7-2z" fill="#f3f0e6" ${S}/><circle cx="20" cy="21" r="1.4" fill="#3b2f2a"/><circle cx="28" cy="21" r="1.4" fill="#3b2f2a"/><path d="M18 17h4M26 17h4" stroke="#d9d6d0" stroke-width="2.2" stroke-linecap="round"/></svg>`,
   be_na: `<svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="22" fill="#fde2cf"/><path d="M12 46c1-8 5-12 12-12s11 4 12 12z" fill="#f2b544" ${S}/><circle cx="11" cy="24" r="4" fill="#4a3326" ${S}/><circle cx="37" cy="24" r="4" fill="#4a3326" ${S}/><circle cx="24" cy="23" r="10" fill="#f6d2ae" ${S}/><path d="M14 21c1-6 5-9 10-9s9 3 10 9c-4-2-6-5-10-5s-6 3-10 5z" fill="#4a3326" ${S}/><path d="M28 12l5-3v6z" fill="#e5533c" ${S}/><circle cx="20" cy="23" r="1.4" fill="#3b2f2a"/><circle cx="28" cy="23" r="1.4" fill="#3b2f2a"/><circle cx="18" cy="27" r="1.8" fill="#f2a5a0"/><circle cx="30" cy="27" r="1.8" fill="#f2a5a0"/><path d="M21 28c2 1.4 4 1.4 6 0" stroke="#3b2f2a" stroke-width="2.2" stroke-linecap="round" fill="none"/></svg>`
 };
 const HEART = '<svg class="heart" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 17s-7-4.4-7-9.2A3.8 3.8 0 0 1 10 5.6a3.8 3.8 0 0 1 7 2.2C17 12.6 10 17 10 17z" fill="#e5533c" stroke="#3b2f2a" stroke-width="1.8" stroke-linejoin="round"/></svg>';
@@ -32,8 +44,8 @@ export const nounOf = id => {
 
 export class EconomyUI {
   // h: { onSell(id, qty), onBuy(id, qty), onBagUpgrade(), onDeliver(orderId), onSkipOrder(orderId), onBuyBox() }
-  constructor(ui, store, h) {
-    this.ui = ui; this.store = store; this.h = h;
+  constructor(ui, store, h, now) {
+    this.ui = ui; this.store = store; this.h = h; this.now = now;
     this.tab = 'sell';
   }
 
@@ -127,7 +139,9 @@ export class EconomyUI {
 
   renderOrders() {
     const s = this.state;
-    $('friendsLine').innerHTML = `${T.friends_line}: ` + Object.keys(s.friends).map(n => `<span><b>${T['name_' + n]}</b> ${HEART} ${s.friends[n]}</span>`).join('');
+    const known = orders.unlocked(s), next = orders.nextNeighbor(s);
+    $('friendsLine').innerHTML = `${T.friends_line}: ` + known.map(n => `<span><b>${T['name_' + n]}</b> ${HEART} ${s.friends[n] || 0}</span>`).join('')
+      + (next ? `<span>${fmt(T.friends_next, { name: T['name_' + next.id], n: next.left })}</span>` : '');
     const list = s.orders.list;
     if (!list.length) { $('orderList').innerHTML = `<li class="note">${T.order_none}</li>`; return; }
     $('orderList').innerHTML = list.map(o => {
@@ -137,7 +151,7 @@ export class EconomyUI {
         <span class="avatar">${AVATARS[o.from]}</span>
         <span class="txt">
           <b>${fmt(T.order_need, { name: T['name_' + o.from], qty: o.qty, unit: unitOf(o.item), noun: nounOf(o.item) })}</b>
-          <small>${flavors[o.id % flavors.length]}</small>
+          <small>${flavors[o.id % flavors.length]} · ${fmt(T.order_wait, { time: duration(orders.timeLeft(o, this.now())) })}</small>
           <span class="row"><span class="ico">${itemIcon(o.item)}</span><span class="bar"><i style="width:${Math.min(100, Math.round(have / o.qty * 100))}%"></i></span><span>${fmt(T.order_progress, { have: Math.min(have, o.qty), qty: o.qty })}</span></span>
           <span class="row"><span class="reward">${fmt(T.order_reward, { coins: o.coins, hearts: o.hearts })} ${HEART}</span></span>
         </span>

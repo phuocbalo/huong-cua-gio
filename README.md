@@ -21,7 +21,7 @@ Bản chơi thử: https://phuocbalo.github.io/huong-cua-gio/
 | `js/coop.js` | Luật nuôi gà: cho ăn mỗi ngày, đẻ trứng, nhặt trứng |
 | `js/dust.js` | Luật bụi sân thượng: bám bụi sau 3–4 ngày, quét để nhận xu |
 | `js/shop.js` | Luật tiệm anh Bảo: giá mua bán, mua thùng, nâng cấp túi đồ |
-| `js/orders.js` | Luật đơn hàng hàng xóm: 3 đơn, giao hàng, đổi đơn, điểm thân thiết |
+| `js/orders.js` | Luật đơn hàng hàng xóm: 3 đơn, giao hàng, đổi đơn, tự đổi sau 3 ngày, 7 hàng xóm mở dần, điểm thân thiết |
 | `js/ui-economy.js` | Giao diện tiệm, bảng đơn hàng, xác nhận mua thùng |
 | `js/daylight.js` | Màu trời, phố, đèn cho từng giờ trong ngày; chuyển dần giữa các khung giờ |
 | `js/scene.js` | Cảnh sân thượng vẽ bằng Phaser (hình tạm) |
@@ -113,6 +113,9 @@ Trong bảng "Bản thử" có "Thêm 10 xu" nếu cần thêm xu để thử mu
 - [ ] **F12** Chỉ đặt món đã có (lúc đầu: rau muống, cải, trứng gà). Mua hạt mới thì đơn mới có thể đặt món đó.
 - [ ] **F12** Đủ hàng: dây phơi hiện bong bóng dấu tích; "Giao hàng" nhận đúng xu (cao hơn bán ở tiệm) và điểm thân thiết; có đơn mới thay vào.
 - [ ] **F12** Thiếu hàng: nút ghi "Còn thiếu N" và không bấm được. "Đổi đơn khác" thay đơn mới ngay, không mất gì.
+- [ ] **F12 Hàng xóm mở dần (0.8.1):** lúc đầu chỉ bà Tư và bé Na; dòng "Sắp quen" ghi người kế tiếp và còn bao nhiêu đơn. Giao đủ 3 đơn: "Cô Mai mái bên nghe tiếng rau ngon, ghé hỏi mua!" và có đơn của cô Mai. Tiếp theo: anh Tuấn (6 đơn), chú Sáu (10), chị Hoa (15), ông Ba (20).
+- [ ] **F12** Mỗi người hay đặt món riêng (chú Sáu hay đặt trứng, chị Hoa đặt dưa leo/húng quế/ớt với số lượng lớn…), mỗi người có ảnh và câu thoại riêng.
+- [ ] **F12 Đơn quá hạn (0.8.1):** mỗi đơn ghi "Chờ thêm khoảng …". Để quá 3 ngày ("Tua tới sáng mai" 3 lần): đơn được thay bằng đơn mới đúng chỗ đó, hiện "… đã mua ngoài chợ", không mất xu hay điểm. Nếu hết hạn lúc vắng mặt thì bảng đi vắng ghi "N đơn cũ quá hạn đã được thay bằng đơn mới".
 - [ ] **F14 Mua thùng:** ô trống kế tiếp có dấu "+" và giá. Chạm vào: bảng xác nhận "Thùng thứ 5 · 40 xu". Mua: thùng mới nảy lên, gieo được ngay; dấu "+" chuyển sang ô kế tiếp với giá mới (70, 110, 160).
 - [ ] **F14** Thiếu xu: bảng ghi "Còn thiếu N xu", nút mờ. Đủ 8 thùng thì không còn dấu "+".
 - [ ] **F14** Mua thùng rồi tải lại: số thùng giữ nguyên, mọi thùng chạm được bằng ngón cái.

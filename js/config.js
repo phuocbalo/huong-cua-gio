@@ -1,7 +1,7 @@
 // Bảng dữ liệu của game. Muốn cân bằng lại game thì sửa số ở đây, không cần đụng vào code khác.
 // Đơn vị thời gian là mili giây; dùng các hằng PHUT, GIO cho dễ đọc.
 
-export const APP_VERSION = '0.8.0';
+export const APP_VERSION = '0.8.1';
 
 const PHUT = 60 * 1000;
 const GIO = 60 * PHUT;
@@ -102,7 +102,19 @@ export const BAG_UPGRADES = [{ slots: 4, price: 60 }, { slots: 4, price: 120 }, 
 // ---------- Đơn hàng hàng xóm (F12) ----------
 export const ORDER_SLOTS = 3;          // luôn có 3 đơn trên dây phơi
 export const ORDER_BONUS = 1.6;        // đơn hàng trả hơn bán ở tiệm 60%
-export const NEIGHBORS = ['ba_tu', 'be_na'];
+export const ORDER_EXPIRE = 3 * NGAY;  // đơn để quá 3 ngày: người đặt đã mua ngoài chợ, đơn mới thay vào, không phạt
+// Hàng xóm mở dần: unlock = tổng số đơn đã giao để người đó bắt đầu ghé hỏi mua.
+// likes = món hay đặt (7 phần 10 số đơn chọn trong đây nếu người chơi đã có món đó); bulk = hệ số số lượng
+export const NEIGHBORS = {
+  ba_tu:    { unlock: 0,  likes: ['rau_muong', 'cai', 'ca_chua'] },
+  be_na:    { unlock: 0,  likes: ['trung_ga', 'dua_leo', 'ca_chua'] },
+  co_mai:   { unlock: 3,  likes: ['hung_que', 'cai'] },
+  anh_tuan: { unlock: 6,  likes: ['rau_muong', 'trung_ga'], bulk: 0.8 },
+  chu_sau:  { unlock: 10, likes: ['trung_ga'] },
+  chi_hoa:  { unlock: 15, likes: ['dua_leo', 'hung_que', 'ot'], bulk: 1.5 },
+  ong_ba:   { unlock: 20, likes: ['ca_chua', 'ot'] }
+};
+export const LIKE_CHANCE = 0.7;
 
 // ---------- Mua thêm thùng xốp (F14) ----------
 // Giá thùng thứ 5, 6, 7, 8. Tối đa 8 thùng cho vừa sân (vị trí trong scene.js)
