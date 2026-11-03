@@ -15,658 +15,96 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700&family=Be+Vietnam+Pro:wght@400;500;600&display=swap">
-<style>
-  /* Layout: một khung dọc tỉ lệ điện thoại nằm giữa màn hình; cảnh vẽ bằng canvas, giao diện HTML phủ lên trên.
-     Game giữ một phong cách riêng (không đổi theo sáng/tối của trình duyệt), mọi màu đặt rõ ràng. */
-  :root {
-    --stage: #262c40;      /* nền ngoài khung, xanh phố đêm */
-    --ink: #3b2f2a;        /* nét viền nâu ấm */
-    --paper: #fff8ec;      /* nền bảng, nút */
-    --paper-2: #f3e6cf;    /* nền nút khi bấm */
-    --leaf: #5f9a4c;       /* màu cây, nút chính */
-    --marigold: #f2b544;   /* đồng xu, điểm nhấn */
-    --muted: #7b6a5e;      /* chữ phụ */
-    --font-display: "Baloo 2", "Be Vietnam Pro", system-ui, sans-serif;
-    --font-body: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", sans-serif;
-    color-scheme: dark;
-  }
-  [hidden] { display: none !important; }
-  html, body { height: 100%; }
-  body {
-    background: var(--stage);
-    color: var(--ink);
-    font-family: var(--font-body);
-    overflow: hidden;
-    -webkit-tap-highlight-color: transparent;
-    user-select: none;
-    -webkit-user-select: none;
-  }
-  #stage {
-    height: 100%;
-    display: grid;
-    place-items: center;
-    padding-top: max(12px, env(safe-area-inset-top, 0px));
-    padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
-    padding-left: max(16px, env(safe-area-inset-left, 0px));
-    padding-right: max(16px, env(safe-area-inset-right, 0px));
-    box-sizing: border-box;
-  }
-  #frame {
-    position: relative;
-    container-type: size;
-    border-radius: 22px;
-    overflow: hidden;
-    box-shadow: 0 0 0 3px rgba(255, 248, 236, 0.08), 0 24px 60px rgba(0, 0, 0, 0.45);
-    background: #9fd3f0;
-  }
-  #game, #game canvas { position: absolute; inset: 0; width: 100% !important; height: 100% !important; display: block; }
-  #game canvas { margin: 0 !important; }
-
-  /* ---------- HUD ---------- */
-  .hud {
-    position: absolute; left: 3.5cqw; right: 3.5cqw; top: 3cqw;
-    display: flex; justify-content: space-between; align-items: center; gap: 2cqw;
-    pointer-events: none;
-  }
-  .pill {
-    pointer-events: auto;
-    display: inline-flex; align-items: center; gap: 1.6cqw;
-    background: var(--paper);
-    border: 0.8cqw solid var(--ink);
-    border-radius: 999px;
-    padding: 1cqw 3.2cqw 1cqw 1.6cqw;
-    font-family: var(--font-display);
-    font-weight: 700;
-    font-size: 4.4cqw;
-    line-height: 1;
-    font-variant-numeric: tabular-nums;
-    box-shadow: 0 1cqw 0 rgba(59, 47, 42, 0.25);
-  }
-  .pill svg { width: 6.4cqw; height: 6.4cqw; flex: none; }
-  .pill .sub { font-family: var(--font-body); font-weight: 500; font-size: 3.2cqw; color: var(--muted); }
-  .tag {
-    pointer-events: auto;
-    appearance: none; cursor: pointer;
-    background: rgba(59, 47, 42, 0.72); color: var(--paper);
-    border: 0; border-radius: 999px;
-    font: 600 2.8cqw/1 var(--font-body);
-    letter-spacing: 0.04em;
-    padding: 1.6cqw 2.6cqw;
-    white-space: nowrap;
-  }
-  .tag:focus-visible, .tool:focus-visible, .chip:focus-visible, .close:focus-visible { outline: 0.8cqw solid var(--marigold); outline-offset: 0.6cqw; }
-
-  /* ---------- Thanh công cụ ---------- */
-  .toolbar {
-    position: absolute; left: 3.5cqw; right: 3.5cqw; bottom: 3.5cqw;
-    display: grid; grid-template-columns: repeat(4, 1fr); gap: 2.4cqw;
-  }
-  .tool {
-    appearance: none; cursor: pointer;
-    display: grid; justify-items: center; gap: 0.8cqw;
-    background: var(--paper);
-    border: 0.8cqw solid var(--ink);
-    border-radius: 5cqw;
-    padding: 2cqw 0 1.6cqw;
-    color: var(--ink);
-    font: 600 3cqw/1.1 var(--font-body);
-    box-shadow: 0 1.2cqw 0 rgba(59, 47, 42, 0.3);
-    transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
-    min-height: 44px;
-  }
-  .tool svg { width: 9cqw; height: 9cqw; }
-  .tool:active { transform: translateY(1cqw); box-shadow: 0 0.2cqw 0 rgba(59, 47, 42, 0.3); background: var(--paper-2); }
-
-  /* ---------- Thông báo nhẹ ---------- */
-  .toast {
-    position: absolute; left: 50%; bottom: 25cqw;
-    transform: translate(-50%, 2cqw);
-    width: max-content; max-width: 84cqw;
-    background: var(--paper);
-    border: 0.8cqw solid var(--ink);
-    border-radius: 4cqw;
-    padding: 2.4cqw 3.6cqw;
-    font: 500 3.5cqw/1.4 var(--font-body);
-    text-align: center;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.2s ease, transform 0.2s ease;
-    box-shadow: 0 1.2cqw 0 rgba(59, 47, 42, 0.25);
-  }
-  .toast.show { opacity: 1; transform: translate(-50%, 0); }
-
-  /* ---------- Bảng thông tin kiểm thử ---------- */
-  .sheet-backdrop { position: absolute; inset: 0; background: rgba(38, 44, 64, 0.45); }
-  .sheet {
-    position: absolute; left: 3.5cqw; right: 3.5cqw; bottom: 3.5cqw;
-    background: var(--paper);
-    border: 0.8cqw solid var(--ink);
-    border-radius: 6cqw;
-    padding: 5cqw 5cqw 4.5cqw;
-    display: grid; gap: 3.2cqw;
-    box-shadow: 0 1.4cqw 0 rgba(59, 47, 42, 0.3);
-  }
-  .sheet h2 {
-    margin: 0;
-    font: 700 6cqw/1.1 var(--font-display);
-    text-wrap: balance;
-  }
-  .sheet dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 1.4cqw 4cqw; font-size: 3.4cqw; }
-  .sheet dt { color: var(--muted); }
-  .sheet dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; }
-  .sheet .label { font-size: 3cqw; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
-  .chips { display: flex; flex-wrap: wrap; gap: 2cqw; }
-  .chip {
-    appearance: none; cursor: pointer;
-    background: transparent; color: var(--ink);
-    border: 0.6cqw solid var(--ink); border-radius: 999px;
-    padding: 1.6cqw 3.4cqw;
-    font: 600 3.3cqw/1 var(--font-body);
-    min-height: 32px;
-  }
-  .chip[aria-pressed="true"] { background: var(--leaf); border-color: var(--leaf); color: var(--paper); }
-  .close {
-    appearance: none; cursor: pointer;
-    justify-self: stretch;
-    background: var(--ink); color: var(--paper);
-    border: 0; border-radius: 4cqw;
-    padding: 3cqw;
-    font: 600 3.6cqw/1 var(--font-body);
-    min-height: 44px;
-  }
-  .note { margin: 0; font-size: 3cqw; line-height: 1.45; color: var(--muted); }
-
-  #boot {
-    position: absolute; inset: 0; display: grid; place-items: center;
-    font: 700 6cqw/1 var(--font-display); color: var(--ink);
-    background: #fde9c8;
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .tool, .toast { transition: none; }
-  }
-</style>
+<link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-
 <div id="stage">
   <div id="frame">
     <div id="game"></div>
-    <div id="boot">Đang dọn sân thượng…</div>
+    <div id="boot" data-t="booting">Đang dọn sân thượng…</div>
 
     <div class="hud">
       <div class="pill" id="clockPill" aria-live="polite">
         <svg id="periodIcon" viewBox="0 0 32 32" aria-hidden="true"></svg>
-        <span><span id="clock">--:--</span> <span class="sub" id="period">Sáng</span></span>
+        <span><span id="clock">--:--</span> <span class="sub" id="period"></span></span>
       </div>
-      <button class="tag" id="infoBtn" type="button" aria-haspopup="dialog" aria-label="Thông tin bản thử">BẢN THỬ 0.2</button>
-      <div class="pill" aria-label="Số xu">
+      <button class="tag" id="infoBtn" type="button" aria-haspopup="dialog" data-t-label="info_button_label"></button>
+      <div class="pill" data-t-label="coinsLabel">
         <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="12" fill="#f2b544" stroke="#3b2f2a" stroke-width="2.5"/><circle cx="16" cy="16" r="7" fill="none" stroke="#c98a1c" stroke-width="2"/></svg>
-        <span id="coins">120</span>
+        <span id="coins">–</span>
       </div>
     </div>
 
     <div class="toast" id="toast" role="status"></div>
 
-    <nav class="toolbar" aria-label="Công cụ">
-      <button class="tool" type="button" data-msg="Túi đồ sẽ có ở chặng 1 (F10).">
+    <nav class="toolbar" data-t-label="toolsLabel">
+      <button class="tool" type="button" data-soon="soon_bag">
         <svg viewBox="0 0 40 40" aria-hidden="true"><path d="M10 15h20l-2 18H12z" fill="#d9a46b" stroke="#3b2f2a" stroke-width="2.5" stroke-linejoin="round"/><path d="M15 15c0-4 2-7 5-7s5 3 5 7" fill="none" stroke="#3b2f2a" stroke-width="2.5" stroke-linecap="round"/><path d="M16 22h8" stroke="#3b2f2a" stroke-width="2.5" stroke-linecap="round"/></svg>
-        Túi đồ
+        <span data-t="tool_bag"></span>
       </button>
-      <button class="tool" type="button" data-msg="Bình tưới sẽ có ở chặng 1 (F02).">
+      <button class="tool" type="button" data-soon="soon_water">
         <svg viewBox="0 0 40 40" aria-hidden="true"><path d="M9 17h17v14a3 3 0 0 1-3 3H12a3 3 0 0 1-3-3z" fill="#7fb6d9" stroke="#3b2f2a" stroke-width="2.5" stroke-linejoin="round"/><path d="M26 21l8-6" stroke="#3b2f2a" stroke-width="2.5" stroke-linecap="round"/><path d="M12 17c0-4 2.5-6 5.5-6s5.5 2 5.5 6" fill="none" stroke="#3b2f2a" stroke-width="2.5"/><circle cx="35" cy="20" r="1.4" fill="#7fb6d9"/><circle cx="33" cy="24" r="1.4" fill="#7fb6d9"/></svg>
-        Bình tưới
+        <span data-t="tool_water"></span>
       </button>
-      <button class="tool" type="button" data-msg="Tiệm anh Bảo sẽ mở ở chặng 4 (F11).">
+      <button class="tool" type="button" data-soon="soon_shop">
         <svg viewBox="0 0 40 40" aria-hidden="true"><path d="M8 17h24v16H8z" fill="#fff8ec" stroke="#3b2f2a" stroke-width="2.5" stroke-linejoin="round"/><path d="M6 10h28l-2 7H8z" fill="#e57d5a" stroke="#3b2f2a" stroke-width="2.5" stroke-linejoin="round"/><path d="M17 33v-8h6v8" fill="#d9a46b" stroke="#3b2f2a" stroke-width="2.5" stroke-linejoin="round"/></svg>
-        Tiệm
+        <span data-t="tool_shop"></span>
       </button>
-      <button class="tool" type="button" data-msg="Cài đặt sẽ có ở chặng 5 (F21).">
+      <button class="tool" type="button" data-soon="soon_settings">
         <svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="9" fill="#c9d3b8" stroke="#3b2f2a" stroke-width="2.5"/><circle cx="20" cy="20" r="3.5" fill="#fff8ec" stroke="#3b2f2a" stroke-width="2.5"/><path d="M20 6v5M20 29v5M6 20h5M29 20h5M10 10l3.5 3.5M26.5 26.5L30 30M30 10l-3.5 3.5M13.5 26.5L10 30" stroke="#3b2f2a" stroke-width="2.5" stroke-linecap="round"/></svg>
-        Cài đặt
+        <span data-t="tool_settings"></span>
       </button>
     </nav>
 
     <div id="sheetWrap" hidden>
       <div class="sheet-backdrop" id="sheetBackdrop"></div>
       <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
-        <h2 id="sheetTitle">Thông tin bản thử</h2>
+        <h2 id="sheetTitle" data-t="info_title"></h2>
+
+        <div class="label" data-t="info_section_data"></div>
         <dl>
-          <dt>Phiên bản</dt><dd id="iVer">0.2 · PWA chặng 0</dd>
-          <dt>Mở dạng</dt><dd id="iMode">–</dd>
-          <dt>Chơi offline</dt><dd id="iOffline">Đang chuẩn bị…</dd>
-          <dt>Mạng</dt><dd id="iNet">–</dd>
-          <dt>Kích thước khung</dt><dd id="iSize">–</dd>
-          <dt>Màn hình thiết bị</dt><dd id="iScreen">–</dd>
-          <dt>Mật độ điểm ảnh</dt><dd id="iDpr">–</dd>
-          <dt>Hướng màn hình</dt><dd id="iOrient">–</dd>
-          <dt>Giờ máy</dt><dd id="iTime">–</dd>
+          <dt data-t="info_storage"></dt><dd id="iStorage">–</dd>
+          <dt data-t="info_saved_at"></dt><dd id="iSavedAt">–</dd>
+          <dt data-t="info_coins"></dt><dd id="iCoins">–</dd>
+          <dt data-t="info_started"></dt><dd id="iStarted">–</dd>
+          <dt data-t="info_game_time"></dt><dd id="iGameTime">–</dd>
+          <dt data-t="info_away"></dt><dd id="iAway">–</dd>
+          <dt data-t="info_rewound"></dt><dd id="iRewound">–</dd>
+          <dt data-t="info_device_time"></dt><dd id="iTime">–</dd>
         </dl>
-        <div class="label">Xem thử khung giờ</div>
-        <div class="chips" id="periodChips">
-          <button class="chip" type="button" data-p="auto" aria-pressed="true">Theo giờ máy</button>
-          <button class="chip" type="button" data-p="morning" aria-pressed="false">Sáng</button>
-          <button class="chip" type="button" data-p="afternoon" aria-pressed="false">Chiều</button>
-          <button class="chip" type="button" data-p="evening" aria-pressed="false">Tối</button>
-          <button class="chip" type="button" data-p="night" aria-pressed="false">Đêm</button>
+        <div class="actions">
+          <button class="btn" type="button" id="addCoins" data-t="info_add_coins"></button>
+          <button class="btn danger" type="button" id="resetData" data-t="info_reset"></button>
         </div>
-        <p class="note">Hình trong bản này là hình tạm. Các nút công cụ và thùng đất chỉ hiện thông báo; tính năng thật được lắp ở các chặng sau.</p>
-        <button class="close" type="button" id="sheetClose">Đóng</button>
+
+        <div class="label" data-t="info_section_device"></div>
+        <dl>
+          <dt data-t="info_version"></dt><dd id="iVer">–</dd>
+          <dt data-t="info_mode"></dt><dd id="iMode">–</dd>
+          <dt data-t="info_offline"></dt><dd id="iOffline">–</dd>
+          <dt data-t="info_net"></dt><dd id="iNet">–</dd>
+          <dt data-t="info_frame"></dt><dd id="iSize">–</dd>
+          <dt data-t="info_screen"></dt><dd id="iScreen">–</dd>
+          <dt data-t="info_dpr"></dt><dd id="iDpr">–</dd>
+          <dt data-t="info_orient"></dt><dd id="iOrient">–</dd>
+        </dl>
+
+        <div class="label" data-t="info_section_period"></div>
+        <div class="chips" id="periodChips">
+          <button class="chip" type="button" data-p="auto" aria-pressed="true" data-t="period_auto"></button>
+          <button class="chip" type="button" data-p="morning" aria-pressed="false" data-t="period_morning"></button>
+          <button class="chip" type="button" data-p="afternoon" aria-pressed="false" data-t="period_afternoon"></button>
+          <button class="chip" type="button" data-p="evening" aria-pressed="false" data-t="period_evening"></button>
+          <button class="chip" type="button" data-p="night" aria-pressed="false" data-t="period_night"></button>
+        </div>
+        <p class="note" data-t="info_note"></p>
+        <button class="close" type="button" id="sheetClose" data-t="close"></button>
       </div>
     </div>
   </div>
 </div>
 
 <script src="vendor/phaser-3.80.1.min.js"></script>
-<script>
-(() => {
-  // ---------- Kích thước logic của cảnh ----------
-  const W = 390, H = 760, ZOOM = 2;
-  const INK = 0x3b2f2a;
-  const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  // ---------- Khung giờ (theo kế hoạch: sáng 5–11, chiều 11–17, tối 17–19, đêm 19–5) ----------
-  const PERIODS = {
-    morning:   { name: 'Sáng',  skyTop: 0x9fd3f0, skyBot: 0xfde9c8, far: 0xc6d6e4, mid: 0xa6bdd1, near: 0x88a1ba, lit: 0,    shade: [0xffffff, 0],    cloud: 1 },
-    afternoon: { name: 'Chiều', skyTop: 0x74b9e6, skyBot: 0xd6eefc, far: 0xbcd0e1, mid: 0x9ab3ca, near: 0x7c97b0, lit: 0,    shade: [0xffffff, 0],    cloud: 1 },
-    evening:   { name: 'Tối',   skyTop: 0x4d4f88, skyBot: 0xf2a070, far: 0x8f80a4, mid: 0x6f6491, near: 0x534d79, lit: 0.45, shade: [0xff9466, 0.12], cloud: 0.8 },
-    night:     { name: 'Đêm',   skyTop: 0x121a38, skyBot: 0x34407a, far: 0x2b345f, mid: 0x222a50, near: 0x1a2045, lit: 0.85, shade: [0x1d2a66, 0.34], cloud: 0.35 }
-  };
-  const periodOf = h => (h >= 5 && h < 11) ? 'morning' : (h >= 11 && h < 17) ? 'afternoon' : (h >= 17 && h < 19) ? 'evening' : 'night';
-  let override = 'auto';
-  const currentPeriod = () => override === 'auto' ? periodOf(new Date().getHours()) : override;
-
-  // ---------- Khung dọc: luôn giữ tỉ lệ W:H và nằm giữa ----------
-  const stage = document.getElementById('stage');
-  const frame = document.getElementById('frame');
-  function fitFrame() {
-    const cs = getComputedStyle(stage);
-    const aw = stage.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
-    const ah = stage.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
-    const scale = Math.min(aw / W, ah / H);
-    frame.style.width = Math.floor(W * scale) + 'px';
-    frame.style.height = Math.floor(H * scale) + 'px';
-    if (game) game.scale.refresh();
-    updateInfo();
-  }
-
-  // ---------- Thông báo nhẹ ----------
-  const toastEl = document.getElementById('toast');
-  let toastTimer = 0;
-  function toast(msg) {
-    toastEl.textContent = msg;
-    toastEl.classList.add('show');
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2400);
-  }
-  document.querySelectorAll('.tool').forEach(b => b.addEventListener('click', () => toast(b.dataset.msg)));
-
-  // ---------- Đồng hồ trên HUD ----------
-  const ICONS = {
-    morning:   '<circle cx="16" cy="16" r="7" fill="#f2b544" stroke="#3b2f2a" stroke-width="2.5"/><path d="M16 3v4M16 25v4M3 16h4M25 16h4M7 7l2.8 2.8M22.2 22.2L25 25M25 7l-2.8 2.8M9.8 22.2L7 25" stroke="#3b2f2a" stroke-width="2.5" stroke-linecap="round"/>',
-    afternoon: '<circle cx="13" cy="13" r="7" fill="#f2b544" stroke="#3b2f2a" stroke-width="2.5"/><path d="M10 26h14a5 5 0 0 0 0-10 6 6 0 0 0-11 2 4 4 0 0 0-3 8z" fill="#fff8ec" stroke="#3b2f2a" stroke-width="2.5" stroke-linejoin="round"/>',
-    evening:   '<path d="M4 22h24" stroke="#3b2f2a" stroke-width="2.5" stroke-linecap="round"/><path d="M8 22a8 8 0 0 1 16 0z" fill="#f29a6a" stroke="#3b2f2a" stroke-width="2.5" stroke-linejoin="round"/><path d="M16 6v4M6.5 12l2.5 2M25.5 12L23 14" stroke="#3b2f2a" stroke-width="2.5" stroke-linecap="round"/>',
-    night:     '<path d="M21 5a11 11 0 1 0 6 18A9 9 0 0 1 21 5z" fill="#ffe3a3" stroke="#3b2f2a" stroke-width="2.5" stroke-linejoin="round"/>'
-  };
-  const pad = n => String(n).padStart(2, '0');
-  let shownPeriod = null;
-  function tick() {
-    const d = new Date();
-    document.getElementById('clock').textContent = pad(d.getHours()) + ':' + pad(d.getMinutes());
-    const p = currentPeriod();
-    document.getElementById('period').textContent = PERIODS[p].name;
-    document.getElementById('periodIcon').innerHTML = ICONS[p];
-    if (p !== shownPeriod && sceneRef) { sceneRef.applyPeriod(p); shownPeriod = p; }
-    updateInfo();
-  }
-
-  // ---------- Bảng thông tin kiểm thử ----------
-  const sheetWrap = document.getElementById('sheetWrap');
-  function updateInfo() {
-    if (sheetWrap.hidden) return;
-    const d = new Date();
-    document.getElementById('iSize').textContent = frame.clientWidth + ' × ' + frame.clientHeight + ' px';
-    document.getElementById('iScreen').textContent = window.innerWidth + ' × ' + window.innerHeight + ' px';
-    document.getElementById('iDpr').textContent = (window.devicePixelRatio || 1).toFixed(2) + '×';
-    document.getElementById('iOrient').textContent = window.innerHeight >= window.innerWidth ? 'Dọc' : 'Ngang';
-    document.getElementById('iTime').textContent = pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
-  }
-  function openSheet() { sheetWrap.hidden = false; updateInfo(); document.getElementById('sheetClose').focus(); }
-  function closeSheet() { sheetWrap.hidden = true; document.getElementById('infoBtn').focus(); }
-  document.getElementById('infoBtn').addEventListener('click', openSheet);
-  document.getElementById('sheetClose').addEventListener('click', closeSheet);
-  document.getElementById('sheetBackdrop').addEventListener('click', closeSheet);
-  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !sheetWrap.hidden) closeSheet(); });
-  document.querySelectorAll('#periodChips .chip').forEach(c => c.addEventListener('click', () => {
-    override = c.dataset.p;
-    document.querySelectorAll('#periodChips .chip').forEach(x => x.setAttribute('aria-pressed', String(x === c)));
-    tick();
-  }));
-  setInterval(updateInfo, 1000);
-
-  // ---------- Số ngẫu nhiên cố định (cảnh giống nhau mỗi lần mở) ----------
-  function rng(seed) { let s = seed >>> 0; return () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296; }
-
-  let sceneRef = null, game = null;
-
-  class Rooftop extends Phaser.Scene {
-    constructor() { super('rooftop'); }
-
-    create() {
-      sceneRef = this;
-      this.cameras.main.setZoom(ZOOM).centerOn(W / 2, H / 2);
-
-      this.sky = this.add.graphics();
-      this.clouds = this.makeClouds();
-      this.cityFar = this.add.graphics();
-      this.cityMid = this.add.graphics();
-      this.cityNear = this.add.graphics();
-      this.windows = this.add.graphics();
-      this.buildCity();
-
-      this.drawRooftop();
-      this.drawTank(62, 318);
-      this.drawCoop(318, 330);
-      this.drawClothesline();
-      this.boxes = [
-        this.makeBox(138, 452, 1.0), this.makeBox(252, 452, 1.0),
-        this.makeBox(128, 568, 1.08), this.makeBox(262, 568, 1.08)
-      ];
-      this.drawFrontWall();
-
-      this.shade = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0).setBlendMode(Phaser.BlendModes.MULTIPLY);
-      this.glow = this.add.graphics(); // đèn dây sáng ban đêm, vẽ sau lớp tối
-      this.drawLights();
-
-      document.getElementById('boot').hidden = true;
-      tick();
-    }
-
-    // ----- Bầu trời -----
-    paintSky(p) {
-      const g = this.sky; g.clear();
-      g.fillGradientStyle(p.skyTop, p.skyTop, p.skyBot, p.skyBot, 1);
-      g.fillRect(0, 0, W, 340);
-      if (p === PERIODS.night) {
-        const r = rng(7); g.fillStyle(0xfff3c4, 1);
-        for (let i = 0; i < 40; i++) g.fillCircle(r() * W, r() * 200, r() < 0.15 ? 1.4 : 0.8);
-        g.fillStyle(0xffe9a8, 1); g.fillCircle(318, 70, 16);
-        g.fillStyle(p.skyTop, 1); g.fillCircle(326, 64, 14);
-      } else if (p === PERIODS.morning || p === PERIODS.afternoon) {
-        const sy = p === PERIODS.morning ? 96 : 62;
-        g.fillStyle(0xfff4c9, 0.55); g.fillCircle(84, sy, 30);
-        g.fillStyle(0xffe08a, 1); g.fillCircle(84, sy, 19);
-      } else {
-        g.fillStyle(0xffc18a, 0.6); g.fillCircle(120, 300, 46);
-        g.fillStyle(0xffa36b, 1); g.fillCircle(120, 300, 28);
-      }
-    }
-
-    makeClouds() {
-      const list = [];
-      const shapes = [[40, 70, 1], [230, 120, 0.8], [340, 46, 0.65]];
-      shapes.forEach(([x, y, s]) => {
-        const g = this.add.graphics({ x, y });
-        g.fillStyle(0xffffff, 1);
-        g.fillEllipse(0, 0, 70 * s, 22 * s);
-        g.fillEllipse(-14 * s, -9 * s, 34 * s, 26 * s);
-        g.fillEllipse(12 * s, -12 * s, 40 * s, 30 * s);
-        list.push(g);
-        if (!reduceMotion) {
-          this.tweens.add({ targets: g, x: x + 26, duration: 14000 + s * 9000, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
-        }
-      });
-      return list;
-    }
-
-    // ----- Thành phố 3 lớp tĩnh -----
-    buildCity() {
-      this.layers = { far: [], mid: [], near: [] };
-      const make = (key, seed, base, minH, maxH, minW, maxW) => {
-        const r = rng(seed); let x = -10;
-        while (x < W + 10) {
-          const w = minW + r() * (maxW - minW), h = minH + r() * (maxH - minH);
-          this.layers[key].push({ x, w, top: base - h, base, cap: r() < 0.3, ant: r() < 0.2, r: r() });
-          x += w + (key === 'near' ? 4 + r() * 8 : 1 + r() * 3);
-        }
-      };
-      make('far', 11, 300, 60, 150, 26, 46);
-      make('mid', 23, 312, 50, 120, 32, 56);
-      make('near', 37, 328, 30, 90, 40, 70);
-    }
-
-    paintCity(p) {
-      const draw = (g, key, color) => {
-        g.clear(); g.fillStyle(color, 1);
-        this.layers[key].forEach(b => {
-          g.fillRoundedRect(b.x, b.top, b.w, b.base - b.top + 40, { tl: 3, tr: 3, bl: 0, br: 0 });
-          if (b.cap) g.fillRect(b.x + b.w * 0.25, b.top - 8, b.w * 0.5, 9);
-          if (b.ant) g.fillRect(b.x + b.w * 0.6, b.top - 20, 2, 20);
-        });
-      };
-      draw(this.cityFar, 'far', p.far);
-      draw(this.cityMid, 'mid', p.mid);
-      draw(this.cityNear, 'near', p.near);
-
-      // Cửa sổ: ban ngày là ô hơi tối, ban đêm một phần sáng vàng
-      const g = this.windows; g.clear();
-      const r = rng(91);
-      ['mid', 'near'].forEach(key => {
-        this.layers[key].forEach(b => {
-          const cols = Math.max(2, Math.floor(b.w / 13));
-          const cw = 5, ch = 6, gx = (b.w - cols * cw) / (cols + 1);
-          for (let y = b.top + 10; y < b.base - 6; y += 13) {
-            for (let c = 0; c < cols; c++) {
-              const on = r() < p.lit;
-              g.fillStyle(on ? 0xffd98a : 0x000000, on ? 0.95 : 0.12);
-              g.fillRect(b.x + gx + c * (cw + gx), y, cw, ch);
-            }
-          }
-        });
-      });
-      this.clouds.forEach(c => c.setAlpha(p.cloud));
-    }
-
-    // ----- Sân thượng, nhìn nghiêng nhẹ từ trên xuống -----
-    drawRooftop() {
-      const g = this.add.graphics();
-      // Tường lan can phía sau
-      g.fillStyle(0xd9cdb8, 1); g.fillRect(0, 318, W, 26);
-      g.fillStyle(0xc4b59c, 1); g.fillRect(0, 338, W, 6);
-      g.lineStyle(3, INK, 1); g.lineBetween(0, 318, W, 318);
-      // Sàn gạch đỏ (gạch tàu)
-      g.fillStyle(0xd88a63, 1);
-      g.fillPoints([{ x: 0, y: 344 }, { x: W, y: 344 }, { x: W, y: H }, { x: 0, y: H }], true);
-      g.lineStyle(1.5, 0xb96f4c, 0.7);
-      for (let y = 344, step = 22; y < H; y += step, step *= 1.06) g.lineBetween(0, y, W, y);
-      for (let i = -8; i <= 16; i++) {
-        const xt = W / 2 + (i - 4) * 34, xb = W / 2 + (i - 4) * 52;
-        g.lineBetween(xt, 344, xb, H);
-      }
-      // Rêu và vết loang nhẹ cho đỡ phẳng
-      g.fillStyle(0x9a6a4a, 0.18);
-      g.fillEllipse(70, 660, 90, 26); g.fillEllipse(330, 420, 70, 18);
-      g.lineStyle(3, INK, 1); g.lineBetween(0, 344, W, 344);
-    }
-
-    drawTank(x, y) {
-      // Bồn nước inox đứng trên chân sắt
-      const g = this.add.graphics({ x, y });
-      g.fillStyle(0x000000, 0.18); g.fillEllipse(0, 44, 70, 14);
-      g.lineStyle(3, INK, 1);
-      g.fillStyle(0x6b5a52, 1);
-      [[-24, 10], [20, 10]].forEach(([lx]) => { g.fillRect(lx, 10, 5, 34); g.strokeRect(lx, 10, 5, 34); });
-      g.fillStyle(0xdfe5ea, 1);
-      g.fillRoundedRect(-30, -64, 60, 78, 12); g.strokeRoundedRect(-30, -64, 60, 78, 12);
-      g.fillStyle(0xffffff, 0.75); g.fillRoundedRect(-20, -56, 7, 60, 3);
-      g.lineStyle(2, 0xa9b4bd, 1); g.lineBetween(-29, -36, 29, -36); g.lineBetween(-29, -8, 29, -8);
-      g.lineStyle(3, INK, 1);
-      g.fillStyle(0xc9d1d8, 1); g.fillEllipse(0, -66, 30, 9); g.strokeEllipse(0, -66, 30, 9);
-    }
-
-    drawCoop(x, y) {
-      // Chuồng gà chưa mở: vẽ mờ, chạm vào có thông báo
-      const c = this.add.container(x, y).setAlpha(0.55);
-      const g = this.add.graphics();
-      g.fillStyle(0x000000, 0.2); g.fillEllipse(0, 40, 86, 14);
-      g.lineStyle(3, INK, 1);
-      g.fillStyle(0xc89a6a, 1); g.fillRect(-36, -14, 72, 52); g.strokeRect(-36, -14, 72, 52);
-      g.fillStyle(0x9c6b45, 1); g.fillTriangle(-44, -12, 44, -12, 0, -46); g.strokeTriangle(-44, -12, 44, -12, 0, -46);
-      g.fillStyle(0x5a4034, 1); g.fillRoundedRect(-12, 8, 24, 30, { tl: 12, tr: 12, bl: 0, br: 0 });
-      g.lineStyle(2, 0x8a5f3e, 1); g.lineBetween(-36, 4, -16, 4); g.lineBetween(16, 4, 36, 4);
-      c.add(g);
-      c.setSize(90, 90).setInteractive({ useHandCursor: true });
-      c.on('pointerup', () => { this.bounce(c); toast('Chuồng gà sẽ mở ở chặng 3 (F05).'); });
-    }
-
-    drawClothesline() {
-      // Dây phơi đồ giữa bồn nước và chuồng gà
-      const g = this.add.graphics();
-      g.lineStyle(3, INK, 1);
-      g.lineBetween(118, 268, 118, 352); g.lineBetween(262, 268, 262, 352);
-      g.lineStyle(1.5, INK, 0.9);
-      const pts = []; for (let t = 0; t <= 1.0001; t += 0.1) pts.push(new Phaser.Math.Vector2(118 + 144 * t, 272 + Math.sin(Math.PI * t) * 10));
-      g.strokePoints(pts);
-      const cloth = (cx, w, h, col) => {
-        const yy = 272 + Math.sin(Math.PI * (cx - 118) / 144) * 10;
-        g.fillStyle(col, 1); g.lineStyle(2, INK, 1);
-        g.fillRect(cx - w / 2, yy, w, h); g.strokeRect(cx - w / 2, yy, w, h);
-      };
-      cloth(150, 22, 30, 0x8fc0d9); cloth(186, 18, 24, 0xf2b544); cloth(226, 26, 34, 0xe57d5a);
-    }
-
-    makeBox(x, y, s) {
-      // Thùng xốp trồng rau: mặt trước trắng, mặt trên là đất
-      const c = this.add.container(x, y).setScale(s);
-      const g = this.add.graphics();
-      g.fillStyle(0x000000, 0.2); g.fillEllipse(0, 34, 104, 18);
-      g.lineStyle(3, INK, 1);
-      g.fillStyle(0xf6f3ec, 1); g.fillRoundedRect(-46, -6, 92, 40, 6); g.strokeRoundedRect(-46, -6, 92, 40, 6);
-      g.fillStyle(0xe7e1d4, 1); g.fillRect(-43, 22, 86, 9);
-      g.fillStyle(0xfbfaf6, 1); g.fillRoundedRect(-50, -26, 100, 26, 8); g.strokeRoundedRect(-50, -26, 100, 26, 8);
-      g.fillStyle(0x7a5236, 1); g.fillRoundedRect(-42, -21, 84, 16, 6);
-      const r = rng(x * 7 + y);
-      g.fillStyle(0x5c3c27, 1);
-      for (let i = 0; i < 14; i++) g.fillCircle(-38 + r() * 76, -18 + r() * 10, 1 + r() * 1.2);
-      c.add(g);
-      c.setSize(104, 66).setInteractive({ useHandCursor: true });
-      c.on('pointerup', () => { this.bounce(c); toast('Thùng xốp còn trống. Gieo hạt sẽ có ở chặng 1 (F01).'); });
-      return c;
-    }
-
-    drawFrontWall() {
-      // Lan can phía trước, thấp và gần mắt người chơi
-      const g = this.add.graphics();
-      g.fillStyle(0xe3d7c2, 1); g.fillRect(0, 690, W, 70);
-      g.fillStyle(0xcfc0a5, 1); g.fillRect(0, 690, W, 10);
-      g.lineStyle(3, INK, 1); g.lineBetween(0, 690, W, 690);
-      g.lineStyle(1.5, 0xbfae90, 1);
-      for (let x = 30; x < W; x += 60) g.lineBetween(x, 702, x, 760);
-      // Chậu cây nhỏ trên lan can cho có sức sống
-      const pot = (px) => {
-        g.fillStyle(0x5f9a4c, 1); g.lineStyle(2.5, INK, 1);
-        g.fillEllipse(px - 7, 672, 14, 20); g.strokeEllipse(px - 7, 672, 14, 20);
-        g.fillEllipse(px + 7, 670, 14, 22); g.strokeEllipse(px + 7, 670, 14, 22);
-        g.fillStyle(0xc9734e, 1); g.lineStyle(3, INK, 1);
-        g.fillPoints([{ x: px - 14, y: 676 }, { x: px + 14, y: 676 }, { x: px + 10, y: 694 }, { x: px - 10, y: 694 }], true);
-        g.strokePoints([{ x: px - 14, y: 676 }, { x: px + 14, y: 676 }, { x: px + 10, y: 694 }, { x: px - 10, y: 694 }], true);
-      };
-      pot(36); pot(354);
-    }
-
-    drawLights() {
-      // Bóng đèn dây giăng phía trên sân; ban đêm phát sáng
-      const g = this.glow;
-      this.bulbs = [];
-      for (let i = 0; i < 9; i++) {
-        const t = i / 8, bx = 20 + t * 350, by = 360 + Math.sin(Math.PI * t) * 14;
-        this.bulbs.push({ x: bx, y: by });
-      }
-      this.wire = this.add.graphics();
-      this.wire.setDepth(this.glow.depth - 1);
-      const pts = this.bulbs.map(b => new Phaser.Math.Vector2(b.x, b.y - 4));
-      this.wire.lineStyle(1.5, INK, 0.85); this.wire.strokePoints(pts);
-      this.children.bringToTop(this.wire); this.children.bringToTop(this.glow);
-    }
-
-    paintLights(p) {
-      const g = this.glow; g.clear();
-      const on = p === PERIODS.night || p === PERIODS.evening;
-      this.bulbs.forEach(b => {
-        if (on) { g.fillStyle(0xffd98a, 0.28); g.fillCircle(b.x, b.y + 2, 9); }
-        g.fillStyle(on ? 0xffe6a6 : 0xf3ead7, 1); g.lineStyle(1.5, INK, 1);
-        g.fillCircle(b.x, b.y + 2, 3.6); g.strokeCircle(b.x, b.y + 2, 3.6);
-      });
-    }
-
-    bounce(target) {
-      if (reduceMotion) return;
-      const sx = target.scaleX, sy = target.scaleY;
-      this.tweens.killTweensOf(target);
-      target.setScale(sx, sy);
-      this.tweens.add({ targets: target, scaleX: sx * 1.06, scaleY: sy * 0.94, duration: 90, yoyo: true, ease: 'Quad.easeOut', onComplete: () => target.setScale(sx, sy) });
-    }
-
-    applyPeriod(key) {
-      const p = PERIODS[key];
-      this.paintSky(p);
-      this.paintCity(p);
-      // Lớp phủ nhân màu: trắng = giữ nguyên, càng gần màu bóng thì cảnh càng tối/ấm
-      const t = Math.min(1, p.shade[1] * 2);
-      const mix = (a, b) => Math.round(a + (b - a) * t);
-      const sc = p.shade[0];
-      const col = (mix(255, (sc >> 16) & 255) << 16) | (mix(255, (sc >> 8) & 255) << 8) | mix(255, sc & 255);
-      this.shade.setFillStyle(col, 1).setAlpha(t > 0 ? 1 : 0);
-      this.paintLights(p);
-    }
-  }
-
-  fitFrame();
-  game = new Phaser.Game({
-    type: Phaser.AUTO,
-    parent: 'game',
-    width: W * ZOOM,
-    height: H * ZOOM,
-    backgroundColor: '#9fd3f0',
-    scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
-    render: { antialias: true, roundPixels: false },
-    banner: false,
-    scene: Rooftop
-  });
-  window.addEventListener('resize', fitFrame);
-  window.addEventListener('orientationchange', () => setTimeout(fitFrame, 200));
-  setInterval(tick, 20000);
-
-  // ---------- PWA: bộ nhớ offline và trạng thái cho bảng thông tin ----------
-  const isStandalone = () => (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
-  let offlineState = 'Đang chuẩn bị…';
-  function updatePwaInfo() {
-    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-    set('iMode', isStandalone() ? 'App trên màn hình chính' : 'Trình duyệt');
-    set('iOffline', offlineState);
-    set('iNet', navigator.onLine ? 'Có mạng' : 'Mất mạng');
-  }
-  window.addEventListener('online', () => { updatePwaInfo(); });
-  window.addEventListener('offline', () => { updatePwaInfo(); toast('Đã mất mạng. Game vẫn chơi bình thường.'); });
-  document.getElementById('infoBtn').addEventListener('click', updatePwaInfo);
-  setInterval(updatePwaInfo, 1000);
-
-  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
-    navigator.serviceWorker.register('sw.js').then(reg => {
-      const firstInstall = !navigator.serviceWorker.controller;
-      return navigator.serviceWorker.ready.then(ready => {
-        offlineState = 'Sẵn sàng';
-        if (firstInstall) toast('Đã lưu game vào máy. Lần sau tắt mạng vẫn chơi được.');
-        const ch = new MessageChannel();
-        ch.port1.onmessage = e => { const el = document.getElementById('iVer'); if (el) el.textContent = e.data + ' · PWA chặng 0'; };
-        if (ready.active) ready.active.postMessage('version', [ch.port2]);
-        updatePwaInfo();
-      });
-    }).catch(() => { offlineState = 'Không bật được'; updatePwaInfo(); });
-  } else {
-    offlineState = 'Trình duyệt không hỗ trợ';
-  }
-  updatePwaInfo();
-})();
-</script>
+<script type="module" src="js/main.js"></script>
 </body>
 </html>

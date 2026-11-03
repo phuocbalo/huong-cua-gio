@@ -1,6 +1,6 @@
 // Bộ nhớ offline của game.
 // Mỗi lần phát hành bản mới, tăng VERSION để trình duyệt tải lại toàn bộ.
-const VERSION = '0.2.0';
+const VERSION = '0.3.0';
 const CACHE = 'san-thuong-' + VERSION;
 
 // Mọi thứ game cần để chạy khi tắt mạng.
@@ -8,6 +8,16 @@ const CORE = [
   './',
   './index.html',
   './manifest.webmanifest',
+  './css/style.css',
+  './js/main.js',
+  './js/config.js',
+  './js/text.vi.js',
+  './js/util.js',
+  './js/save.js',
+  './js/clock.js',
+  './js/ui.js',
+  './js/pwa.js',
+  './js/scene.js',
   './vendor/phaser-3.80.1.min.js',
   './icons/icon-180.png',
   './icons/icon-192.png',
@@ -66,16 +76,39 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Hình, thư viện, phông chữ: dùng bản đã lưu, chưa có thì tải và lưu lại.
+  const url = new URL(req.url);
+  const sameOrigin = url.origin === self.location.origin;
+  const isFont = url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com';
+  if (!sameOrigin && !isFont) return;
+
+  // File của game (mã, giao diện, hình): có mạng thì lấy bản mới và cập nhật bộ nhớ, để trang và mã
+  // luôn cùng một phiên bản; mạng chậm quá 3 giây hoặc mất mạng thì dùng bản đã lưu.
+  // Thư viện Phaser có số phiên bản trong tên file nên dùng bản đã lưu luôn cho nhanh.
+  if (sameOrigin && !url.pathname.includes('/vendor/')) {
+    event.respondWith((async () => {
+      const cache = await caches.open(CACHE);
+      try {
+        const res = await Promise.race([
+          fetch(req),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('slow')), 3000))
+        ]);
+        if (res.ok) cache.put(req, res.clone());
+        return res;
+      } catch (e) {
+        return (await cache.match(req, { ignoreSearch: true })) || Response.error();
+      }
+    })());
+    return;
+  }
+
+  // Phaser và phông chữ: dùng bản đã lưu, chưa có thì tải và lưu lại.
   event.respondWith((async () => {
     const cache = await caches.open(CACHE);
-    const hit = await cache.match(req, { ignoreSearch: req.url.startsWith(self.location.origin) });
+    const hit = await cache.match(req, { ignoreSearch: sameOrigin });
     if (hit) return hit;
     try {
       const res = await fetch(req);
-      const url = new URL(req.url);
-      const cacheable = url.origin === self.location.origin || url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com';
-      if (res.ok && cacheable) cache.put(req, res.clone());
+      if (res.ok || res.type === 'opaque') cache.put(req, res.clone());
       return res;
     } catch (e) {
       return Response.error();

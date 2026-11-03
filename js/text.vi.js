@@ -1,0 +1,107 @@
+// Mọi câu chữ hiển thị trong game (tiếng Việt).
+// Thêm tiếng Anh sau này: sao chép file này thành text.en.js và dịch phần chữ, giữ nguyên các khóa.
+
+export const T = {
+  // ----- Chung -----
+  gameName: 'Sân Thượng Xanh',
+  booting: 'Đang dọn sân thượng…',
+  coinsLabel: 'Số xu',
+  toolsLabel: 'Công cụ',
+
+  // ----- Khung giờ -----
+  period_morning: 'Sáng',
+  period_afternoon: 'Chiều',
+  period_evening: 'Tối',
+  period_night: 'Đêm',
+  period_auto: 'Theo giờ máy',
+
+  // ----- Thanh công cụ -----
+  tool_bag: 'Túi đồ',
+  tool_water: 'Bình tưới',
+  tool_shop: 'Tiệm',
+  tool_settings: 'Cài đặt',
+  soon_bag: 'Túi đồ sẽ có ở chặng 1 (F10).',
+  soon_water: 'Bình tưới sẽ có ở chặng 1 (F02).',
+  soon_shop: 'Tiệm anh Bảo sẽ mở ở chặng 4 (F11).',
+  soon_settings: 'Cài đặt sẽ có ở chặng 5 (F21).',
+  soon_box: 'Thùng xốp còn trống. Gieo hạt sẽ có ở chặng 1 (F01).',
+  soon_coop: 'Chuồng gà sẽ mở ở chặng 3 (F05).',
+
+  // ----- Thông báo -----
+  offline_ready: 'Đã lưu game vào máy. Lần sau tắt mạng vẫn chơi được.',
+  went_offline: 'Đã mất mạng. Game vẫn chơi bình thường.',
+  clock_rewound: 'Giờ máy vừa bị lùi. Tiến độ game được giữ nguyên.',
+  welcome_back: 'Chào mừng trở lại. Bạn đã vắng {time}.',
+  save_failed: 'Không lưu được dữ liệu trên máy này. Game vẫn chơi được nhưng sẽ mất tiến độ khi đóng.',
+  test_coins_added: 'Đã thêm 10 xu. Đóng hẳn game rồi mở lại để kiểm tra đã lưu.',
+  data_reset: 'Đã xóa dữ liệu. Game bắt đầu lại từ đầu.',
+
+  // ----- Bảng thông tin bản thử -----
+  info_button: 'BẢN THỬ {v}',
+  info_button_label: 'Thông tin bản thử',
+  info_title: 'Thông tin bản thử',
+  info_section_device: 'Thiết bị',
+  info_section_data: 'Dữ liệu và đồng hồ',
+  info_section_period: 'Xem thử khung giờ',
+  info_version: 'Phiên bản',
+  info_mode: 'Mở dạng',
+  info_mode_app: 'App trên màn hình chính',
+  info_mode_browser: 'Trình duyệt',
+  info_offline: 'Chơi offline',
+  info_offline_preparing: 'Đang chuẩn bị…',
+  info_offline_ready: 'Sẵn sàng',
+  info_offline_failed: 'Không bật được',
+  info_offline_unsupported: 'Trình duyệt không hỗ trợ',
+  info_net: 'Mạng',
+  info_net_on: 'Có mạng',
+  info_net_off: 'Mất mạng',
+  info_frame: 'Kích thước khung',
+  info_screen: 'Màn hình thiết bị',
+  info_dpr: 'Mật độ điểm ảnh',
+  info_orient: 'Hướng màn hình',
+  info_orient_portrait: 'Dọc',
+  info_orient_landscape: 'Ngang',
+  info_device_time: 'Giờ máy',
+  info_storage: 'Nơi lưu',
+  info_storage_idb: 'Trong máy (IndexedDB)',
+  info_storage_memory: 'Không lưu được',
+  info_saved_at: 'Lưu lần cuối',
+  info_saved_never: 'Chưa lưu',
+  info_started: 'Bắt đầu chơi',
+  info_game_time: 'Thời gian game đã chạy',
+  info_away: 'Lần vắng gần nhất',
+  info_rewound: 'Giờ máy bị lùi',
+  info_rewound_none: 'Chưa lần nào',
+  info_rewound_count: '{n} lần, gần nhất lùi {time}',
+  info_coins: 'Số xu đang lưu',
+  info_add_coins: 'Thêm 10 xu (thử lưu)',
+  info_reset: 'Xóa dữ liệu',
+  info_reset_confirm: 'Bấm lần nữa để xóa hẳn',
+  info_note: 'Hình trong bản này là hình tạm. Nút công cụ và thùng đất chỉ hiện thông báo; tính năng thật được lắp ở các chặng sau.',
+  close: 'Đóng',
+
+  // ----- Tên cây và vật phẩm -----
+  crop_rau_muong: 'Rau muống',
+  crop_cai: 'Cải',
+  crop_hung_que: 'Húng quế',
+  crop_dua_leo: 'Dưa leo',
+  crop_ot: 'Ớt',
+  crop_ca_chua: 'Cà chua',
+  item_hat_rau_muong: 'Hạt rau muống',
+  item_hat_cai: 'Hạt cải',
+  item_hat_hung_que: 'Hạt húng quế',
+  item_hat_dua_leo: 'Hạt dưa leo',
+  item_hat_ot: 'Hạt ớt',
+  item_hat_ca_chua: 'Hạt cà chua',
+  item_rau_muong: 'Bó rau muống',
+  item_cai: 'Bó cải',
+  item_hung_que: 'Bó húng quế',
+  item_dua_leo: 'Trái dưa leo',
+  item_ot: 'Trái ớt',
+  item_ca_chua: 'Trái cà chua',
+  item_trung_ga: 'Trứng gà',
+  item_thuc_an_ga: 'Thức ăn gà'
+};
+
+// Thay {tên} trong câu bằng giá trị: fmt(T.welcome_back, { time: '2 giờ' })
+export const fmt = (s, vars) => s.replace(/\{(\w+)\}/g, (_, k) => (vars[k] ?? ''));
