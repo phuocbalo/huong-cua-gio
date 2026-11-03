@@ -52,5 +52,5 @@ Dùng nút "Tua +10 phút" / "Tua +1 giờ" và "Thêm mỗi loại 3 hạt" tro
 - [ ] **F02 Tưới nước:** cây chưa tưới có đất màu nhạt và bong bóng giọt nước. Chạm cây khô để tưới, hoặc bấm "Bình tưới" để tưới mọi cây khô cùng lúc. Đất chuyển màu sẫm.
 - [ ] **F02** Gieo 2 cây cùng loại, chỉ tưới 1 cây: cây được tưới chín trước. Cây không tưới bao lâu cũng không chết.
 - [ ] **F03 Thu hoạch:** chạm cây chín: nông sản bay về nút Túi đồ, hiện "+3 …". Rau muống, cải thu xong thì thùng trống; húng quế, dưa leo, ớt, cà chua quay về hình "lớn" rồi chín lại.
-- [ ] **F10** Túi đầy (thêm hạt nhiều lần cho đầy 12 ô) rồi thu hoạch: hiện "Túi đồ đã đầy", cây vẫn giữ nông sản.
+- [ ] **F10** Bấm "Lấp đầy túi" trong bảng "Bản thử" (các ô trống được lấp bằng trứng gà), rồi thu hoạch một loại nông sản chưa có trong túi: hiện "Túi đồ đã đầy", cây vẫn giữ nông sản.
 - [ ] Gieo, tưới, thu xong thì đóng hẳn game ngay, mở lại: mọi thứ còn nguyên.

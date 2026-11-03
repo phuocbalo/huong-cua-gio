@@ -114,11 +114,20 @@ async function boot() {
     ui.refreshOpenSheets();
   }
 
+  function onFillBag() {
+    const items = state().inventory;
+    const free = items.slots - inv.usedSlots(items);
+    if (free > 0) inv.add(items, 'trung_ga', free * 99);
+    ui.toast(T.bag_filled);
+    store.flush();
+    ui.refreshOpenSheets();
+  }
+
   const ui = new UI({
     store, clock, pwa,
     onFrameResize: () => { if (game) game.scale.refresh(); },
     onPeriodChange: p => { if (scene) scene.applyPeriod(p); },
-    onWaterAll, onPlant, onSkip, onAddSeeds
+    onWaterAll, onPlant, onSkip, onAddSeeds, onFillBag
   });
   ui.init();
 

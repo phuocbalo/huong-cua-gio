@@ -110,6 +110,8 @@ export const T = {
   info_skip_10m: 'Tua +10 phút',
   info_skip_1h: 'Tua +1 giờ',
   info_add_seeds: 'Thêm mỗi loại 3 hạt',
+  info_fill_bag: 'Lấp đầy túi (thử túi đầy)',
+  bag_filled: 'Đã lấp đầy các ô trống bằng trứng gà. Xóa dữ liệu để dọn lại.',
   skipped: 'Đã tua nhanh {time}.',
   seeds_added: 'Đã thêm hạt giống vào túi.',
   seeds_full: 'Túi đồ không đủ chỗ cho tất cả hạt giống.',

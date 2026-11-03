@@ -16,7 +16,8 @@ const ICONS = {
 };
 
 export class UI {
-  constructor({ store, clock, pwa, onFrameResize, onPeriodChange, onWaterAll, onPlant, onSkip, onAddSeeds }) {
+  constructor({ store, clock, pwa, onFrameResize, onPeriodChange, onWaterAll, onPlant, onSkip, onAddSeeds, onFillBag }) {
+    this.onFillBag = onFillBag;
     this.onWaterAll = onWaterAll;
     this.onPlant = onPlant;
     this.onSkip = onSkip;
@@ -70,6 +71,7 @@ export class UI {
     $('skip10m').addEventListener('click', () => this.onSkip(10 * 60 * 1000));
     $('skip1h').addEventListener('click', () => this.onSkip(60 * 60 * 1000));
     $('addSeeds').addEventListener('click', () => this.onAddSeeds());
+    $('fillBag').addEventListener('click', () => this.onFillBag());
 
     $('infoBtn').addEventListener('click', () => this.openSheet());
     $('sheetClose').addEventListener('click', () => this.closeSheet());
