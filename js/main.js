@@ -14,6 +14,10 @@ import * as farm from './farm.js';
 import * as inv from './inventory.js';
 import * as coop from './coop.js';
 import * as dust from './dust.js';
+import * as shop from './shop.js';
+import * as orders from './orders.js';
+import { EconomyUI, unitOf, nounOf } from './ui-economy.js';
+import { MAX_BOXES } from './config.js';
 import { LAY_DELAY } from './config.js';
 
 const AWAY_NOTICE_MS = 60000;         // vắng từ 1 phút: lời chào ngắn
@@ -135,6 +139,76 @@ async function boot() {
     renderDust();
   }
 
+  // ----- Chặng 4: tiệm, đơn hàng, mua thùng -----
+  const pickLine = arr => arr[Math.floor(Math.random() * arr.length)];
+  // Ghi nhận món đã mở và ghim đủ đơn hàng; trả về true nếu có thay đổi cần lưu
+  function syncOrders() {
+    const a = orders.syncSeen(state());
+    const b = orders.refill(state()) > 0;
+    return a || b;
+  }
+  function renderOrders() {
+    if (!scene) return;
+    const list = state().orders.list;
+    scene.setOrderNotes(list.length, list.some(o => orders.canDeliver(state(), o)));
+  }
+  function renderBuySlot() {
+    if (!scene) return;
+    const n = state().boxes.length;
+    scene.setBuySlot(n < MAX_BOXES ? n : -1, shop.nextBoxPrice(state()));
+  }
+  function afterTrade() {
+    ui.refreshCoins(true);
+    eco.refresh();
+    ui.refreshOpenSheets();
+    renderOrders();
+    renderBuySlot();
+    store.flush();
+  }
+  const ecoHandlers = {
+    onSell(id, qty) {
+      const r = shop.sell(state(), id, qty);
+      if (!r.ok) return;
+      ui.toast(fmt(T.sold, { coins: r.coins, qty, unit: unitOf(id), noun: nounOf(id) }));
+      eco.say(pickLine(T.shop_after_sell));
+      afterTrade();
+    },
+    onBuy(id, qty) {
+      const r = shop.buy(state(), id, qty);
+      if (!r.ok) return;
+      ui.toast(fmt(T.bought, { coins: r.cost, qty, unit: unitOf(id), noun: nounOf(id) }));
+      eco.say(pickLine(T.shop_after_buy));
+      if (syncOrders()) renderOrders();
+      afterTrade();
+    },
+    onBagUpgrade() {
+      const r = shop.buyBagUpgrade(state());
+      if (!r.ok) return;
+      ui.toast(fmt(T.bag_upgraded, { slots: r.slots }));
+      afterTrade();
+    },
+    onDeliver(id) {
+      const r = orders.deliver(state(), id);
+      if (!r.ok) return;
+      const o = r.order;
+      ui.toast(fmt(T.delivered, { name: T['name_' + o.from], coins: o.coins, hearts: o.hearts }));
+      afterTrade();
+    },
+    onSkipOrder(id) {
+      if (!orders.skip(state(), id).ok) return;
+      ui.toast(T.order_skipped);
+      afterTrade();
+    },
+    onBuyBox() {
+      const r = shop.buyBox(state());
+      if (!r.ok) return;
+      if (scene) scene.addBox(r.index);
+      ui.toast(T.box_bought);
+      renderBoxes();
+      afterTrade();
+    }
+  };
+
   // ----- Hành động của người chơi -----
   function waterBox(i, quiet) {
     const b = state().boxes[i];
@@ -244,6 +318,12 @@ async function boot() {
     onWaterAll, onPlant, onSkip, onAddSeeds, onFillBag, onSimAway, onNextDay, onAddDust
   });
   ui.init();
+  const eco = new EconomyUI(ui, store, ecoHandlers);
+  eco.init();
+  // Bảng nào đang mở thì cập nhật theo túi đồ mới (thu hoạch, nhặt trứng…)
+  const baseRefresh = ui.refreshOpenSheets.bind(ui);
+  ui.refreshOpenSheets = () => { baseRefresh(); eco.refresh(); renderOrders(); };
+  if (syncOrders()) store.flush();
 
   // Mỗi nhịp đồng hồ: cây lớn theo thời gian game
   clock.on(type => {
@@ -251,9 +331,11 @@ async function boot() {
     farm.updateAll(state(), now());
     if (coop.update(state(), now())) store.markDirty();
     if (dust.update(state(), now())) store.markDirty();
+    if (syncOrders()) store.markDirty();
     renderBoxes();
     renderCoop();
     renderDust();
+    renderOrders();
   });
 
   // Bắt đầu đồng hồ: tính phần thời gian đã trôi khi game tắt, cây lớn bù phần đó (F20)
@@ -261,7 +343,11 @@ async function boot() {
   clock.on((type, r) => { if (type === 'return') greet(r); });
 
   // Xóa dữ liệu thì vẽ lại thùng
-  store.onChange(() => { renderBoxes(); renderCoop(); renderDust(); });
+  store.onChange(() => {
+    // Xóa dữ liệu trong bản thử: số thùng có thể giảm về 4, nên dựng lại cảnh cho khớp
+    if (scene && scene.boxes.length !== state().boxes.length) { location.reload(); return; }
+    renderBoxes(); renderCoop(); renderDust(); renderOrders(); renderBuySlot();
+  });
 
   game = createGame({
     boxCount: () => state().boxes.length,
@@ -272,19 +358,23 @@ async function boot() {
       renderBoxes();
       renderCoop();
       renderDust();
+      renderOrders();
+      renderBuySlot();
       greet(first);
     },
     onTapBox,
     onTapCoop,
     onTapTrough,
-    onTapDust
+    onTapDust,
+    onTapOrders: () => eco.openOrders(),
+    onTapBuyBox: () => eco.openBuyBox()
   });
 
   window.addEventListener('offline', () => ui.toast(T.went_offline));
   pwa.register(firstInstall => { if (firstInstall) ui.toast(T.offline_ready); });
 
   // Cửa sổ kiểm thử cho người phát triển (gõ trong console): __game.store.data
-  window.__game = { store, clock, ui, pwa, farm, coop, dust };
+  window.__game = { store, clock, ui, pwa, farm, coop, dust, shop, orders, eco, get scene() { return scene; } };
 }
 
 boot();

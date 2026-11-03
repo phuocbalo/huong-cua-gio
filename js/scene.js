@@ -3,7 +3,7 @@ import { W, H, ZOOM, INK } from './config.js';
 import { skyAt, mixColor } from './daylight.js';
 import { rng, reduceMotion } from './util.js';
 
-let hooks = { onReady() {}, onTapBox() {}, onTapCoop() {}, onTapTrough() {}, onTapDust() {} };
+let hooks = { onReady() {}, onTapBox() {}, onTapCoop() {}, onTapTrough() {}, onTapDust() {}, onTapOrders() {}, onTapBuyBox() {} };
 
 // Thùng xốp nhỏ để sân chứa được nhiều thùng. Lưới có chỗ cho tối đa 8 thùng (mua thêm ở F14):
 // hàng 1 hai thùng bên trái (bên phải là sân gà), hàng 2 và 3 mỗi hàng ba thùng. 4 thùng đầu là khối 2×2 bên trái.
@@ -51,17 +51,64 @@ class Rooftop extends Phaser.Scene {
       if (!this.isCanvasTap(pointer)) return;
       const d = this.dustAt ? this.dustAt(pointer.worldX, pointer.worldY) : -1;
       if (d >= 0) { hooks.onTapDust(d); return; }
+      if (this.buySlotAt(pointer.worldX, pointer.worldY)) { hooks.onTapBuyBox(); return; }
       const i = this.boxAt(pointer.worldX, pointer.worldY);
       if (i >= 0) { this.bounce(this.boxes[i]); hooks.onTapBox(i); }
     });
     this.input.on('pointermove', pointer => {
       if (pointer.event && pointer.event.target !== this.game.canvas) return;
-      const over = this.boxAt(pointer.worldX, pointer.worldY) >= 0 || (this.dustAt && this.dustAt(pointer.worldX, pointer.worldY) >= 0);
+      const over = this.boxAt(pointer.worldX, pointer.worldY) >= 0 || this.buySlotAt(pointer.worldX, pointer.worldY) || (this.dustAt && this.dustAt(pointer.worldX, pointer.worldY) >= 0);
       if (over) this.game.canvas.style.cursor = 'pointer';
       else if (this.game.canvas.style.cursor === 'pointer' && !this.input.manager.isOver) this.game.canvas.style.cursor = '';
     });
 
     hooks.onReady(this);
+  }
+
+  // ----- F14 Ô trống mua thêm thùng -----
+  // index: vị trí trong BOX_SLOTS (bằng số thùng đang có), -1 để ẩn; price: giá hiện trên ô
+  setBuySlot(index, price) {
+    if (!this.buyG) {
+      this.buyG = this.add.graphics();
+      this.buyText = this.add.text(0, 0, '', { fontFamily: '"Baloo 2", system-ui, sans-serif', fontSize: '13px', fontStyle: '700', color: '#fff8ec', stroke: '#3b2f2a', strokeThickness: 4 }).setOrigin(0.5);
+      this.children.moveBelow(this.buyG, this.frontWall); this.children.moveBelow(this.buyText, this.frontWall);
+    }
+    const key = index + '|' + price;
+    if (key === this.buyView) return;
+    this.buyView = key;
+    const g = this.buyG; g.clear();
+    this.buySlot = index >= 0 && index < BOX_SLOTS.length ? index : -1;
+    this.buyText.setVisible(this.buySlot >= 0);
+    if (this.buySlot < 0) return;
+    const [x, y] = BOX_SLOTS[this.buySlot], s = BOX_SCALE, w = 100 * s, h = 60 * s, top = y - 26 * s;
+    g.fillStyle(0xfff8ec, 0.28); g.fillRoundedRect(x - w / 2, top, w, h, 8);
+    // viền nét đứt
+    g.lineStyle(2, 0xfff8ec, 0.9);
+    const dash = (x0, y0, x1, y1) => { const len = Math.hypot(x1 - x0, y1 - y0), n = Math.floor(len / 8); for (let k = 0; k < n; k += 2) { const a = k / n, b = Math.min(1, (k + 1) / n); g.lineBetween(x0 + (x1 - x0) * a, y0 + (y1 - y0) * a, x0 + (x1 - x0) * b, y0 + (y1 - y0) * b); } };
+    dash(x - w / 2, top, x + w / 2, top); dash(x + w / 2, top, x + w / 2, top + h); dash(x + w / 2, top + h, x - w / 2, top + h); dash(x - w / 2, top + h, x - w / 2, top);
+    g.fillStyle(0x5f9a4c, 1); g.lineStyle(2.4, INK, 1); g.fillCircle(x, top + h / 2 - 6, 11); g.strokeCircle(x, top + h / 2 - 6, 11);
+    g.lineStyle(3, 0xfff8ec, 1); g.lineBetween(x - 5, top + h / 2 - 6, x + 5, top + h / 2 - 6); g.lineBetween(x, top + h / 2 - 11, x, top + h / 2 - 1);
+    this.buyText.setText(price + ' xu').setPosition(x, top + h / 2 + 12);
+  }
+
+  buySlotAt(x, y) {
+    if (this.buySlot == null || this.buySlot < 0) return false;
+    const [bx, by] = BOX_SLOTS[this.buySlot], s = BOX_SCALE;
+    return Math.abs(x - bx) <= 52 * s && y >= by - 28 * s && y <= by + 36 * s;
+  }
+
+  // Thùng mới xuất hiện ở ô kế tiếp, nảy lên nhẹ
+  addBox(index) {
+    const [x, y] = BOX_SLOTS[index];
+    const c = this.makeBox(x, y, BOX_SCALE);
+    this.children.moveBelow(c, this.frontWall);
+    this.boxes[index] = c;
+    if (!reduceMotion) {
+      c.setScale(BOX_SCALE * 0.4);
+      this.tweens.add({ targets: c, scale: BOX_SCALE, duration: 420, ease: 'Back.easeOut' });
+      this.plantFx(index);
+    }
+    return c;
   }
 
   // ----- F23 Bụi trên sân -----
@@ -619,7 +666,46 @@ class Rooftop extends Phaser.Scene {
       g.fillStyle(col, 1); g.lineStyle(2, INK, 1);
       g.fillRect(cx - w / 2, yy, w, h); g.strokeRect(cx - w / 2, yy, w, h);
     };
-    cloth(150, 22, 30, 0x8fc0d9); cloth(186, 18, 24, 0xf2b544); cloth(226, 26, 34, 0xe57d5a);
+    cloth(140, 22, 30, 0x8fc0d9); cloth(170, 18, 24, 0xf2b544);
+
+    // F12: giấy đặt hàng của hàng xóm ghim trên dây phơi (vẽ lại theo số đơn trong setOrderNotes)
+    this.notesG = this.add.graphics();
+    this.notesBubble = this.makeCheckBubble().setPosition(240, 252).setVisible(false);
+    const z = this.add.zone(226, 296, 76, 62).setInteractive({ useHandCursor: true });
+    z.on('pointerup', pointer => { if (!this.isCanvasTap(pointer)) return; this.bounceAt(this.notesG); hooks.onTapOrders(); });
+    this.notesView = '';
+  }
+
+  lineY(x) { return 272 + Math.sin(Math.PI * (x - 118) / 144) * 10; }
+
+  makeCheckBubble() {
+    const b = this.add.container(0, 0);
+    const g = this.add.graphics();
+    g.fillStyle(0xfff8ec, 1); g.lineStyle(2.5, INK, 1);
+    g.fillCircle(0, 0, 12); g.strokeCircle(0, 0, 12);
+    g.fillTriangle(-4, 9, 2, 10, -6, 18); g.lineBetween(-4, 10, -6, 18); g.lineBetween(2, 10, -6, 18);
+    g.lineStyle(3.2, 0x5f9a4c, 1); g.beginPath(); g.moveTo(-5, 0); g.lineTo(-1, 4); g.lineTo(6, -4); g.strokePath();
+    b.add(g);
+    if (!reduceMotion) this.tweens.add({ targets: g, y: -4, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    return b;
+  }
+
+  // n tờ giấy đặt hàng; ready = có đơn giao được ngay (hiện bong bóng dấu tích)
+  setOrderNotes(n, ready) {
+    const key = n + '|' + ready;
+    if (key === this.notesView) return;
+    this.notesView = key;
+    const g = this.notesG; g.clear();
+    [204, 226, 248].slice(0, n).forEach((x, k) => {
+      const y = this.lineY(x), ang = [-0.06, 0.05, -0.03][k];
+      const w = 17, h = 21, cx = x, cy = y + 2 + h / 2;
+      const pts = [[-w / 2, -h / 2], [w / 2, -h / 2], [w / 2, h / 2], [-w / 2, h / 2]].map(([px, py]) => ({ x: cx + px * Math.cos(ang) - py * Math.sin(ang), y: cy + px * Math.sin(ang) + py * Math.cos(ang) }));
+      g.fillStyle(0xfffaf0, 1); g.fillPoints(pts, true); g.lineStyle(1.8, INK, 1); g.strokePoints(pts, true);
+      g.lineStyle(1.2, 0x9a8a7a, 1);
+      for (let r = 0; r < 3; r++) g.lineBetween(cx - 5, cy - 4 + r * 4, cx + 5 - (r === 2 ? 3 : 0), cy - 4 + r * 4);
+      g.fillStyle(0xc89a5a, 1); g.lineStyle(1.4, INK, 1); g.fillRect(cx - 1.6, y - 3, 3.2, 7); g.strokeRect(cx - 1.6, y - 3, 3.2, 7);   // kẹp phơi
+    });
+    this.notesBubble.setVisible(!!ready && n > 0);
   }
 
   makeBox(x, y, s) {
@@ -841,6 +927,7 @@ class Rooftop extends Phaser.Scene {
   drawFrontWall() {
     // Lan can phía trước, thấp và gần mắt người chơi
     const g = this.add.graphics();
+    this.frontWall = g;
     g.fillStyle(0xe3d7c2, 1); g.fillRect(0, 690, W, 70);
     g.fillStyle(0xcfc0a5, 1); g.fillRect(0, 690, W, 10);
     g.lineStyle(3, INK, 1); g.lineBetween(0, 690, W, 690);

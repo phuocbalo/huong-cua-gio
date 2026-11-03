@@ -20,9 +20,12 @@ Bản chơi thử: https://phuocbalo.github.io/huong-cua-gio/
 | `js/icons.js` | Biểu tượng vật phẩm |
 | `js/coop.js` | Luật nuôi gà: cho ăn mỗi ngày, đẻ trứng, nhặt trứng |
 | `js/dust.js` | Luật bụi sân thượng: bám bụi sau 3–4 ngày, quét để nhận xu |
+| `js/shop.js` | Luật tiệm anh Bảo: giá mua bán, mua thùng, nâng cấp túi đồ |
+| `js/orders.js` | Luật đơn hàng hàng xóm: 3 đơn, giao hàng, đổi đơn, điểm thân thiết |
+| `js/ui-economy.js` | Giao diện tiệm, bảng đơn hàng, xác nhận mua thùng |
 | `js/daylight.js` | Màu trời, phố, đèn cho từng giờ trong ngày; chuyển dần giữa các khung giờ |
 | `js/scene.js` | Cảnh sân thượng vẽ bằng Phaser (hình tạm) |
-| `tests/` | Kiểm thử luật chơi: `node tests/farm.test.mjs`, `node tests/daylight.test.mjs`, `node tests/coop.test.mjs`, `node tests/dust.test.mjs` |
+| `tests/` | Kiểm thử luật chơi: `node tests/farm.test.mjs`, `node tests/daylight.test.mjs`, `node tests/coop.test.mjs`, `node tests/dust.test.mjs`, `node tests/economy.test.mjs` |
 | `js/ui.js` | Điều khiển giao diện HTML |
 | `js/pwa.js` | Bật chơi offline và theo dõi trạng thái |
 | `manifest.webmanifest` | Khai báo PWA: tên app, biểu tượng, mở toàn màn hình, màn dọc |
@@ -96,3 +99,20 @@ Dùng "Tua +1 giờ", "Tua tới sáng mai" và "Giả lập vắng 8 giờ" tro
 - [ ] **F23** Đóng game khi đang có bụi rồi mở lại: bụi còn đúng chỗ cũ.
 - [ ] **F23** Vắng mặt lúc bụi bám: bảng "Trong lúc bạn vắng …" có dòng "Sân thượng bám bụi…".
 - [ ] **Bản lưu cũ:** người chơi bản 0.6 mở bản 0.7: mọi thứ còn nguyên; bụi đầu tiên bám sau 3–4 ngày.
+
+## Kiểm thử chặng 4 – Kinh tế và mở rộng
+
+Trong bảng "Bản thử" có "Thêm 10 xu" nếu cần thêm xu để thử mua.
+
+- [ ] **F11 Tiệm:** bấm "Tiệm": anh Bảo chào một câu. Tab "Bán" chưa có hàng thì hiện lời nhắc thu hoạch.
+- [ ] **F11** Có nông sản/trứng: "Bán 1" tăng xu đúng giá một món; "Bán hết · N xu" tăng đúng N xu; túi giảm đúng số lượng; ô xu nảy nhẹ.
+- [ ] **F11** Tab "Mua": mua 1 hạt giống trừ đúng xu, hạt vào túi. Không đủ xu thì nút mờ và ghi "Thiếu N xu". Túi đầy thì ghi "Túi đồ hết chỗ".
+- [ ] **F11** Nâng cấp túi đồ: "Thêm 4 ô túi đồ" (60, 120, 200 xu), túi lên 16, 20, 24 ô; sau lần thứ 3 hiện "đã nâng tối đa".
+- [ ] **F11** Mua xong tắt game ngay: xu và đồ đều đã lưu.
+- [ ] **F12 Đơn hàng:** trên dây phơi có 3 tờ giấy; chạm vào để mở "Đơn hàng hàng xóm" với 3 đơn của bà Tư / bé Na, mỗi đơn có tiến độ "Có x/y" và phần thưởng.
+- [ ] **F12** Chỉ đặt món đã có (lúc đầu: rau muống, cải, trứng gà). Mua hạt mới thì đơn mới có thể đặt món đó.
+- [ ] **F12** Đủ hàng: dây phơi hiện bong bóng dấu tích; "Giao hàng" nhận đúng xu (cao hơn bán ở tiệm) và điểm thân thiết; có đơn mới thay vào.
+- [ ] **F12** Thiếu hàng: nút ghi "Còn thiếu N" và không bấm được. "Đổi đơn khác" thay đơn mới ngay, không mất gì.
+- [ ] **F14 Mua thùng:** ô trống kế tiếp có dấu "+" và giá. Chạm vào: bảng xác nhận "Thùng thứ 5 · 40 xu". Mua: thùng mới nảy lên, gieo được ngay; dấu "+" chuyển sang ô kế tiếp với giá mới (70, 110, 160).
+- [ ] **F14** Thiếu xu: bảng ghi "Còn thiếu N xu", nút mờ. Đủ 8 thùng thì không còn dấu "+".
+- [ ] **F14** Mua thùng rồi tải lại: số thùng giữ nguyên, mọi thùng chạm được bằng ngón cái.

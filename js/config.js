@@ -1,7 +1,7 @@
 // Bảng dữ liệu của game. Muốn cân bằng lại game thì sửa số ở đây, không cần đụng vào code khác.
 // Đơn vị thời gian là mili giây; dùng các hằng PHUT, GIO cho dễ đọc.
 
-export const APP_VERSION = '0.7.0';
+export const APP_VERSION = '0.8.0';
 
 const PHUT = 60 * 1000;
 const GIO = 60 * PHUT;
@@ -74,22 +74,40 @@ export const CROPS = {
 
 // ---------- Vật phẩm trong kho ----------
 // kind: seed (hạt giống), produce (nông sản), animal (sản phẩm vật nuôi), supply (vật tư)
+// unit: đơn vị đếm khi nói chuyện ("4 bó rau muống", "2 quả trứng gà"); chữ nằm trong text.vi.js
+// Giá: hạt giống lấy seedPrice, nông sản lấy sellPrice trong CROPS; món khác ghi ngay ở đây.
 export const ITEMS = {
-  hat_rau_muong: { kind: 'seed', crop: 'rau_muong' },
-  hat_cai:       { kind: 'seed', crop: 'cai' },
-  hat_hung_que:  { kind: 'seed', crop: 'hung_que' },
-  hat_dua_leo:   { kind: 'seed', crop: 'dua_leo' },
-  hat_ot:        { kind: 'seed', crop: 'ot' },
-  hat_ca_chua:   { kind: 'seed', crop: 'ca_chua' },
-  rau_muong:     { kind: 'produce' },
-  cai:           { kind: 'produce' },
-  hung_que:      { kind: 'produce' },
-  dua_leo:       { kind: 'produce' },
-  ot:            { kind: 'produce' },
-  ca_chua:       { kind: 'produce' },
-  trung_ga:      { kind: 'animal', sellPrice: 8 },
-  thuc_an_ga:    { kind: 'supply', price: 4 }
+  hat_rau_muong: { kind: 'seed', crop: 'rau_muong', unit: 'goi' },
+  hat_cai:       { kind: 'seed', crop: 'cai', unit: 'goi' },
+  hat_hung_que:  { kind: 'seed', crop: 'hung_que', unit: 'goi' },
+  hat_dua_leo:   { kind: 'seed', crop: 'dua_leo', unit: 'goi' },
+  hat_ot:        { kind: 'seed', crop: 'ot', unit: 'goi' },
+  hat_ca_chua:   { kind: 'seed', crop: 'ca_chua', unit: 'goi' },
+  rau_muong:     { kind: 'produce', unit: 'bo' },
+  cai:           { kind: 'produce', unit: 'bo' },
+  hung_que:      { kind: 'produce', unit: 'bo' },
+  dua_leo:       { kind: 'produce', unit: 'trai' },
+  ot:            { kind: 'produce', unit: 'trai' },
+  ca_chua:       { kind: 'produce', unit: 'trai' },
+  trung_ga:      { kind: 'animal', unit: 'qua', sellPrice: 8 },
+  thuc_an_ga:    { kind: 'supply', unit: 'bao', price: 4 }
 };
+
+// ---------- Tiệm tạp hóa anh Bảo (F11) ----------
+export const SHOP_BUY = ['hat_rau_muong', 'hat_cai', 'hat_hung_que', 'hat_dua_leo', 'hat_ot', 'hat_ca_chua', 'thuc_an_ga'];
+export const SHOP_SELL_KINDS = ['produce', 'animal'];
+// Mỗi lần nâng cấp túi đồ thêm 4 ô; giá tăng dần
+export const BAG_UPGRADES = [{ slots: 4, price: 60 }, { slots: 4, price: 120 }, { slots: 4, price: 200 }];
+
+// ---------- Đơn hàng hàng xóm (F12) ----------
+export const ORDER_SLOTS = 3;          // luôn có 3 đơn trên dây phơi
+export const ORDER_BONUS = 1.6;        // đơn hàng trả hơn bán ở tiệm 60%
+export const NEIGHBORS = ['ba_tu', 'be_na'];
+
+// ---------- Mua thêm thùng xốp (F14) ----------
+// Giá thùng thứ 5, 6, 7, 8. Tối đa 8 thùng cho vừa sân (vị trí trong scene.js)
+export const BOX_PRICES = [40, 70, 110, 160];
+export const MAX_BOXES = 8;
 
 export const INVENTORY_SLOTS = 12;   // số ô kho lúc đầu
 export const STACK_SIZE = 99;        // số lượng tối đa trong một ô

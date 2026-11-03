@@ -21,7 +21,6 @@ export const T = {
   tool_water: 'Bình tưới',
   tool_shop: 'Tiệm',
   tool_settings: 'Cài đặt',
-  soon_shop: 'Tiệm anh Bảo sẽ mở ở chặng 4 (F11).',
   soon_settings: 'Cài đặt sẽ có ở chặng 5 (F21).',
 
   // ----- F01 Gieo hạt -----
@@ -50,12 +49,67 @@ export const T = {
   coop_fed: 'Đã đổ thức ăn. Gà sẽ đẻ trứng sau khoảng {time}.',
   coop_fed_today: 'Gà đã ăn no hôm nay, sẽ đẻ trứng sau khoảng {time}.',
   coop_done_today: 'Hôm nay gà đã ăn và đẻ trứng rồi. Mai nhớ cho ăn tiếp nhé.',
-  coop_no_feed: 'Hết thức ăn gà. Tiệm anh Bảo sẽ bán thức ăn ở chặng 4.',
+  coop_no_feed: 'Hết thức ăn gà. Ghé tiệm anh Bảo mua thêm nhé.',
   eggs_collected: '+{n} trứng gà vào túi đồ.',
   eggs_full: 'Túi đồ đã đầy. Trứng vẫn nằm trong chuồng chờ bạn.',
   coop_empty_hungry: 'Chưa có trứng. Gà đang đói, chạm máng ăn để cho gà ăn.',
   coop_empty_digesting: 'Chưa có trứng. Gà sẽ đẻ sau khoảng {time}.',
   coop_empty_done: 'Hôm nay gà đã đẻ rồi. Mai cho ăn để có trứng mới.',
+
+  // ----- Đơn vị đếm và tên gọi trong câu -----
+  unit_bo: 'bó', unit_trai: 'trái', unit_qua: 'quả', unit_goi: 'gói', unit_bao: 'bao',
+  noun_rau_muong: 'rau muống', noun_cai: 'cải', noun_hung_que: 'húng quế', noun_dua_leo: 'dưa leo',
+  noun_ot: 'ớt', noun_ca_chua: 'cà chua', noun_trung_ga: 'trứng gà',
+
+  // ----- F11 Tiệm anh Bảo -----
+  shop_title: 'Tiệm tạp hóa anh Bảo',
+  shop_tab_sell: 'Bán',
+  shop_tab_buy: 'Mua',
+  shop_greet: ['Rau nhà trồng hả em? Đưa anh coi nào.', 'Hôm nay có gì tươi không em?', 'Mua gì cứ lấy, anh tính rẻ cho.'],
+  shop_after_sell: ['Tươi ghê! Lần sau để dành cho anh nữa nha.', 'Hàng này bán chạy lắm, cảm ơn em.', 'Anh trả giá cao vậy là quý em lắm đó!'],
+  shop_after_buy: ['Gieo xong nhớ tưới đều nha em.', 'Giá này là anh bớt cho em rồi đó!', 'Hết thì ghé anh lấy tiếp.'],
+  shop_have: 'Có {n} · {price} xu mỗi {unit}',
+  shop_price: '{price} xu mỗi {unit}',
+  shop_sell_one: 'Bán 1',
+  shop_sell_all: 'Bán hết · {coins} xu',
+  shop_buy_one: 'Mua 1',
+  shop_buy_five: 'Mua 5',
+  shop_missing: 'Thiếu {n} xu',
+  shop_bag_full: 'Túi đồ hết chỗ',
+  shop_nothing_to_sell: 'Chưa có gì để bán. Thu hoạch rau hoặc nhặt trứng rồi quay lại nhé.',
+  shop_bag_upgrade: 'Thêm {n} ô túi đồ',
+  shop_bag_upgrade_info: 'Túi đang có {slots} ô · {price} xu',
+  shop_bag_upgrade_max: 'Túi đồ đã nâng tối đa ({slots} ô)',
+  shop_buy_bag: 'Mua · {price} xu',
+  sold: '+{coins} xu. Đã bán {qty} {unit} {noun}.',
+  bought: 'Đã mua {qty} {unit} {noun}. −{coins} xu.',
+  bag_upgraded: 'Túi đồ giờ có {slots} ô.',
+
+  // ----- F12 Đơn hàng hàng xóm -----
+  orders_title: 'Đơn hàng hàng xóm',
+  orders_hint: 'Giao đủ hàng để nhận xu và điểm thân thiết. Đơn không có hạn chót.',
+  name_ba_tu: 'Bà Tư', name_be_na: 'Bé Na',
+  order_need: '{name} cần {qty} {unit} {noun}.',
+  order_flavor_ba_tu: ['Nấu canh cho cả nhà ăn.', 'Bà muốn làm món xào.', 'Để bà muối dưa.'],
+  order_flavor_be_na: ['Mẹ dặn con mua giúp ạ.', 'Con mang qua cho cô giáo.', 'Con thích ăn món này lắm!'],
+  order_progress: 'Có {have}/{qty}',
+  order_reward: '+{coins} xu · +{hearts}',
+  order_deliver: 'Giao hàng',
+  order_missing: 'Còn thiếu {n}',
+  order_skip: 'Đổi đơn khác',
+  order_none: 'Chưa có đơn nào. Gieo hạt hoặc nhặt trứng để hàng xóm biết bạn có gì nhé.',
+  delivered: '{name} cảm ơn bạn! +{coins} xu, +{hearts} thân thiết.',
+  order_skipped: 'Đã đổi sang đơn khác.',
+  friends_line: 'Thân thiết',
+
+  // ----- F14 Mua thêm thùng xốp -----
+  buybox_title: 'Mua thêm thùng xốp',
+  buybox_info: 'Thùng thứ {n} · {price} xu',
+  buybox_have: 'Bạn đang có {coins} xu.',
+  buybox_missing: 'Còn thiếu {n} xu. Bán bớt nông sản ở tiệm anh Bảo nhé.',
+  buybox_buy: 'Mua thùng · {price} xu',
+  buybox_later: 'Để sau',
+  box_bought: 'Có thùng xốp mới! Chạm vào để gieo hạt.',
 
   // ----- F23 Quét bụi -----
   dust_swept: '+{n} xu. Sân sạch hơn rồi.',
@@ -83,7 +137,7 @@ export const T = {
   bag_tab_produce: 'Nông sản',
   bag_tab_supply: 'Vật tư',
   bag_empty: 'Chưa có gì ở đây.',
-  bag_upgrade_note: 'Nâng cấp thêm ô cho túi đồ sẽ có ở tiệm anh Bảo (chặng 4).',
+  bag_upgrade_note: 'Muốn thêm ô cho túi đồ thì ghé tiệm anh Bảo, tab Mua.',
 
   // ----- Thông báo -----
   offline_ready: 'Đã lưu game vào máy. Lần sau tắt mạng vẫn chơi được.',
@@ -150,7 +204,7 @@ export const T = {
   skipped: 'Đã tua nhanh {time}.',
   seeds_added: 'Đã thêm hạt giống vào túi.',
   seeds_full: 'Túi đồ không đủ chỗ cho tất cả hạt giống.',
-  info_note: 'Hình trong bản này là hình tạm. Tiệm và cài đặt sẽ được lắp ở các chặng sau.',
+  info_note: 'Hình trong bản này là hình tạm. Cài đặt sẽ được lắp ở chặng 5.',
   close: 'Đóng',
 
   // ----- Tên cây và vật phẩm -----

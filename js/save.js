@@ -7,9 +7,10 @@
 import { START_BOXES, START_COINS, START_INVENTORY, INVENTORY_SLOTS, START_FEED_FOR_OLD_SAVES, FEED_ITEM } from './config.js';
 import { newCoop } from './coop.js';
 import { newDust } from './dust.js';
+import { newOrders, newFriends, syncSeen } from './orders.js';
 import * as inv from './inventory.js';
 
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 4;
 
 const DB_NAME = 'san-thuong-xanh';
 const STORE = 'saves';
@@ -34,6 +35,10 @@ export function defaultSave(now = Date.now()) {
     boxes: Array.from({ length: START_BOXES }, () => ({ crop: null })),
     coop: newCoop(),
     dust: newDust(0),
+    orders: newOrders(),   // đơn được ghim khi game mở (orders.refill)
+    friends: newFriends(),
+    seen: [],
+    bagUpgrades: 0,
     tutorialDone: false,
     settings: { music: 0.6, sfx: 0.8 }
   };
@@ -48,7 +53,13 @@ const MIGRATIONS = {
     return next;
   },
   // 2 → 3 (bản 0.7): bụi bám sân thượng; lần đầu sau 3–4 ngày kể từ lúc cập nhật
-  2: s => ({ ...s, schemaVersion: 3, dust: newDust((s.clock && s.clock.gameTime) || 0) })
+  2: s => ({ ...s, schemaVersion: 3, dust: newDust((s.clock && s.clock.gameTime) || 0) }),
+  // 3 → 4 (bản 0.8, chặng 4): đơn hàng hàng xóm, điểm thân thiết, nâng cấp túi đồ
+  3: s => {
+    const next = { ...s, schemaVersion: 4, orders: newOrders(), friends: newFriends(), seen: [], bagUpgrades: 0 };
+    syncSeen(next);   // những món người chơi cũ đã có sẽ được đặt hàng ngay
+    return next;
+  }
 };
 
 export function migrate(s) {

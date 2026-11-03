@@ -233,3 +233,50 @@
   .pill.pop { animation: pill-pop 0.45s ease; }
   @keyframes pill-pop { 0% { transform: scale(1); } 40% { transform: scale(1.12); } 100% { transform: scale(1); } }
   @media (prefers-reduced-motion: reduce) { .pill.pop { animation: none; } }
+
+  /* ---------- Tiệm anh Bảo (F11) ---------- */
+  .keeper { display: grid; grid-template-columns: 15cqw 1fr; gap: 3cqw; align-items: center; }
+  .avatar svg { width: 100%; height: auto; display: block; }
+  .keeper-text { display: grid; gap: 1cqw; min-width: 0; }
+  .say {
+    margin: 0; position: relative; background: #fffdf7; border: 0.5cqw solid var(--paper-2); border-radius: 3cqw;
+    padding: 1.6cqw 2.6cqw; font-size: 3.2cqw; line-height: 1.4;
+  }
+  .shop-list, .order-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2cqw; }
+  .shop-row {
+    display: grid; grid-template-columns: 10cqw 1fr; grid-template-areas: "ico meta" "acts acts"; gap: 1.6cqw 2.6cqw; align-items: center;
+    padding: 2.2cqw 2.4cqw; border: 0.5cqw solid var(--paper-2); border-radius: 4cqw; background: #fffdf7;
+  }
+  .shop-row .ico { grid-area: ico; }
+  .shop-row .ico svg { width: 100%; height: auto; display: block; }
+  .shop-row .meta { grid-area: meta; min-width: 0; display: grid; gap: 0.5cqw; }
+  .shop-row .meta b { font: 600 3.5cqw/1.2 var(--font-body); }
+  .shop-row .meta small { font-size: 2.9cqw; color: var(--muted); line-height: 1.3; font-variant-numeric: tabular-nums; }
+  .shop-row .meta .why { color: #b4472e; font-weight: 600; }
+  .shop-row .acts { grid-area: acts; display: grid; grid-template-columns: 1fr 1fr; gap: 2cqw; }
+  .shop-row .acts.one { grid-template-columns: 1fr; }
+
+  /* ---------- Đơn hàng (F12) ---------- */
+  .friends { margin: 0; display: flex; flex-wrap: wrap; gap: 3cqw; font-size: 3.2cqw; color: var(--muted); }
+  .friends b { color: var(--ink); }
+  .friends svg, .heart { width: 3.4cqw; height: 3.4cqw; vertical-align: -0.5cqw; }
+  .order-card {
+    display: grid; grid-template-columns: 12cqw 1fr; grid-template-areas: "av txt" "acts acts"; gap: 2cqw 3cqw; align-items: center;
+    padding: 2.6cqw; border: 0.6cqw solid var(--paper-2); border-radius: 4cqw; background: #fffdf7;
+  }
+  .order-card.ready { border-color: var(--leaf); }
+  .order-card .avatar { grid-area: av; }
+  .order-card .txt { grid-area: txt; min-width: 0; display: grid; gap: 0.8cqw; }
+  .order-card .txt b { font: 600 3.5cqw/1.3 var(--font-body); }
+  .order-card .txt small { font-size: 2.9cqw; color: var(--muted); line-height: 1.3; }
+  .order-card .row { display: flex; align-items: center; gap: 2cqw; font-size: 3cqw; font-variant-numeric: tabular-nums; }
+  .order-card .row .ico { width: 6cqw; flex: none; }
+  .order-card .row .ico svg { width: 100%; height: auto; display: block; }
+  .order-card .bar { flex: 1; height: 1.8cqw; border-radius: 1cqw; background: var(--paper-2); overflow: hidden; }
+  .order-card .bar i { display: block; height: 100%; background: var(--leaf); }
+  .order-card .reward { font-weight: 600; white-space: nowrap; }
+  .order-card .acts { grid-area: acts; display: grid; grid-template-columns: 1.4fr 1fr; gap: 2cqw; }
+  .btn.ghost { border-color: var(--paper-2); color: var(--muted); }
+
+  /* ---------- Mua thùng (F14) ---------- */
+  .big-line { margin: 0; font: 700 5cqw/1.2 var(--font-display); }
