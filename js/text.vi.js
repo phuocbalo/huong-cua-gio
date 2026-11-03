@@ -23,7 +23,6 @@ export const T = {
   tool_settings: 'Cài đặt',
   soon_shop: 'Tiệm anh Bảo sẽ mở ở chặng 4 (F11).',
   soon_settings: 'Cài đặt sẽ có ở chặng 5 (F21).',
-  soon_coop: 'Chuồng gà sẽ mở ở chặng 3 (F05).',
 
   // ----- F01 Gieo hạt -----
   seed_title: 'Gieo vào thùng xốp',
@@ -47,6 +46,17 @@ export const T = {
   harvest_full: 'Túi đồ đã đầy. Nông sản vẫn nằm trên cây chờ bạn.',
   harvest_last: 'Cây đã cho hết lứa. Thùng trống, có thể gieo hạt mới.',
 
+  // ----- F05 Nuôi gà -----
+  coop_fed: 'Đã đổ thức ăn. Gà sẽ đẻ trứng sau khoảng {time}.',
+  coop_fed_today: 'Gà đã ăn no hôm nay, sẽ đẻ trứng sau khoảng {time}.',
+  coop_done_today: 'Hôm nay gà đã ăn và đẻ trứng rồi. Mai nhớ cho ăn tiếp nhé.',
+  coop_no_feed: 'Hết thức ăn gà. Tiệm anh Bảo sẽ bán thức ăn ở chặng 4.',
+  eggs_collected: '+{n} trứng gà vào túi đồ.',
+  eggs_full: 'Túi đồ đã đầy. Trứng vẫn nằm trong chuồng chờ bạn.',
+  coop_empty_hungry: 'Chưa có trứng. Gà đang đói, chạm máng ăn để cho gà ăn.',
+  coop_empty_digesting: 'Chưa có trứng. Gà sẽ đẻ sau khoảng {time}.',
+  coop_empty_done: 'Hôm nay gà đã đẻ rồi. Mai cho ăn để có trứng mới.',
+
   // ----- F20 Trong lúc bạn đi vắng -----
   away_title: 'Trong lúc bạn vắng {time}',
   away_ripe_one: '{crop} đã chín, chờ bạn thu hoạch.',
@@ -55,6 +65,8 @@ export const T = {
   away_grew_many: '{n} cây lớn thêm một chút.',
   away_dry_one: '{crop} đang khô đất nên lớn chậm lại.',
   away_dry_many: '{n} cây đang khô đất nên lớn chậm lại.',
+  away_eggs: 'Gà đã đẻ {n} quả trứng, đang chờ bạn nhặt.',
+  away_hungry: 'Gà đang đói, đổ thức ăn vào máng nhé.',
   away_hint_water: 'Bấm "Bình tưới" để tưới hết cây khô một lần.',
   away_go: 'Ra vườn',
 
@@ -64,6 +76,7 @@ export const T = {
   bag_tab_all: 'Tất cả',
   bag_tab_seed: 'Hạt giống',
   bag_tab_produce: 'Nông sản',
+  bag_tab_supply: 'Vật tư',
   bag_empty: 'Chưa có gì ở đây.',
   bag_upgrade_note: 'Nâng cấp thêm ô cho túi đồ sẽ có ở tiệm anh Bảo (chặng 4).',
 
@@ -124,11 +137,13 @@ export const T = {
   info_add_seeds: 'Thêm mỗi loại 3 hạt',
   info_fill_bag: 'Lấp đầy túi (thử túi đầy)',
   info_sim_away: 'Giả lập vắng 8 giờ',
+  info_next_day: 'Tua tới sáng mai',
+  next_day: 'Đã tua sang sáng hôm sau. Gà đói rồi đấy.',
   bag_filled: 'Đã lấp đầy các ô trống bằng trứng gà. Xóa dữ liệu để dọn lại.',
   skipped: 'Đã tua nhanh {time}.',
   seeds_added: 'Đã thêm hạt giống vào túi.',
   seeds_full: 'Túi đồ không đủ chỗ cho tất cả hạt giống.',
-  info_note: 'Hình trong bản này là hình tạm. Tiệm, cài đặt và chuồng gà sẽ được lắp ở các chặng sau.',
+  info_note: 'Hình trong bản này là hình tạm. Tiệm và cài đặt sẽ được lắp ở các chặng sau.',
   close: 'Đóng',
 
   // ----- Tên cây và vật phẩm -----

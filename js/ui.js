@@ -17,7 +17,8 @@ const ICONS = {
 };
 
 export class UI {
-  constructor({ store, clock, pwa, onFrameResize, onTimeChange, onWaterAll, onPlant, onSkip, onAddSeeds, onFillBag, onSimAway }) {
+  constructor({ store, clock, pwa, onFrameResize, onTimeChange, onWaterAll, onPlant, onSkip, onAddSeeds, onFillBag, onSimAway, onNextDay }) {
+    this.onNextDay = onNextDay;
     this.onSimAway = onSimAway;
     this.onFillBag = onFillBag;
     this.onWaterAll = onWaterAll;
@@ -77,6 +78,7 @@ export class UI {
     $('addSeeds').addEventListener('click', () => this.onAddSeeds());
     $('fillBag').addEventListener('click', () => this.onFillBag());
     $('simAway').addEventListener('click', () => { this.closeSheet(); this.onSimAway(8 * 3600 * 1000); });
+    $('nextDay').addEventListener('click', () => this.onNextDay());
 
     $('infoBtn').addEventListener('click', () => this.openSheet());
     $('sheetClose').addEventListener('click', () => this.closeSheet());
@@ -202,7 +204,7 @@ export class UI {
   }
 
   // ----- F20 Trong lúc bạn đi vắng -----
-  // s: { away, ripe: [crop], grew: [crop], dry: [crop] }
+  // s: { away, ripe: [crop], grew: [crop], dry: [crop], eggs: số trứng mới, hungry: gà vừa đói lại }
   showAway(s) {
     const name = c => T['crop_' + c];
     const list = arr => arr.map(c => name(c).toLowerCase()).join(', ');
@@ -211,6 +213,8 @@ export class UI {
     const sprout = '<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 34V18" stroke="#3b2f2a" stroke-width="2.6" stroke-linecap="round"/><path d="M20 20 C12 20 8 14 9 9 C16 9 20 14 20 20z" fill="#7cc062" stroke="#3b2f2a" stroke-width="2.4" stroke-linejoin="round"/><path d="M20 22 C28 22 32 16 31 11 C24 11 20 16 20 22z" fill="#7cc062" stroke="#3b2f2a" stroke-width="2.4" stroke-linejoin="round"/></svg>';
     if (s.ripe.length) rows.push([itemIcon(s.ripe[0]), s.ripe.length === 1 ? fmt(T.away_ripe_one, { crop: name(s.ripe[0]) }) : fmt(T.away_ripe_many, { n: s.ripe.length, list: list(s.ripe) })]);
     if (s.grew.length) rows.push([sprout, s.grew.length === 1 ? fmt(T.away_grew_one, { crop: name(s.grew[0]) }) : fmt(T.away_grew_many, { n: s.grew.length })]);
+    if (s.eggs) rows.push([itemIcon('trung_ga'), fmt(T.away_eggs, { n: s.eggs })]);
+    if (s.hungry) rows.push([itemIcon('thuc_an_ga'), T.away_hungry]);
     if (s.dry.length) rows.push([drop, s.dry.length === 1 ? fmt(T.away_dry_one, { crop: name(s.dry[0]) }) : fmt(T.away_dry_many, { n: s.dry.length })]);
     $('awayTitle').textContent = fmt(T.away_title, { time: duration(s.away) });
     $('awayList').innerHTML = rows.map(([ico, txt]) => `<li><span class="ico">${ico}</span><span>${txt}</span></li>`).join('')

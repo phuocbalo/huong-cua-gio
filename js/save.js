@@ -4,9 +4,11 @@
 // tăng SCHEMA_VERSION và viết thêm một bước nâng cấp trong MIGRATIONS để bản lưu cũ của người chơi
 // được nâng lên mà không mất gì.
 
-import { START_BOXES, START_COINS, START_INVENTORY, INVENTORY_SLOTS } from './config.js';
+import { START_BOXES, START_COINS, START_INVENTORY, INVENTORY_SLOTS, START_FEED_FOR_OLD_SAVES, FEED_ITEM } from './config.js';
+import { newCoop } from './coop.js';
+import * as inv from './inventory.js';
 
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 const DB_NAME = 'san-thuong-xanh';
 const STORE = 'saves';
@@ -29,14 +31,21 @@ export function defaultSave(now = Date.now()) {
     },
     inventory: { slots: INVENTORY_SLOTS, items: { ...START_INVENTORY } },
     boxes: Array.from({ length: START_BOXES }, () => ({ crop: null })),
+    coop: newCoop(),
     tutorialDone: false,
     settings: { music: 0.6, sfx: 0.8 }
   };
 }
 
 // Các bước nâng cấp bản lưu. Khóa = phiên bản cũ, hàm trả về bản lưu ở phiên bản kế tiếp.
-// Ví dụ khi lên phiên bản 2:  1: s => ({ ...s, schemaVersion: 2, animals: [] })
-const MIGRATIONS = {};
+const MIGRATIONS = {
+  // 1 → 2 (bản 0.6, chặng 3): mở chuồng gà, tặng thức ăn để người chơi cũ cho gà ăn được ngay
+  1: s => {
+    const next = { ...s, schemaVersion: 2, coop: newCoop(), inventory: { ...s.inventory, items: { ...s.inventory.items } } };
+    inv.add(next.inventory, FEED_ITEM, START_FEED_FOR_OLD_SAVES);   // túi đầy thì thôi, không lỗi
+    return next;
+  }
+};
 
 export function migrate(s) {
   let cur = s;
@@ -88,7 +97,8 @@ export class SaveStore {
       this.storage = 'idb';
       const saved = await tx(this.db, 'readonly', s => s.get(KEY));
       this.data = saved ? migrate(saved) : defaultSave();
-      if (!saved) await this.flush();
+      // Bản lưu mới, hoặc vừa nâng cấp từ phiên bản cũ: ghi lại ngay
+      if (!saved || saved.schemaVersion !== this.data.schemaVersion) await this.flush();
     } catch (e) {
       console.warn('Không mở được nơi lưu, chơi tạm không lưu:', e);
       this.storage = 'memory';

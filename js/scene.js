@@ -3,7 +3,7 @@ import { W, H, ZOOM, INK } from './config.js';
 import { skyAt, mixColor } from './daylight.js';
 import { rng, reduceMotion } from './util.js';
 
-let hooks = { onReady() {}, onTapBox() {}, onTapCoop() {} };
+let hooks = { onReady() {}, onTapBox() {}, onTapCoop() {}, onTapTrough() {} };
 
 // Cây vẽ to hơn thùng một chút cho dễ nhìn trên điện thoại
 const PLANT_SCALE = 1.2;
@@ -180,18 +180,173 @@ class Rooftop extends Phaser.Scene {
   }
 
   drawCoop(x, y) {
-    // Chuồng gà chưa mở: vẽ mờ, chạm vào có thông báo
-    const c = this.add.container(x, y).setAlpha(0.55);
+    // Chuồng gà (F05): chạm chuồng để nhặt trứng
+    const c = this.add.container(x, y);
     const g = this.add.graphics();
     g.fillStyle(0x000000, 0.2); g.fillEllipse(0, 40, 86, 14);
     g.lineStyle(3, INK, 1);
     g.fillStyle(0xc89a6a, 1); g.fillRect(-36, -14, 72, 52); g.strokeRect(-36, -14, 72, 52);
+    g.lineStyle(1.5, 0xa97c4f, 1); for (let k = -24; k <= 24; k += 12) g.lineBetween(k, -12, k, 36);
+    g.lineStyle(3, INK, 1);
     g.fillStyle(0x9c6b45, 1); g.fillTriangle(-44, -12, 44, -12, 0, -46); g.strokeTriangle(-44, -12, 44, -12, 0, -46);
     g.fillStyle(0x5a4034, 1); g.fillRoundedRect(-12, 8, 24, 30, { tl: 12, tr: 12, bl: 0, br: 0 });
-    g.lineStyle(2, 0x8a5f3e, 1); g.lineBetween(-36, 4, -16, 4); g.lineBetween(16, 4, 36, 4);
+    g.fillStyle(0xe8c48a, 1); g.fillRect(-14, 34, 28, 5);   // rơm trước cửa
     c.add(g);
-    c.setSize(90, 90).setInteractive({ useHandCursor: true });
-    c.on('pointerup', pointer => { if (!this.isCanvasTap(pointer)) return; this.bounce(c); hooks.onTapCoop(); });
+    // Trứng nằm trong ổ rơm ở cửa chuồng (nền tối nên trứng nổi rõ), kèm bong bóng nhắc nhặt
+    this.eggG = this.add.graphics();
+    c.add(this.eggG);
+    this.eggCount = this.add.text(20, 22, '', { fontFamily: '"Baloo 2", system-ui, sans-serif', fontSize: '15px', fontStyle: '700', color: '#fff8ec', stroke: '#3b2f2a', strokeThickness: 4 }).setOrigin(0, 0.5);
+    c.add(this.eggCount);
+    this.eggBubble = this.makeEggBubble();
+    this.eggBubble.setPosition(34, -40).setVisible(false);
+    c.add(this.eggBubble);
+    this.coopC = c;
+    const zone = this.add.zone(x, y, 96, 96).setInteractive({ useHandCursor: true });
+    zone.on('pointerup', pointer => { if (!this.isCanvasTap(pointer)) return; this.bounce(c); hooks.onTapCoop(); });
+
+    // Máng ăn: chạm để đổ thức ăn
+    const tx = 350, ty = 404;
+    this.trough = this.add.container(tx, ty);
+    const tg = this.add.graphics();
+    tg.fillStyle(0x000000, 0.18); tg.fillEllipse(0, 9, 46, 9);
+    tg.lineStyle(2.5, INK, 1); tg.fillStyle(0xa97c4f, 1);
+    tg.fillRoundedRect(-20, -6, 40, 14, 4); tg.strokeRoundedRect(-20, -6, 40, 14, 4);
+    tg.fillStyle(0x6b4a33, 1); tg.fillRect(-16, -4, 32, 5);
+    this.trough.add(tg);
+    this.grain = this.add.graphics();
+    this.trough.add(this.grain);
+    this.feedBubble = this.makeFeedBubble();
+    this.feedBubble.setPosition(4, -30).setVisible(false);
+    this.trough.add(this.feedBubble);
+    const tz = this.add.zone(tx, ty - 10, 60, 56).setInteractive({ useHandCursor: true });
+    tz.on('pointerup', pointer => { if (!this.isCanvasTap(pointer)) return; this.bounce(this.trough); hooks.onTapTrough(); });
+
+    // Gà đi lại quanh sân trước chuồng
+    this.chickens = [this.makeChicken(306, 392, 1), this.makeChicken(372, 420, -1)];
+    this.coopView = '';
+  }
+
+  makeEggBubble() {
+    const b = this.add.container(0, 0);
+    const g = this.add.graphics();
+    g.fillStyle(0xfff8ec, 1); g.lineStyle(2.5, INK, 1);
+    g.fillCircle(0, 0, 12); g.strokeCircle(0, 0, 12);
+    g.fillTriangle(-4, 9, 2, 10, -8, 18); g.lineBetween(-4, 10, -8, 18); g.lineBetween(2, 10, -8, 18);
+    g.fillStyle(0xf7e7cf, 1); g.lineStyle(2, INK, 1); g.fillEllipse(0, 0, 10, 13); g.strokeEllipse(0, 0, 10, 13);
+    b.add(g);
+    if (!reduceMotion) this.tweens.add({ targets: g, y: -4, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    return b;
+  }
+
+  makeFeedBubble() {
+    const b = this.add.container(0, 0);
+    const g = this.add.graphics();
+    g.fillStyle(0xfff8ec, 1); g.lineStyle(2.5, INK, 1);
+    g.fillCircle(0, 0, 12); g.strokeCircle(0, 0, 12);
+    g.fillTriangle(-4, 9, 2, 10, -6, 18); g.lineBetween(-4, 10, -6, 18); g.lineBetween(2, 10, -6, 18);
+    g.fillStyle(0xe8b84a, 1); g.lineStyle(1.5, INK, 1);
+    [[-4, 2], [3, 3], [0, -3], [5, -3], [-5, -4]].forEach(([gx, gy]) => { g.fillEllipse(gx, gy, 4.5, 3.2); g.strokeEllipse(gx, gy, 4.5, 3.2); });
+    b.add(g);
+    if (!reduceMotion) this.tweens.add({ targets: g, y: -4, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    return b;
+  }
+
+  makeChicken(x, y, dir) {
+    const c = this.add.container(x, y).setScale(dir, 1);
+    const body = this.add.graphics();
+    body.lineStyle(2, 0xd98a2b, 1);
+    body.lineBetween(-3, -3, -4, 0); body.lineBetween(3, -3, 4, 0);
+    body.fillStyle(0x000000, 0.16); body.fillEllipse(0, 1, 26, 6);
+    body.lineStyle(2.2, INK, 1);
+    body.fillStyle(0xf6efe2, 1);
+    body.fillTriangle(-10, -12, -18, -22, -14, -8); body.strokeTriangle(-10, -12, -18, -22, -14, -8);
+    body.fillEllipse(0, -10, 26, 17); body.strokeEllipse(0, -10, 26, 17);
+    body.lineStyle(1.6, 0xd7cbb6, 1); body.beginPath(); body.arc(-2, -10, 6, 0.3, 2.6); body.strokePath();
+    c.add(body);
+    const head = this.add.container(9, -16);
+    const hg = this.add.graphics();
+    hg.lineStyle(2.2, INK, 1);
+    hg.fillStyle(0xe5533c, 1); hg.fillCircle(-1, -9, 2.6); hg.fillCircle(2, -10, 2.6); hg.strokeCircle(-1, -9, 2.6); hg.strokeCircle(2, -10, 2.6);
+    hg.fillStyle(0xf6efe2, 1); hg.fillCircle(0, -4, 5.5); hg.strokeCircle(0, -4, 5.5);
+    hg.fillStyle(0xf2b544, 1); hg.fillTriangle(5, -5, 10, -3.5, 5, -2); hg.strokeTriangle(5, -5, 10, -3.5, 5, -2);
+    hg.fillStyle(0xe5533c, 1); hg.fillEllipse(4, -0.5, 3, 4);
+    hg.fillStyle(INK, 1); hg.fillCircle(1.5, -5, 1.2);
+    head.add(hg);
+    c.add(head);
+    c.head = head;
+    c.home = { x, y };
+    if (!reduceMotion) this.time.delayedCall(600 + Math.random() * 1500, () => this.chickenAct(c));
+    return c;
+  }
+
+  // Gà lúc mổ thóc, lúc đi vài bước trong khoảng sân trước chuồng
+  chickenAct(c) {
+    const next = () => this.time.delayedCall(900 + Math.random() * 2600, () => this.chickenAct(c));
+    if (Math.random() < 0.55) {
+      this.tweens.add({ targets: c.head, y: -9, angle: 28, duration: 140, yoyo: true, repeat: 1 + Math.floor(Math.random() * 3), ease: 'Quad.easeOut', onComplete: next });
+    } else {
+      const nx = Phaser.Math.Clamp(c.x + (Math.random() * 60 - 30), 296, 378);
+      const ny = Phaser.Math.Clamp(c.y + (Math.random() * 20 - 10), 384, 424);
+      c.setScale(nx >= c.x ? 1 : -1, 1);
+      this.tweens.add({ targets: c, x: nx, y: ny, duration: 600 + Math.abs(nx - c.x) * 18, ease: 'Sine.easeInOut', onComplete: next });
+      this.tweens.add({ targets: c.head, y: -17.5, duration: 160, yoyo: true, repeat: 3 });
+    }
+  }
+
+  // Vẽ lại chuồng theo trạng thái: { eggs, fed, hungry }
+  setCoop(v) {
+    const key = [v.eggs, v.fed, v.hungry].join('|');
+    if (key === this.coopView) return;
+    this.coopView = key;
+    const g = this.eggG; g.clear();
+    if (v.eggs > 0) {
+      g.fillStyle(0xe8c48a, 1); g.fillEllipse(0, 33, 24, 8);   // ổ rơm
+      const spots = [[-6, 28], [6, 28], [0, 23]];
+      for (let k = 0; k < Math.min(v.eggs, spots.length); k++) {
+        const [ex, ey] = spots[k];
+        g.fillStyle(0xfbf3e4, 1); g.lineStyle(2, INK, 1);
+        g.fillEllipse(ex, ey, 10, 13); g.strokeEllipse(ex, ey, 10, 13);
+      }
+    }
+    this.eggCount.setText(v.eggs > 3 ? '×' + v.eggs : '');
+    this.eggBubble.setVisible(v.eggs > 0);
+    const gr = this.grain; gr.clear();
+    if (v.fed) {
+      gr.fillStyle(0xe8b84a, 1);
+      [[-12, -3], [-6, -4], [0, -3], [6, -4], [12, -3], [-9, -6], [3, -6], [9, -6]].forEach(([gx, gy]) => gr.fillEllipse(gx, gy, 4.5, 3));
+    }
+    this.feedBubble.setVisible(!!v.hungry);
+  }
+
+  feedFx() {
+    if (reduceMotion) return;
+    const tx = this.trough.x, ty = this.trough.y;
+    for (let k = 0; k < 10; k++) {
+      const d = this.add.ellipse(tx - 16 + k * 3.5, ty - 44 - (k % 3) * 6, 4, 3, 0xe8b84a).setStrokeStyle(1, INK);
+      this.tweens.add({ targets: d, y: ty - 4, delay: k * 35, duration: 360, ease: 'Quad.easeIn', onComplete: () => d.destroy() });
+    }
+    // Gà chạy lại máng ăn
+    this.chickens.forEach((c, i) => {
+      const nx = this.trough.x + (i ? 22 : -22);
+      c.setScale(nx >= c.x ? 1 : -1, 1);
+      this.tweens.add({ targets: c, x: nx, y: this.trough.y + 10, duration: 500, ease: 'Quad.easeOut' });
+    });
+  }
+
+  eggsFx(qty, tx, ty) {
+    const x = this.coopC.x, y = this.coopC.y + 26;
+    this.flyToBag(x, y, 0xfbf3e4, qty, tx, ty);
+  }
+
+  // Vật phẩm bay về nút túi đồ, kèm chữ "+n"
+  flyToBag(x, y, col, qty, tx, ty) {
+    const label = this.add.text(x, y - 20, '+' + qty, { fontFamily: '"Baloo 2", system-ui, sans-serif', fontSize: '22px', fontStyle: '700', color: '#fff8ec', stroke: '#3b2f2a', strokeThickness: 5 }).setOrigin(0.5);
+    this.tweens.add({ targets: label, y: y - 54, alpha: 0, duration: 900, ease: 'Quad.easeOut', onComplete: () => label.destroy() });
+    if (reduceMotion) return;
+    for (let k = 0; k < Math.min(qty, 8); k++) {
+      const d = this.add.circle(x + (k - (Math.min(qty, 8) - 1) / 2) * 12, y, 6, col).setStrokeStyle(2, INK);
+      this.tweens.add({ targets: d, x: tx, y: ty, scale: 0.5, delay: 120 + k * 90, duration: 600, ease: 'Cubic.easeIn', onComplete: () => d.destroy() });
+    }
   }
 
   drawClothesline() {
@@ -425,18 +580,9 @@ class Rooftop extends Phaser.Scene {
   // Nông sản bay về nút túi đồ (tx, ty là toạ độ trong cảnh)
   harvestFx(i, color, qty, tx, ty) {
     const p = this.boxWorld(i);
-    const col = Phaser.Display.Color.HexStringToColor(color).color;
-    const label = this.add.text(p.x, p.y - 50, '+' + qty, { fontFamily: '"Baloo 2", system-ui, sans-serif', fontSize: '22px', fontStyle: '700', color: '#fff8ec', stroke: '#3b2f2a', strokeThickness: 5 }).setOrigin(0.5);
-    this.tweens.add({ targets: label, y: p.y - 84, alpha: 0, duration: 900, ease: 'Quad.easeOut', onComplete: () => label.destroy() });
-    if (reduceMotion) return;
-    for (let k = 0; k < qty; k++) {
-      const d = this.add.circle(p.x + (k - (qty - 1) / 2) * 12, p.y - 30, 6, col).setStrokeStyle(2, INK);
-      this.tweens.add({
-        targets: d, x: tx, y: ty, scale: 0.5, delay: 120 + k * 90, duration: 600, ease: 'Cubic.easeIn',
-        onComplete: () => d.destroy()
-      });
-    }
+    this.flyToBag(p.x, p.y - 30, Phaser.Display.Color.HexStringToColor(color).color, qty, tx, ty);
   }
+
 
   drawFrontWall() {
     // Lan can phía trước, thấp và gần mắt người chơi

@@ -18,9 +18,10 @@ Bản chơi thử: https://phuocbalo.github.io/huong-cua-gio/
 | `js/farm.js` | Luật trồng trọt: gieo, tưới, tính tiến độ, thu hoạch |
 | `js/inventory.js` | Luật túi đồ: số ô, gộp cùng loại, đầy thì từ chối |
 | `js/icons.js` | Biểu tượng vật phẩm |
+| `js/coop.js` | Luật nuôi gà: cho ăn mỗi ngày, đẻ trứng, nhặt trứng |
 | `js/daylight.js` | Màu trời, phố, đèn cho từng giờ trong ngày; chuyển dần giữa các khung giờ |
 | `js/scene.js` | Cảnh sân thượng vẽ bằng Phaser (hình tạm) |
-| `tests/` | Kiểm thử luật chơi: `node tests/farm.test.mjs` và `node tests/daylight.test.mjs` |
+| `tests/` | Kiểm thử luật chơi: `node tests/farm.test.mjs`, `node tests/daylight.test.mjs`, `node tests/coop.test.mjs` |
 | `js/ui.js` | Điều khiển giao diện HTML |
 | `js/pwa.js` | Bật chơi offline và theo dõi trạng thái |
 | `manifest.webmanifest` | Khai báo PWA: tên app, biểu tượng, mở toàn màn hình, màn dọc |
@@ -67,3 +68,19 @@ Dùng nút "Tua +10 phút" / "Tua +1 giờ" và "Thêm mỗi loại 3 hạt" tro
 - [ ] **F08** Bấm "Chạy nhanh 24 giờ": trời đổi màu dần trong 24 giây, không giật; mặt trời mọc bên trái, lặn sau dãy nhà bên phải; phố lên đèn từ từ.
 - [ ] **F08** Để game mở qua 17:00: màu chuyển dần sang chiều tối, không đổi phắt.
 - [ ] **N06** Chơi 15 phút trên điện thoại tầm trung: máy không nóng lên rõ rệt.
+
+## Kiểm thử chặng 3 – Nuôi gà
+
+Dùng "Tua +1 giờ", "Tua tới sáng mai" và "Giả lập vắng 8 giờ" trong bảng "Bản thử" để không phải chờ.
+
+- [ ] **Bản lưu cũ:** người đã chơi bản trước, mở bản 0.6: cây, xu, túi đồ còn nguyên; có thêm chuồng 2 gà và 5 "Thức ăn gà" trong tab "Vật tư" của túi đồ.
+- [ ] **F05 Cho ăn:** gà đói thì máng ăn có bong bóng hạt thóc. Chạm máng: thóc rơi vào máng, gà chạy lại ăn, thức ăn trong túi giảm 1, hiện "Gà sẽ đẻ trứng sau khoảng 2 giờ".
+- [ ] **F05** Chạm máng lần nữa trong cùng ngày: không trừ thức ăn, hiện "Gà đã ăn no hôm nay…".
+- [ ] **F05** Tua 2 giờ: trong ổ rơm ở cửa chuồng có 2 quả trứng, chuồng có bong bóng hình quả trứng.
+- [ ] **F05** Chạm chuồng: trứng bay về túi, "+2 trứng gà"; tab "Nông sản" có Trứng gà.
+- [ ] **F05** Đã đẻ trong ngày mà cho ăn hoặc chờ thêm: không có thêm trứng. "Tua tới sáng mai": gà đói lại, cho ăn được tiếp.
+- [ ] **F05** Không cho ăn nhiều ngày ("Tua tới sáng mai" vài lần): gà vẫn còn đủ 2 con, chỉ không đẻ.
+- [ ] **F05** Không nhặt trứng qua nhiều ngày: trứng vẫn còn, cộng dồn (hiện "×4", "×6"…).
+- [ ] **F05** Hết thức ăn (cho ăn đủ 5 ngày): chạm máng hiện "Hết thức ăn gà".
+- [ ] **F05** Túi đầy ("Lấp đầy túi") rồi nhặt trứng: hiện "Túi đồ đã đầy", trứng vẫn nằm trong chuồng.
+- [ ] **F20** Cho gà ăn, đóng game hơn 5 phút rồi mở lại (hoặc "Giả lập vắng 8 giờ"): bảng đi vắng có dòng "Gà đã đẻ 2 quả trứng…". Sang ngày mới thì có dòng "Gà đang đói…".

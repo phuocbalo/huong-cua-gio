@@ -12,6 +12,8 @@ import { duration } from './util.js';
 import { CROP_COLOR } from './icons.js';
 import * as farm from './farm.js';
 import * as inv from './inventory.js';
+import * as coop from './coop.js';
+import { LAY_DELAY } from './config.js';
 
 const AWAY_NOTICE_MS = 60000;         // vắng từ 1 phút: lời chào ngắn
 const AWAY_SUMMARY_MS = 5 * 60000;    // vắng từ 5 phút và có thay đổi: bảng "Trong lúc bạn đi vắng"
@@ -44,10 +46,15 @@ async function boot() {
   // Chụp trạng thái các thùng lúc rời game; khi quay lại so sánh để kể cho người chơi nghe
   function snapshot() {
     const t = now();
-    return state().boxes.map(b => ({ crop: b.crop, stage: farm.stageOf(b), ripe: farm.isRipe(b), dry: farm.isDry(b, t) }));
+    const boxes = state().boxes.map(b => ({ crop: b.crop, stage: farm.stageOf(b), ripe: farm.isRipe(b), dry: farm.isDry(b, t) }));
+    boxes.eggs = state().coop.eggs;
+    boxes.hungry = coop.status(state(), t).key === 'hungry';
+    return boxes;
   }
   function awaySummary(before, away) {
     const t = now(), s = { away, ripe: [], grew: [], dry: [] };
+    s.eggs = Math.max(0, state().coop.eggs - (before.eggs || 0));
+    s.hungry = coop.status(state(), t).key === 'hungry' && !before.hungry;
     state().boxes.forEach((b, i) => {
       const a = before[i] || {};
       if (!b.crop || a.crop !== b.crop) return;            // thùng đổi cây trong lúc vắng: bỏ qua
@@ -65,8 +72,51 @@ async function boot() {
     if (r.away < AWAY_NOTICE_MS) return;
     const s = awaySummary(lastSnapshot, r.away);
     lastSnapshot = snapshot();
-    if (r.away >= AWAY_SUMMARY_MS && (s.ripe.length || s.grew.length || s.dry.length)) ui.showAway(s);
+    if (r.away >= AWAY_SUMMARY_MS && (s.ripe.length || s.grew.length || s.dry.length || s.eggs || s.hungry)) ui.showAway(s);
     else ui.toast(fmt(T.welcome_back, { time: duration(r.away) }));
+  }
+
+  // ----- F05 Nuôi gà -----
+  function renderCoop() {
+    if (!scene) return;
+    const st = coop.status(state(), now());
+    scene.setCoop({ eggs: state().coop.eggs, fed: st.key === 'digesting', hungry: st.key === 'hungry' });
+  }
+  function coopStatusText(prefix) {
+    const st = coop.status(state(), now());
+    if (st.key === 'hungry') return T[prefix + 'hungry'];
+    if (st.key === 'digesting') return fmt(T[prefix + 'digesting'], { time: duration(st.left) });
+    return T[prefix + 'done'];
+  }
+  function onTapTrough() {
+    const r = coop.feed(state(), now());
+    if (r.ok) {
+      if (scene) scene.feedFx();
+      ui.toast(fmt(T.coop_fed, { time: duration(LAY_DELAY) }));
+      store.flush();
+    } else if (r.reason === 'no_feed') {
+      ui.toast(T.coop_no_feed);
+    } else {
+      const st = coop.status(state(), now());
+      ui.toast(st.key === 'digesting' ? fmt(T.coop_fed_today, { time: duration(st.left) }) : T.coop_done_today);
+    }
+    renderCoop();
+    ui.refreshOpenSheets();
+  }
+  function onTapCoop() {
+    const r = coop.collect(state(), now());
+    if (r.ok) {
+      const tg = ui.bagTarget();
+      if (scene) scene.eggsFx(r.qty, tg.x, tg.y);
+      ui.toast(fmt(T.eggs_collected, { n: r.qty }));
+      store.flush();
+    } else if (r.reason === 'full') {
+      ui.toast(T.eggs_full);
+    } else {
+      ui.toast(coopStatusText('coop_empty_'));
+    }
+    renderCoop();
+    ui.refreshOpenSheets();
   }
 
   // ----- Hành động của người chơi -----
@@ -150,6 +200,11 @@ async function boot() {
     greet({ away: ms, rewound: false });
   }
 
+  function onNextDay() {
+    clock.skip(coop.msToNextDay(state(), now()) + 6 * 3600 * 1000);   // sang 6 giờ sáng hôm sau
+    ui.toast(T.next_day);
+  }
+
   function onFillBag() {
     const items = state().inventory;
     const free = items.slots - inv.usedSlots(items);
@@ -163,7 +218,7 @@ async function boot() {
     store, clock, pwa,
     onFrameResize: () => { if (game) game.scale.refresh(); },
     onTimeChange: h => { if (scene) scene.applyTime(h); },
-    onWaterAll, onPlant, onSkip, onAddSeeds, onFillBag, onSimAway
+    onWaterAll, onPlant, onSkip, onAddSeeds, onFillBag, onSimAway, onNextDay
   });
   ui.init();
 
@@ -171,7 +226,9 @@ async function boot() {
   clock.on(type => {
     if (type !== 'tick') return;
     farm.updateAll(state(), now());
+    if (coop.update(state(), now())) store.markDirty();
     renderBoxes();
+    renderCoop();
   });
 
   // Bắt đầu đồng hồ: tính phần thời gian đã trôi khi game tắt, cây lớn bù phần đó (F20)
@@ -179,7 +236,7 @@ async function boot() {
   clock.on((type, r) => { if (type === 'return') greet(r); });
 
   // Xóa dữ liệu thì vẽ lại thùng
-  store.onChange(() => renderBoxes());
+  store.onChange(() => { renderBoxes(); renderCoop(); });
 
   game = createGame({
     onReady: s => {
@@ -187,17 +244,19 @@ async function boot() {
       ui.hideBoot();
       ui.forceTime();
       renderBoxes();
+      renderCoop();
       greet(first);
     },
     onTapBox,
-    onTapCoop: () => ui.toast(T.soon_coop)
+    onTapCoop,
+    onTapTrough
   });
 
   window.addEventListener('offline', () => ui.toast(T.went_offline));
   pwa.register(firstInstall => { if (firstInstall) ui.toast(T.offline_ready); });
 
   // Cửa sổ kiểm thử cho người phát triển (gõ trong console): __game.store.data
-  window.__game = { store, clock, ui, pwa, farm };
+  window.__game = { store, clock, ui, pwa, farm, coop };
 }
 
 boot();

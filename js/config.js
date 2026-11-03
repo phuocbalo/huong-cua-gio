@@ -1,7 +1,7 @@
 // Bảng dữ liệu của game. Muốn cân bằng lại game thì sửa số ở đây, không cần đụng vào code khác.
 // Đơn vị thời gian là mili giây; dùng các hằng PHUT, GIO cho dễ đọc.
 
-export const APP_VERSION = '0.5.1';
+export const APP_VERSION = '0.6.0';
 
 const PHUT = 60 * 1000;
 const GIO = 60 * PHUT;
@@ -94,7 +94,16 @@ export const ITEMS = {
 export const INVENTORY_SLOTS = 12;   // số ô kho lúc đầu
 export const STACK_SIZE = 99;        // số lượng tối đa trong một ô
 
+// ---------- Chăn nuôi (F05) ----------
+// Mỗi ngày đổ thức ăn một lần; gà đã ăn thì đẻ sau LAY_DELAY, mỗi con một quả.
+// Không cho ăn thì gà ngừng đẻ, không bệnh, không chết. Trứng chưa nhặt không mất.
+export const START_CHICKENS = 2;
+export const LAY_DELAY = 2 * GIO;     // đề xuất: đẻ 2 giờ sau khi ăn, cùng nhịp với tưới cây
+export const EGGS_PER_CHICKEN = 1;
+export const FEED_ITEM = 'thuc_an_ga';
+
 // ---------- Khởi đầu ----------
 export const START_BOXES = 4;
 export const START_COINS = 120;
-export const START_INVENTORY = { hat_rau_muong: 3, hat_cai: 2 };
+export const START_INVENTORY = { hat_rau_muong: 3, hat_cai: 2, thuc_an_ga: 5 };
+export const START_FEED_FOR_OLD_SAVES = 5;   // tặng người chơi bản cũ khi chuồng gà mở
