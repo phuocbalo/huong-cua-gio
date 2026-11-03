@@ -1,7 +1,7 @@
 // Bảng dữ liệu của game. Muốn cân bằng lại game thì sửa số ở đây, không cần đụng vào code khác.
 // Đơn vị thời gian là mili giây; dùng các hằng PHUT, GIO cho dễ đọc.
 
-export const APP_VERSION = '0.4.0';
+export const APP_VERSION = '0.4.1';
 
 const PHUT = 60 * 1000;
 const GIO = 60 * PHUT;
@@ -29,8 +29,8 @@ export const PERIODS = {
 
 // ---------- Trồng trọt (đã chốt: cây lớn theo giờ thực, chưa tưới lớn bằng 50%) ----------
 export const UNWATERED_SPEED = 0.5;
-// Tác dụng của một lần tưới. Đề xuất, sẽ chốt khi làm F02 ở chặng 1.
-export const WATER_DURATION = 6 * GIO;
+// Tác dụng của một lần tưới. Đã chốt 2 giờ để người chơi quay lại chăm cây vài lần mỗi ngày.
+export const WATER_DURATION = 2 * GIO;
 
 // Ngưỡng tiến độ của 4 giai đoạn hình: hạt, mầm, lớn, chín
 export const STAGES = [

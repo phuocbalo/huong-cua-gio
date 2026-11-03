@@ -4,6 +4,9 @@ import { rng, reduceMotion } from './util.js';
 
 let hooks = { onReady() {}, onTapBox() {}, onTapCoop() {} };
 
+// Cây vẽ to hơn thùng một chút cho dễ nhìn trên điện thoại
+const PLANT_SCALE = 1.2;
+
 class Rooftop extends Phaser.Scene {
   constructor() { super('rooftop'); }
 
@@ -215,7 +218,7 @@ class Rooftop extends Phaser.Scene {
     this.paintSoil(c, false);
 
     // Cây: gốc đặt ở mặt đất để cây đung đưa quanh gốc
-    c.plant = this.add.graphics({ x: 0, y: -14 });
+    c.plant = this.add.graphics({ x: 0, y: -14 }).setScale(PLANT_SCALE);
     c.add(c.plant);
 
     // Bong bóng giọt nước nhắc tưới, và ánh lấp lánh khi cây chín
