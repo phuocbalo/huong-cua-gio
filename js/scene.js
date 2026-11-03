@@ -5,8 +5,12 @@ import { rng, reduceMotion } from './util.js';
 
 let hooks = { onReady() {}, onTapBox() {}, onTapCoop() {}, onTapTrough() {} };
 
-// Cây vẽ to hơn thùng một chút cho dễ nhìn trên điện thoại
-const PLANT_SCALE = 1.2;
+// Thùng xốp nhỏ để sân chứa được nhiều thùng. Lưới có chỗ cho tối đa 8 thùng (mua thêm ở F14):
+// hàng 1 hai thùng bên trái (bên phải là sân gà), hàng 2 và 3 mỗi hàng ba thùng. 4 thùng đầu là khối 2×2 bên trái.
+export const BOX_SLOTS = [[86, 456], [202, 456], [86, 550], [202, 550], [318, 550], [86, 640], [202, 640], [318, 640]];
+const BOX_SCALE = 0.68;
+// Cây vẽ to so với thùng (1,5 × 0,68 ≈ cỡ gốc) cho dễ nhìn trên điện thoại
+const PLANT_SCALE = 1.5;
 
 class Rooftop extends Phaser.Scene {
   constructor() { super('rooftop'); }
@@ -24,12 +28,10 @@ class Rooftop extends Phaser.Scene {
 
     this.drawRooftop();
     this.drawTank(62, 318);
-    this.drawCoop(318, 330);
     this.drawClothesline();
-    this.boxes = [
-      this.makeBox(138, 452, 1.0), this.makeBox(252, 452, 1.0),
-      this.makeBox(128, 568, 1.08), this.makeBox(262, 568, 1.08)
-    ];
+    this.drawCoop();
+    const n = Math.min(BOX_SLOTS.length, hooks.boxCount ? hooks.boxCount() : 4);
+    this.boxes = BOX_SLOTS.slice(0, n).map(([bx, by]) => this.makeBox(bx, by, BOX_SCALE));
     this.drawFrontWall();
 
     this.shade = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0).setBlendMode(Phaser.BlendModes.MULTIPLY);
@@ -179,51 +181,121 @@ class Rooftop extends Phaser.Scene {
     g.fillStyle(0xc9d1d8, 1); g.fillEllipse(0, -66, 30, 9); g.strokeEllipse(0, -66, 30, 9);
   }
 
-  drawCoop(x, y) {
-    // Chuồng gà (F05): chạm chuồng để nhặt trứng
-    const c = this.add.container(x, y);
-    const g = this.add.graphics();
-    g.fillStyle(0x000000, 0.2); g.fillEllipse(0, 40, 86, 14);
-    g.lineStyle(3, INK, 1);
-    g.fillStyle(0xc89a6a, 1); g.fillRect(-36, -14, 72, 52); g.strokeRect(-36, -14, 72, 52);
-    g.lineStyle(1.5, 0xa97c4f, 1); for (let k = -24; k <= 24; k += 12) g.lineBetween(k, -12, k, 36);
-    g.lineStyle(3, INK, 1);
-    g.fillStyle(0x9c6b45, 1); g.fillTriangle(-44, -12, 44, -12, 0, -46); g.strokeTriangle(-44, -12, 44, -12, 0, -46);
-    g.fillStyle(0x5a4034, 1); g.fillRoundedRect(-12, 8, 24, 30, { tl: 12, tr: 12, bl: 0, br: 0 });
-    g.fillStyle(0xe8c48a, 1); g.fillRect(-14, 34, 28, 5);   // rơm trước cửa
-    c.add(g);
-    // Trứng nằm trong ổ rơm ở cửa chuồng (nền tối nên trứng nổi rõ), kèm bong bóng nhắc nhặt
-    this.eggG = this.add.graphics();
-    c.add(this.eggG);
-    this.eggCount = this.add.text(20, 22, '', { fontFamily: '"Baloo 2", system-ui, sans-serif', fontSize: '15px', fontStyle: '700', color: '#fff8ec', stroke: '#3b2f2a', strokeThickness: 4 }).setOrigin(0, 0.5);
-    c.add(this.eggCount);
-    this.eggBubble = this.makeEggBubble();
-    this.eggBubble.setPosition(34, -40).setVisible(false);
-    c.add(this.eggBubble);
-    this.coopC = c;
-    const zone = this.add.zone(x, y, 96, 96).setInteractive({ useHandCursor: true });
-    zone.on('pointerup', pointer => { if (!this.isCanvasTap(pointer)) return; this.bounce(c); hooks.onTapCoop(); });
+  // ----- Chuồng gà (F05): chuồng sàn chân cao, sân quây lưới B40, máng tre, bình nước -----
+  drawCoop() {
+    const WOOD = 0xc89a6a, WOOD_D = 0x9c6b45, POST = 0x7a5236;
+    const RUN = { x0: 284, x1: 386, back: 352, front: 436 };
+    this.run = RUN;
 
-    // Máng ăn: chạm để đổ thức ăn
-    const tx = 350, ty = 404;
+    // Lưới phía sau sân
+    const back = this.add.graphics();
+    this.mesh(back, RUN.x0, RUN.x1, RUN.back - 20, RUN.back);
+    back.lineStyle(3, INK, 1); back.fillStyle(POST, 1);
+    [RUN.x0, RUN.x1].forEach(px => { back.fillRect(px - 2, RUN.back - 22, 4, 24); back.strokeRect(px - 2, RUN.back - 22, 4, 24); });
+
+    // Rơm lót sân
+    const floor = this.add.graphics();
+    floor.fillStyle(0xe6c27e, 0.55); floor.fillEllipse(335, 400, 104, 40);
+    floor.lineStyle(1.2, 0xc99a4e, 0.8);
+    const r = rng(5);
+    for (let k = 0; k < 26; k++) { const fx = 292 + r() * 88, fy = 386 + r() * 30; floor.lineBetween(fx, fy, fx + 5 - r() * 10, fy + 2 - r() * 4); }
+
+    // Chuồng sàn
+    const g = this.add.graphics();
+    g.fillStyle(0x000000, 0.18); g.fillEllipse(342, 364, 70, 10);
+    g.lineStyle(2.5, INK, 1);
+    g.fillStyle(POST, 1);
+    [[318, 330], [363, 330]].forEach(([lx, ly]) => { g.fillRect(lx, ly, 4, 34); g.strokeRect(lx, ly, 4, 34); });
+    g.fillStyle(WOOD_D, 1); g.fillRect(310, 326, 64, 8); g.strokeRect(310, 326, 64, 8);
+    g.fillStyle(WOOD, 1); g.fillRect(313, 297, 58, 30); g.strokeRect(313, 297, 58, 30);
+    g.lineStyle(1.4, 0xa97c4f, 1); for (let px = 323; px < 371; px += 10) g.lineBetween(px, 299, px, 325);
+    // Cửa tròn và thanh đậu
+    g.lineStyle(2.5, INK, 1); g.fillStyle(0x3b2a20, 1); g.fillCircle(342, 313, 7.5); g.strokeCircle(342, 313, 7.5);
+    // Mái tôn lượn sóng
+    const roof = [{ x: 304, y: 302 }, { x: 342, y: 274 }, { x: 380, y: 302 }];
+    g.fillStyle(0x8fa6b2, 1); g.fillPoints(roof, true);
+    g.lineStyle(1.3, 0x6d8593, 1);
+    for (let k = 1; k < 8; k++) { const t = k / 8; g.lineBetween(342, 275, 304 + 76 * t, 301); }
+    g.lineStyle(2.5, INK, 1); g.strokePoints(roof, true);
+    g.fillStyle(0x6d8593, 1); g.fillRect(338, 271, 8, 5);
+    // Cầu thang gỗ có nan cho gà lên chuồng
+    const ramp = [{ x: 336, y: 331 }, { x: 348, y: 331 }, { x: 353, y: 376 }, { x: 331, y: 376 }];
+    g.fillStyle(0xb98856, 1); g.fillPoints(ramp, true); g.strokePoints(ramp, true);
+    g.lineStyle(2, 0x7a5236, 1); for (let ry = 338; ry < 376; ry += 7) g.lineBetween(336 - (ry - 331) * 0.11, ry, 348 + (ry - 331) * 0.11, ry);
+    // Ổ đẻ gắn bên hông chuồng, mặt trước để hở thấy rơm và trứng
+    g.lineStyle(2.5, INK, 1);
+    g.fillStyle(0xa97c4f, 1); g.fillRect(289, 306, 25, 22); g.strokeRect(289, 306, 25, 22);
+    g.fillStyle(0x4a3326, 1); g.fillRect(292, 311, 19, 14);
+    g.fillStyle(0xe6c27e, 1); g.fillEllipse(301.5, 324, 20, 6);
+    g.fillStyle(WOOD_D, 1); g.fillPoints([{ x: 286, y: 307 }, { x: 316, y: 307 }, { x: 314, y: 301 }, { x: 288, y: 301 }], true);
+    g.strokePoints([{ x: 286, y: 307 }, { x: 316, y: 307 }, { x: 314, y: 301 }, { x: 288, y: 301 }], true);
+
+    this.eggG = this.add.graphics();
+    this.eggCount = this.add.text(277, 316, '', { fontFamily: '"Baloo 2", system-ui, sans-serif', fontSize: '14px', fontStyle: '700', color: '#fff8ec', stroke: '#3b2f2a', strokeThickness: 4 }).setOrigin(1, 0.5);
+    this.eggBubble = this.makeEggBubble();
+    this.eggBubble.setPosition(300, 284).setVisible(false);
+    this.coopPos = { x: 301, y: 320 };
+    this.coopC = this.add.container(0, 0, [g, this.eggG]);   // để chạm thì cả chuồng nảy nhẹ
+    const zone = this.add.zone(330, 314, 104, 80).setInteractive({ useHandCursor: true });
+    zone.on('pointerup', pointer => { if (!this.isCanvasTap(pointer)) return; this.bounceAt(g, this.eggG); hooks.onTapCoop(); });
+
+    // Máng ăn bằng ống tre bổ đôi, gác trên hai cọc chữ Y
+    const tx = 320, ty = 404;
     this.trough = this.add.container(tx, ty);
     const tg = this.add.graphics();
-    tg.fillStyle(0x000000, 0.18); tg.fillEllipse(0, 9, 46, 9);
-    tg.lineStyle(2.5, INK, 1); tg.fillStyle(0xa97c4f, 1);
-    tg.fillRoundedRect(-20, -6, 40, 14, 4); tg.strokeRoundedRect(-20, -6, 40, 14, 4);
-    tg.fillStyle(0x6b4a33, 1); tg.fillRect(-16, -4, 32, 5);
+    tg.fillStyle(0x000000, 0.16); tg.fillEllipse(0, 9, 60, 8);
+    tg.lineStyle(2, INK, 1); tg.fillStyle(POST, 1);
+    [-20, 20].forEach(sx => { tg.fillRect(sx - 1.5, -2, 3, 10); tg.lineBetween(sx - 4, -4, sx, 0); tg.lineBetween(sx + 4, -4, sx, 0); });
+    tg.lineStyle(2.4, INK, 1); tg.fillStyle(0x9cc25a, 1);
+    tg.fillRoundedRect(-27, -7, 54, 10, 5); tg.strokeRoundedRect(-27, -7, 54, 10, 5);
+    tg.fillStyle(0x5f8a33, 1); tg.fillRoundedRect(-24, -6, 48, 4, 2);
+    tg.lineStyle(1.6, 0xd7e8a6, 1); tg.lineBetween(-9, -6, -9, 2); tg.lineBetween(11, -6, 11, 2);
     this.trough.add(tg);
     this.grain = this.add.graphics();
     this.trough.add(this.grain);
     this.feedBubble = this.makeFeedBubble();
-    this.feedBubble.setPosition(4, -30).setVisible(false);
+    this.feedBubble.setPosition(0, -36).setVisible(false);
     this.trough.add(this.feedBubble);
-    const tz = this.add.zone(tx, ty - 10, 60, 56).setInteractive({ useHandCursor: true });
+    const tz = this.add.zone(tx, ty - 8, 66, 44).setInteractive({ useHandCursor: true });
     tz.on('pointerup', pointer => { if (!this.isCanvasTap(pointer)) return; this.bounce(this.trough); hooks.onTapTrough(); });
 
-    // Gà đi lại quanh sân trước chuồng
-    this.chickens = [this.makeChicken(306, 392, 1), this.makeChicken(372, 420, -1)];
+    // Bình nước gà: đế đỏ, bình trong
+    const wg = this.add.graphics();
+    wg.fillStyle(0x000000, 0.16); wg.fillEllipse(368, 412, 24, 6);
+    wg.lineStyle(2.2, INK, 1);
+    wg.fillStyle(0xd8352a, 1); wg.fillEllipse(368, 408, 24, 8); wg.strokeEllipse(368, 408, 24, 8);
+    wg.fillStyle(0x6fb4e0, 0.9); wg.fillEllipse(368, 406, 18, 4);
+    wg.fillStyle(0xdff0f6, 0.92); wg.fillRoundedRect(361, 386, 14, 20, { tl: 7, tr: 7, bl: 2, br: 2 }); wg.strokeRoundedRect(361, 386, 14, 20, { tl: 7, tr: 7, bl: 2, br: 2 });
+    wg.fillStyle(0x8cc6e6, 0.9); wg.fillRect(362.5, 396, 11, 9);
+    wg.fillStyle(0xd8352a, 1); wg.fillRoundedRect(363, 382, 10, 5, 2); wg.strokeRoundedRect(363, 382, 10, 5, 2);
+
+    // Gà trống và gà mái đi lại trong sân
+    this.chickens = [this.makeChicken(304, 396, 1, 'rooster'), this.makeChicken(356, 424, -1, 'hen')];
+
+    // Lưới phía trước, vẽ sau gà để gà nằm trong sân
+    const front = this.add.graphics();
+    this.mesh(front, RUN.x0, RUN.x1, RUN.front - 26, RUN.front);
+    front.lineStyle(3, INK, 1); front.fillStyle(POST, 1);
+    [RUN.x0, 335, RUN.x1].forEach(px => { front.fillRect(px - 2, RUN.front - 30, 4, 32); front.strokeRect(px - 2, RUN.front - 30, 4, 32); });
+    front.lineStyle(2.5, POST, 1);
+    front.lineBetween(RUN.x0, RUN.back - 22, RUN.x0, RUN.front - 30); front.lineBetween(RUN.x1, RUN.back - 22, RUN.x1, RUN.front - 30);
     this.coopView = '';
+  }
+
+  // Lưới thép mắt cáo (B40) giữa hai cọc: các đường chéo đan nhau, có thanh trên và dưới
+  mesh(g, x0, x1, y0, y1) {
+    g.lineStyle(1, 0x5b6770, 0.55);
+    const h = y1 - y0, step = 7;
+    for (let x = x0 - h; x < x1; x += step) {
+      g.lineBetween(Math.max(x0, x), y1 - Math.max(0, x0 - x), Math.min(x1, x + h), y0 + Math.max(0, x + h - x1));
+      g.lineBetween(Math.max(x0, x), y0 + Math.max(0, x0 - x), Math.min(x1, x + h), y1 - Math.max(0, x + h - x1));
+    }
+    g.lineStyle(2, 0x5b6770, 0.9); g.lineBetween(x0, y0, x1, y0); g.lineBetween(x0, y1, x1, y1);
+  }
+
+  bounceAt(...targets) {
+    if (reduceMotion) return;
+    targets.forEach(t => { this.tweens.killTweensOf(t); t.y = 0; this.tweens.add({ targets: t, y: -2, duration: 90, yoyo: true, ease: 'Quad.easeOut' }); });
   }
 
   makeEggBubble() {
@@ -231,7 +303,7 @@ class Rooftop extends Phaser.Scene {
     const g = this.add.graphics();
     g.fillStyle(0xfff8ec, 1); g.lineStyle(2.5, INK, 1);
     g.fillCircle(0, 0, 12); g.strokeCircle(0, 0, 12);
-    g.fillTriangle(-4, 9, 2, 10, -8, 18); g.lineBetween(-4, 10, -8, 18); g.lineBetween(2, 10, -8, 18);
+    g.fillTriangle(-4, 9, 2, 10, 0, 18); g.lineBetween(-4, 10, 0, 18); g.lineBetween(2, 10, 0, 18);
     g.fillStyle(0xf7e7cf, 1); g.lineStyle(2, INK, 1); g.fillEllipse(0, 0, 10, 13); g.strokeEllipse(0, 0, 10, 13);
     b.add(g);
     if (!reduceMotion) this.tweens.add({ targets: g, y: -4, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
@@ -243,7 +315,7 @@ class Rooftop extends Phaser.Scene {
     const g = this.add.graphics();
     g.fillStyle(0xfff8ec, 1); g.lineStyle(2.5, INK, 1);
     g.fillCircle(0, 0, 12); g.strokeCircle(0, 0, 12);
-    g.fillTriangle(-4, 9, 2, 10, -6, 18); g.lineBetween(-4, 10, -6, 18); g.lineBetween(2, 10, -6, 18);
+    g.fillTriangle(-4, 9, 2, 10, -2, 18); g.lineBetween(-4, 10, -2, 18); g.lineBetween(2, 10, -2, 18);
     g.fillStyle(0xe8b84a, 1); g.lineStyle(1.5, INK, 1);
     [[-4, 2], [3, 3], [0, -3], [5, -3], [-5, -4]].forEach(([gx, gy]) => { g.fillEllipse(gx, gy, 4.5, 3.2); g.strokeEllipse(gx, gy, 4.5, 3.2); });
     b.add(g);
@@ -251,45 +323,94 @@ class Rooftop extends Phaser.Scene {
     return b;
   }
 
-  makeChicken(x, y, dir) {
+  // ----- Gà ta: trống lông đỏ cam đuôi xanh đen, mái nâu có đốm. Chân chạm đất ở (0, 0), quay mặt sang phải -----
+  bez(p0, p1, p2, p3, n = 10) {
+    return new Phaser.Curves.CubicBezier(new Phaser.Math.Vector2(p0[0], p0[1]), new Phaser.Math.Vector2(p1[0], p1[1]), new Phaser.Math.Vector2(p2[0], p2[1]), new Phaser.Math.Vector2(p3[0], p3[1])).getPoints(n);
+  }
+
+  shape(g, curves, fill, outline = 2.2) {
+    const pts = [].concat(...curves);
+    g.fillStyle(fill, 1); g.fillPoints(pts, true);
+    if (outline) { g.lineStyle(outline, INK, 1); g.strokePoints(pts, true); }
+  }
+
+  makeChicken(x, y, dir, kind) {
+    const rooster = kind === 'rooster';
+    const BODY = rooster ? 0xc4502a : 0xb47644;
+    const WING = rooster ? 0x8e3420 : 0x7f4e2a;
+    const NECK = rooster ? 0xeaa040 : 0xc98d55;
     const c = this.add.container(x, y).setScale(dir, 1);
-    const body = this.add.graphics();
-    body.lineStyle(2, 0xd98a2b, 1);
-    body.lineBetween(-3, -3, -4, 0); body.lineBetween(3, -3, 4, 0);
-    body.fillStyle(0x000000, 0.16); body.fillEllipse(0, 1, 26, 6);
-    body.lineStyle(2.2, INK, 1);
-    body.fillStyle(0xf6efe2, 1);
-    body.fillTriangle(-10, -12, -18, -22, -14, -8); body.strokeTriangle(-10, -12, -18, -22, -14, -8);
-    body.fillEllipse(0, -10, 26, 17); body.strokeEllipse(0, -10, 26, 17);
-    body.lineStyle(1.6, 0xd7cbb6, 1); body.beginPath(); body.arc(-2, -10, 6, 0.3, 2.6); body.strokePath();
-    c.add(body);
-    const head = this.add.container(9, -16);
+    const g = this.add.graphics();
+
+    // Bóng và chân có ngón
+    g.fillStyle(0x000000, 0.16); g.fillEllipse(-1, 1, 30, 6);
+    g.lineStyle(2.2, 0xd9a032, 1);
+    [[-4, -7], [3, -7]].forEach(([lx, ly]) => {
+      g.lineBetween(lx, ly, lx, 0);
+      g.lineBetween(lx, 0, lx + 4, 0.5); g.lineBetween(lx, 0, lx + 2.5, 2); g.lineBetween(lx, 0, lx - 2.5, 0.8);
+    });
+
+    // Đuôi
+    if (rooster) {
+      [[0x22423a, -28, -40, -30, -12], [0x2f5d4c, -24, -44, -22, -16], [0x1b332d, -20, -36, -16, -14]].forEach(([col, tx, ty, ex, ey]) => {
+        this.shape(g, [this.bez([-9, -18], [tx + 2, ty - 6], [tx - 8, ty + 10], [ex, ey]), this.bez([ex, ey], [tx + 2, ty + 14], [tx + 10, ty], [-7, -13])], col, 2);
+      });
+    } else {
+      this.shape(g, [this.bez([-9, -18], [-20, -30], [-24, -22], [-20, -12]), this.bez([-20, -12], [-16, -10], [-12, -11], [-8, -12])], 0x6e4123, 2);
+    }
+
+    // Thân
+    this.shape(g, [
+      this.bez([8, -24], [14, -18], [14, -8], [6, -5]),
+      this.bez([6, -5], [0, -2], [-10, -3], [-13, -10]),
+      this.bez([-13, -10], [-15, -17], [-8, -21], [-2, -21]),
+      this.bez([-2, -21], [2, -21], [4, -26], [8, -24])
+    ], BODY);
+    // Lông cổ
+    this.shape(g, [this.bez([2, -25], [0, -20], [3, -14], [10, -13]), this.bez([10, -13], [14, -16], [14, -24], [9, -27])], NECK, 1.8);
+    if (!rooster) {
+      g.fillStyle(0x7a4a28, 1);
+      [[-6, -15], [-2, -10], [3, -14], [-9, -9], [5, -9], [0, -17]].forEach(([sx, sy]) => g.fillEllipse(sx, sy, 2.4, 1.6));
+    }
+    // Cánh với ba đường lông
+    this.shape(g, [this.bez([-9, -15], [-4, -19], [5, -17], [6, -11]), this.bez([6, -11], [3, -7], [-6, -7], [-9, -15])], WING, 1.8);
+    g.lineStyle(1.2, INK, 0.7);
+    [[-5, -10, 1, -12], [-6, -12, 2, -14], [-3, -8, 3, -10]].forEach(([x0, y0, x1, y1]) => g.lineBetween(x0, y0, x1, y1));
+    c.add(g);
+
+    // Đầu: mào, mỏ, yếm, mắt (tách riêng để mổ thóc)
+    const head = this.add.container(10, -27);
     const hg = this.add.graphics();
-    hg.lineStyle(2.2, INK, 1);
-    hg.fillStyle(0xe5533c, 1); hg.fillCircle(-1, -9, 2.6); hg.fillCircle(2, -10, 2.6); hg.strokeCircle(-1, -9, 2.6); hg.strokeCircle(2, -10, 2.6);
-    hg.fillStyle(0xf6efe2, 1); hg.fillCircle(0, -4, 5.5); hg.strokeCircle(0, -4, 5.5);
-    hg.fillStyle(0xf2b544, 1); hg.fillTriangle(5, -5, 10, -3.5, 5, -2); hg.strokeTriangle(5, -5, 10, -3.5, 5, -2);
-    hg.fillStyle(0xe5533c, 1); hg.fillEllipse(4, -0.5, 3, 4);
-    hg.fillStyle(INK, 1); hg.fillCircle(1.5, -5, 1.2);
+    const comb = rooster
+      ? [this.bez([-4, -4], [-6, -10], [-2, -12], [-1, -7]), this.bez([-1, -7], [0, -13], [4, -13], [3, -7]), this.bez([3, -7], [6, -12], [9, -9], [6, -4])]
+      : [this.bez([-1, -5], [-1, -9], [3, -9], [3, -6]), this.bez([3, -6], [5, -8], [7, -6], [5, -4])];
+    this.shape(hg, comb.concat([[new Phaser.Math.Vector2(-3, -3)]]), 0xd8352a, 1.8);
+    hg.lineStyle(2.2, INK, 1); hg.fillStyle(rooster ? NECK : BODY, 1); hg.fillCircle(1, -1, 5.5); hg.strokeCircle(1, -1, 5.5);
+    hg.fillStyle(0xe0574a, 1); hg.fillEllipse(3.5, -1, 5, 4.5);           // mặt đỏ
+    this.shape(hg, [this.bez([5, -3], [8, -3], [10, -2], [11, -1]), this.bez([11, -1], [9, 0], [7, 1], [5, 1])], 0xf2b544, 1.6);   // mỏ
+    this.shape(hg, [this.bez([5, 1], [7, 3], [7, rooster ? 8 : 5], [5, rooster ? 8 : 5]), this.bez([5, rooster ? 8 : 5], [3, rooster ? 7 : 4], [3, 3], [4, 1])], 0xd8352a, 1.5);  // yếm
+    hg.fillStyle(INK, 1); hg.fillCircle(3, -2.5, 1.3);
+    hg.fillStyle(0xffffff, 1); hg.fillCircle(3.4, -2.9, 0.45);
     head.add(hg);
     c.add(head);
     c.head = head;
-    c.home = { x, y };
+    c.homeY = -27;
     if (!reduceMotion) this.time.delayedCall(600 + Math.random() * 1500, () => this.chickenAct(c));
     return c;
   }
 
-  // Gà lúc mổ thóc, lúc đi vài bước trong khoảng sân trước chuồng
+  // Gà lúc mổ thóc, lúc đi vài bước trong sân
   chickenAct(c) {
+    const R = this.run;
     const next = () => this.time.delayedCall(900 + Math.random() * 2600, () => this.chickenAct(c));
     if (Math.random() < 0.55) {
-      this.tweens.add({ targets: c.head, y: -9, angle: 28, duration: 140, yoyo: true, repeat: 1 + Math.floor(Math.random() * 3), ease: 'Quad.easeOut', onComplete: next });
+      this.tweens.add({ targets: c.head, y: c.homeY + 9, x: 13, angle: 30, duration: 150, yoyo: true, repeat: 1 + Math.floor(Math.random() * 3), ease: 'Quad.easeOut', onComplete: next });
     } else {
-      const nx = Phaser.Math.Clamp(c.x + (Math.random() * 60 - 30), 296, 378);
-      const ny = Phaser.Math.Clamp(c.y + (Math.random() * 20 - 10), 384, 424);
+      const nx = Phaser.Math.Clamp(c.x + (Math.random() * 60 - 30), R.x0 + 14, R.x1 - 12);
+      const ny = Phaser.Math.Clamp(c.y + (Math.random() * 20 - 10), 386, 428);
       c.setScale(nx >= c.x ? 1 : -1, 1);
       this.tweens.add({ targets: c, x: nx, y: ny, duration: 600 + Math.abs(nx - c.x) * 18, ease: 'Sine.easeInOut', onComplete: next });
-      this.tweens.add({ targets: c.head, y: -17.5, duration: 160, yoyo: true, repeat: 3 });
+      this.tweens.add({ targets: c.head, y: c.homeY - 1.5, duration: 160, yoyo: true, repeat: 3 });
     }
   }
 
@@ -299,21 +420,18 @@ class Rooftop extends Phaser.Scene {
     if (key === this.coopView) return;
     this.coopView = key;
     const g = this.eggG; g.clear();
-    if (v.eggs > 0) {
-      g.fillStyle(0xe8c48a, 1); g.fillEllipse(0, 33, 24, 8);   // ổ rơm
-      const spots = [[-6, 28], [6, 28], [0, 23]];
-      for (let k = 0; k < Math.min(v.eggs, spots.length); k++) {
-        const [ex, ey] = spots[k];
-        g.fillStyle(0xfbf3e4, 1); g.lineStyle(2, INK, 1);
-        g.fillEllipse(ex, ey, 10, 13); g.strokeEllipse(ex, ey, 10, 13);
-      }
+    const spots = [[296, 320], [307, 320], [301.5, 316]];
+    for (let k = 0; k < Math.min(v.eggs, spots.length); k++) {
+      const [ex, ey] = spots[k];
+      g.fillStyle(0xfbf3e4, 1); g.lineStyle(1.8, INK, 1);
+      g.fillEllipse(ex, ey, 8, 10); g.strokeEllipse(ex, ey, 8, 10);
     }
     this.eggCount.setText(v.eggs > 3 ? '×' + v.eggs : '');
     this.eggBubble.setVisible(v.eggs > 0);
     const gr = this.grain; gr.clear();
     if (v.fed) {
       gr.fillStyle(0xe8b84a, 1);
-      [[-12, -3], [-6, -4], [0, -3], [6, -4], [12, -3], [-9, -6], [3, -6], [9, -6]].forEach(([gx, gy]) => gr.fillEllipse(gx, gy, 4.5, 3));
+      for (let k = 0; k < 11; k++) gr.fillEllipse(-21 + k * 4.2, -4.5 + (k % 2) * 0.8, 3.6, 2.6);
     }
     this.feedBubble.setVisible(!!v.hungry);
   }
@@ -322,20 +440,19 @@ class Rooftop extends Phaser.Scene {
     if (reduceMotion) return;
     const tx = this.trough.x, ty = this.trough.y;
     for (let k = 0; k < 10; k++) {
-      const d = this.add.ellipse(tx - 16 + k * 3.5, ty - 44 - (k % 3) * 6, 4, 3, 0xe8b84a).setStrokeStyle(1, INK);
-      this.tweens.add({ targets: d, y: ty - 4, delay: k * 35, duration: 360, ease: 'Quad.easeIn', onComplete: () => d.destroy() });
+      const d = this.add.ellipse(tx - 18 + k * 4, ty - 44 - (k % 3) * 6, 4, 3, 0xe8b84a).setStrokeStyle(1, INK);
+      this.tweens.add({ targets: d, y: ty - 5, delay: k * 35, duration: 360, ease: 'Quad.easeIn', onComplete: () => d.destroy() });
     }
     // Gà chạy lại máng ăn
     this.chickens.forEach((c, i) => {
-      const nx = this.trough.x + (i ? 22 : -22);
-      c.setScale(nx >= c.x ? 1 : -1, 1);
-      this.tweens.add({ targets: c, x: nx, y: this.trough.y + 10, duration: 500, ease: 'Quad.easeOut' });
+      const nx = tx + (i ? 16 : -16);
+      c.setScale(i ? -1 : 1, 1);
+      this.tweens.add({ targets: c, x: nx, y: ty + 14, duration: 500, ease: 'Quad.easeOut' });
     });
   }
 
   eggsFx(qty, tx, ty) {
-    const x = this.coopC.x, y = this.coopC.y + 26;
-    this.flyToBag(x, y, 0xfbf3e4, qty, tx, ty);
+    this.flyToBag(this.coopPos.x, this.coopPos.y, 0xfbf3e4, qty, tx, ty);
   }
 
   // Vật phẩm bay về nút túi đồ, kèm chữ "+n"
@@ -388,10 +505,10 @@ class Rooftop extends Phaser.Scene {
 
     // Bong bóng giọt nước nhắc tưới, và ánh lấp lánh khi cây chín
     c.bubble = this.makeBubble();
-    c.bubble.setPosition(42, -46).setVisible(false);
+    c.bubble.setPosition(44, -48).setScale(1.35).setVisible(false);
     c.add(c.bubble);
     c.sparkle = this.makeSparkle();
-    c.sparkle.setPosition(-40, -50).setVisible(false);
+    c.sparkle.setPosition(-42, -52).setScale(1.35).setVisible(false);
     c.add(c.sparkle);
 
     c.viewKey = '';

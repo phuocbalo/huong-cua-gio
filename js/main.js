@@ -239,6 +239,7 @@ async function boot() {
   store.onChange(() => { renderBoxes(); renderCoop(); });
 
   game = createGame({
+    boxCount: () => state().boxes.length,
     onReady: s => {
       scene = s;
       ui.hideBoot();
