@@ -1,5 +1,6 @@
 // Cảnh sân thượng vẽ bằng Phaser. Toàn bộ hình ở đây là hình tạm, mang đúng phong cách của game.
-import { W, H, ZOOM, INK, PERIODS } from './config.js';
+import { W, H, ZOOM, INK } from './config.js';
+import { skyAt, mixColor } from './daylight.js';
 import { rng, reduceMotion } from './util.js';
 
 let hooks = { onReady() {}, onTapBox() {}, onTapCoop() {} };
@@ -48,22 +49,28 @@ class Rooftop extends Phaser.Scene {
   }
 
   // ----- Bầu trời -----
+  // p: màu đã trộn cho giờ hiện tại (daylight.js)
   paintSky(p) {
     const g = this.sky; g.clear();
     g.fillGradientStyle(p.skyTop, p.skyTop, p.skyBot, p.skyBot, 1);
     g.fillRect(0, 0, W, 340);
-    if (p === PERIODS.night) {
-      const r = rng(7); g.fillStyle(0xfff3c4, 1);
-      for (let i = 0; i < 40; i++) g.fillCircle(r() * W, r() * 200, r() < 0.15 ? 1.4 : 0.8);
-      g.fillStyle(0xffe9a8, 1); g.fillCircle(318, 70, 16);
-      g.fillStyle(p.skyTop, 1); g.fillCircle(326, 64, 14);
-    } else if (p === PERIODS.morning || p === PERIODS.afternoon) {
-      const sy = p === PERIODS.morning ? 96 : 62;
-      g.fillStyle(0xfff4c9, 0.55); g.fillCircle(84, sy, 30);
-      g.fillStyle(0xffe08a, 1); g.fillCircle(84, sy, 19);
-    } else {
-      g.fillStyle(0xffc18a, 0.6); g.fillCircle(120, 300, 46);
-      g.fillStyle(0xffa36b, 1); g.fillCircle(120, 300, 28);
+    if (p.stars > 0.02) {
+      const r = rng(7);
+      for (let i = 0; i < 40; i++) {
+        const x = r() * W, y = r() * 200, big = r() < 0.15;
+        g.fillStyle(0xfff3c4, p.stars * (big ? 1 : 0.75)); g.fillCircle(x, y, big ? 1.4 : 0.8);
+      }
+    }
+    if (p.moon.alpha > 0.02) {
+      g.fillStyle(0xffe9a8, p.moon.alpha); g.fillCircle(p.moon.x, p.moon.y, 16);
+      g.fillStyle(p.skyTop, p.moon.alpha); g.fillCircle(p.moon.x + 8, p.moon.y - 6, 14);
+    }
+    if (p.sun.alpha > 0.02) {
+      // Gần chân trời mặt trời to và đỏ cam hơn
+      const core = mixColor(0xffe08a, 0xff9a5c, p.sun.low), halo = mixColor(0xfff4c9, 0xffc18a, p.sun.low);
+      const r = 19 + p.sun.low * 8;
+      g.fillStyle(halo, 0.55 * p.sun.alpha); g.fillCircle(p.sun.x, p.sun.y, r * 1.6);
+      g.fillStyle(core, p.sun.alpha); g.fillCircle(p.sun.x, p.sun.y, r);
     }
   }
 
@@ -98,6 +105,19 @@ class Rooftop extends Phaser.Scene {
     make('far', 11, 300, 60, 150, 26, 46);
     make('mid', 23, 312, 50, 120, 32, 56);
     make('near', 37, 328, 30, 90, 40, 70);
+
+    // Cửa sổ: mỗi ô có một ngưỡng cố định; trời càng tối càng nhiều ô vượt ngưỡng và sáng đèn
+    this.winList = [];
+    const r = rng(91);
+    ['mid', 'near'].forEach(key => {
+      this.layers[key].forEach(b => {
+        const cols = Math.max(2, Math.floor(b.w / 13));
+        const cw = 5, ch = 6, gx = (b.w - cols * cw) / (cols + 1);
+        for (let y = b.top + 10; y < b.base - 6; y += 13) {
+          for (let c = 0; c < cols; c++) this.winList.push({ x: b.x + gx + c * (cw + gx), y, w: cw, h: ch, th: r() });
+        }
+      });
+    });
   }
 
   paintCity(p) {
@@ -113,21 +133,11 @@ class Rooftop extends Phaser.Scene {
     draw(this.cityMid, 'mid', p.mid);
     draw(this.cityNear, 'near', p.near);
 
-    // Cửa sổ: ban ngày là ô hơi tối, ban đêm một phần sáng vàng
     const g = this.windows; g.clear();
-    const r = rng(91);
-    ['mid', 'near'].forEach(key => {
-      this.layers[key].forEach(b => {
-        const cols = Math.max(2, Math.floor(b.w / 13));
-        const cw = 5, ch = 6, gx = (b.w - cols * cw) / (cols + 1);
-        for (let y = b.top + 10; y < b.base - 6; y += 13) {
-          for (let c = 0; c < cols; c++) {
-            const on = r() < p.lit;
-            g.fillStyle(on ? 0xffd98a : 0x000000, on ? 0.95 : 0.12);
-            g.fillRect(b.x + gx + c * (cw + gx), y, cw, ch);
-          }
-        }
-      });
+    this.winList.forEach(w => {
+      const on = w.th < p.lit;
+      g.fillStyle(on ? 0xffd98a : 0x000000, on ? 0.95 : 0.12);
+      g.fillRect(w.x, w.y, w.w, w.h);
     });
     this.clouds.forEach(c => c.setAlpha(p.cloud));
   }
@@ -465,10 +475,10 @@ class Rooftop extends Phaser.Scene {
 
   paintLights(p) {
     const g = this.glow; g.clear();
-    const on = p === PERIODS.night || p === PERIODS.evening;
+    const on = p.lamp;
     this.bulbs.forEach(b => {
-      if (on) { g.fillStyle(0xffd98a, 0.28); g.fillCircle(b.x, b.y + 2, 9); }
-      g.fillStyle(on ? 0xffe6a6 : 0xf3ead7, 1); g.lineStyle(1.5, INK, 1);
+      if (on > 0.02) { g.fillStyle(0xffd98a, 0.28 * on); g.fillCircle(b.x, b.y + 2, 9); }
+      g.fillStyle(mixColor(0xf3ead7, 0xffe6a6, on), 1); g.lineStyle(1.5, INK, 1);
       g.fillCircle(b.x, b.y + 2, 3.6); g.strokeCircle(b.x, b.y + 2, 3.6);
     });
   }
@@ -481,16 +491,13 @@ class Rooftop extends Phaser.Scene {
     this.tweens.add({ targets: target, scaleX: sx * 1.06, scaleY: sy * 0.94, duration: 90, yoyo: true, ease: 'Quad.easeOut', onComplete: () => target.setScale(sx, sy) });
   }
 
-  applyPeriod(key) {
-    const p = PERIODS[key];
+  // Vẽ lại trời, phố, đèn và lớp phủ màu cho một giờ trong ngày (giờ thập phân, ví dụ 18.75)
+  applyTime(hour) {
+    const p = skyAt(hour);
     this.paintSky(p);
     this.paintCity(p);
-    // Lớp phủ nhân màu: trắng = giữ nguyên, càng gần màu bóng thì cảnh càng tối/ấm
-    const t = Math.min(1, p.shade[1] * 2);
-    const mix = (a, b) => Math.round(a + (b - a) * t);
-    const sc = p.shade[0];
-    const col = (mix(255, (sc >> 16) & 255) << 16) | (mix(255, (sc >> 8) & 255) << 8) | mix(255, sc & 255);
-    this.shade.setFillStyle(col, 1).setAlpha(t > 0 ? 1 : 0);
+    // Lớp phủ nhân màu: trắng = giữ nguyên, càng xa trắng thì cả sân càng tối hoặc ấm
+    this.shade.setFillStyle(p.shade, 1).setAlpha(p.shade === 0xffffff ? 0 : 1);
     this.paintLights(p);
   }
 }
@@ -507,6 +514,8 @@ export function createGame(h) {
     scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
     render: { antialias: true, roundPixels: false },
     banner: false,
+    // 30 khung hình/giây là đủ cho game nhịp chậm, đỡ tốn pin và nóng máy (N06)
+    fps: { target: 30, limit: 30 },
     scene: Rooftop
   });
 }

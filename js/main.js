@@ -13,7 +13,8 @@ import { CROP_COLOR } from './icons.js';
 import * as farm from './farm.js';
 import * as inv from './inventory.js';
 
-const AWAY_NOTICE_MS = 60000;
+const AWAY_NOTICE_MS = 60000;         // vắng từ 1 phút: lời chào ngắn
+const AWAY_SUMMARY_MS = 5 * 60000;    // vắng từ 5 phút và có thay đổi: bảng "Trong lúc bạn đi vắng"
 
 async function boot() {
   const store = new SaveStore();
@@ -37,6 +38,35 @@ async function boot() {
       dry: farm.isDry(b, t),
       ripe: farm.isRipe(b)
     }));
+  }
+
+  // ----- F20 Trong lúc bạn đi vắng -----
+  // Chụp trạng thái các thùng lúc rời game; khi quay lại so sánh để kể cho người chơi nghe
+  function snapshot() {
+    const t = now();
+    return state().boxes.map(b => ({ crop: b.crop, stage: farm.stageOf(b), ripe: farm.isRipe(b), dry: farm.isDry(b, t) }));
+  }
+  function awaySummary(before, away) {
+    const t = now(), s = { away, ripe: [], grew: [], dry: [] };
+    state().boxes.forEach((b, i) => {
+      const a = before[i] || {};
+      if (!b.crop || a.crop !== b.crop) return;            // thùng đổi cây trong lúc vắng: bỏ qua
+      if (farm.isRipe(b) && !a.ripe) s.ripe.push(b.crop);
+      else if (farm.stageOf(b) !== a.stage) s.grew.push(b.crop);
+      if (farm.isDry(b, t)) s.dry.push(b.crop);
+    });
+    return s;
+  }
+  let lastSnapshot = snapshot();
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') lastSnapshot = snapshot(); });
+
+  function greet(r) {
+    if (r.rewound) { ui.toast(T.clock_rewound); return; }
+    if (r.away < AWAY_NOTICE_MS) return;
+    const s = awaySummary(lastSnapshot, r.away);
+    lastSnapshot = snapshot();
+    if (r.away >= AWAY_SUMMARY_MS && (s.ripe.length || s.grew.length || s.dry.length)) ui.showAway(s);
+    else ui.toast(fmt(T.welcome_back, { time: duration(r.away) }));
   }
 
   // ----- Hành động của người chơi -----
@@ -114,6 +144,12 @@ async function boot() {
     ui.refreshOpenSheets();
   }
 
+  function onSimAway(ms) {
+    lastSnapshot = snapshot();
+    clock.skip(ms);
+    greet({ away: ms, rewound: false });
+  }
+
   function onFillBag() {
     const items = state().inventory;
     const free = items.slots - inv.usedSlots(items);
@@ -126,8 +162,8 @@ async function boot() {
   const ui = new UI({
     store, clock, pwa,
     onFrameResize: () => { if (game) game.scale.refresh(); },
-    onPeriodChange: p => { if (scene) scene.applyPeriod(p); },
-    onWaterAll, onPlant, onSkip, onAddSeeds, onFillBag
+    onTimeChange: h => { if (scene) scene.applyTime(h); },
+    onWaterAll, onPlant, onSkip, onAddSeeds, onFillBag, onSimAway
   });
   ui.init();
 
@@ -138,13 +174,9 @@ async function boot() {
     renderBoxes();
   });
 
-  // Bắt đầu đồng hồ: tính phần thời gian đã trôi khi game tắt
+  // Bắt đầu đồng hồ: tính phần thời gian đã trôi khi game tắt, cây lớn bù phần đó (F20)
   const first = clock.start();
-  const notify = r => {
-    if (r.rewound) ui.toast(T.clock_rewound);
-    else if (r.away >= AWAY_NOTICE_MS) ui.toast(fmt(T.welcome_back, { time: duration(r.away) }));
-  };
-  clock.on((type, r) => { if (type === 'return') notify(r); });
+  clock.on((type, r) => { if (type === 'return') greet(r); });
 
   // Xóa dữ liệu thì vẽ lại thùng
   store.onChange(() => renderBoxes());
@@ -153,9 +185,9 @@ async function boot() {
     onReady: s => {
       scene = s;
       ui.hideBoot();
-      ui.forcePeriod();
+      ui.forceTime();
       renderBoxes();
-      notify(first);
+      greet(first);
     },
     onTapBox,
     onTapCoop: () => ui.toast(T.soon_coop)

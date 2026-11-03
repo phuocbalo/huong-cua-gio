@@ -1,7 +1,7 @@
 // Bảng dữ liệu của game. Muốn cân bằng lại game thì sửa số ở đây, không cần đụng vào code khác.
 // Đơn vị thời gian là mili giây; dùng các hằng PHUT, GIO cho dễ đọc.
 
-export const APP_VERSION = '0.4.1';
+export const APP_VERSION = '0.5.0';
 
 const PHUT = 60 * 1000;
 const GIO = 60 * PHUT;
@@ -20,12 +20,31 @@ export const periodOf = h =>
   : 'night';
 
 // Màu từng khung giờ (chữ hiển thị nằm trong text.vi.js)
+//   lit: tỉ lệ cửa sổ sáng đèn · shade: màu phủ lên cả sân (trắng = giữ nguyên)
+//   cloud: độ rõ của mây · lamp: độ sáng đèn dây · stars: độ rõ của sao
 export const PERIODS = {
-  morning:   { skyTop: 0x9fd3f0, skyBot: 0xfde9c8, far: 0xc6d6e4, mid: 0xa6bdd1, near: 0x88a1ba, lit: 0,    shade: [0xffffff, 0],    cloud: 1 },
-  afternoon: { skyTop: 0x74b9e6, skyBot: 0xd6eefc, far: 0xbcd0e1, mid: 0x9ab3ca, near: 0x7c97b0, lit: 0,    shade: [0xffffff, 0],    cloud: 1 },
-  evening:   { skyTop: 0x4d4f88, skyBot: 0xf2a070, far: 0x8f80a4, mid: 0x6f6491, near: 0x534d79, lit: 0.45, shade: [0xff9466, 0.12], cloud: 0.8 },
-  night:     { skyTop: 0x121a38, skyBot: 0x34407a, far: 0x2b345f, mid: 0x222a50, near: 0x1a2045, lit: 0.85, shade: [0x1d2a66, 0.34], cloud: 0.35 }
+  morning:   { skyTop: 0x9fd3f0, skyBot: 0xfde9c8, far: 0xc6d6e4, mid: 0xa6bdd1, near: 0x88a1ba, lit: 0,    shade: 0xffffff, cloud: 1,    lamp: 0, stars: 0 },
+  afternoon: { skyTop: 0x74b9e6, skyBot: 0xd6eefc, far: 0xbcd0e1, mid: 0x9ab3ca, near: 0x7c97b0, lit: 0,    shade: 0xffffff, cloud: 1,    lamp: 0, stars: 0 },
+  evening:   { skyTop: 0x4d4f88, skyBot: 0xf2a070, far: 0x8f80a4, mid: 0x6f6491, near: 0x534d79, lit: 0.45, shade: 0xffdcc8, cloud: 0.8,  lamp: 1, stars: 0.2 },
+  night:     { skyTop: 0x121a38, skyBot: 0x34407a, far: 0x2b345f, mid: 0x222a50, near: 0x1a2045, lit: 0.85, shade: 0x9aa0c4, cloud: 0.35, lamp: 1, stars: 1 }
 };
+
+// Mốc chuyển màu trong ngày (giờ thập phân). Giữa hai mốc, màu trộn dần từ khung này sang khung kia,
+// ví dụ 4:30 → 6:00 trời sáng dần từ "đêm" sang "sáng".
+export const SKY_KEYS = [
+  { h: 0,    p: 'night' },
+  { h: 4.5,  p: 'night' },
+  { h: 6,    p: 'morning' },
+  { h: 10.5, p: 'morning' },
+  { h: 12,   p: 'afternoon' },
+  { h: 16.5, p: 'afternoon' },
+  { h: 17.5, p: 'evening' },
+  { h: 18.5, p: 'evening' },
+  { h: 19.5, p: 'night' },
+  { h: 24,   p: 'night' }
+];
+// Mặt trời mọc và lặn (giờ thập phân), mặt trăng đi phần còn lại
+export const SUNRISE = 5.5, SUNSET = 18.5;
 
 // ---------- Trồng trọt (đã chốt: cây lớn theo giờ thực, chưa tưới lớn bằng 50%) ----------
 export const UNWATERED_SPEED = 0.5;

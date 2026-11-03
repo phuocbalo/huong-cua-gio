@@ -14,6 +14,7 @@ export const T = {
   period_evening: 'Tối',
   period_night: 'Đêm',
   period_auto: 'Theo giờ máy',
+  period_cycle: 'Chạy nhanh 24 giờ',
 
   // ----- Thanh công cụ -----
   tool_bag: 'Túi đồ',
@@ -45,6 +46,17 @@ export const T = {
   harvested: '+{qty} {item} vào túi đồ.',
   harvest_full: 'Túi đồ đã đầy. Nông sản vẫn nằm trên cây chờ bạn.',
   harvest_last: 'Cây đã cho hết lứa. Thùng trống, có thể gieo hạt mới.',
+
+  // ----- F20 Trong lúc bạn đi vắng -----
+  away_title: 'Trong lúc bạn vắng {time}',
+  away_ripe_one: '{crop} đã chín, chờ bạn thu hoạch.',
+  away_ripe_many: '{n} cây đã chín: {list}.',
+  away_grew_one: '{crop} lớn thêm một chút.',
+  away_grew_many: '{n} cây lớn thêm một chút.',
+  away_dry_one: '{crop} đang khô đất nên lớn chậm lại.',
+  away_dry_many: '{n} cây đang khô đất nên lớn chậm lại.',
+  away_hint_water: 'Bấm "Bình tưới" để tưới hết cây khô một lần.',
+  away_go: 'Ra vườn',
 
   // ----- F10 Túi đồ -----
   bag_title: 'Túi đồ',
@@ -111,6 +123,7 @@ export const T = {
   info_skip_1h: 'Tua +1 giờ',
   info_add_seeds: 'Thêm mỗi loại 3 hạt',
   info_fill_bag: 'Lấp đầy túi (thử túi đầy)',
+  info_sim_away: 'Giả lập vắng 8 giờ',
   bag_filled: 'Đã lấp đầy các ô trống bằng trứng gà. Xóa dữ liệu để dọn lại.',
   skipped: 'Đã tua nhanh {time}.',
   seeds_added: 'Đã thêm hạt giống vào túi.',

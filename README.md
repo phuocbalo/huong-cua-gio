@@ -18,8 +18,9 @@ Bản chơi thử: https://phuocbalo.github.io/huong-cua-gio/
 | `js/farm.js` | Luật trồng trọt: gieo, tưới, tính tiến độ, thu hoạch |
 | `js/inventory.js` | Luật túi đồ: số ô, gộp cùng loại, đầy thì từ chối |
 | `js/icons.js` | Biểu tượng vật phẩm |
+| `js/daylight.js` | Màu trời, phố, đèn cho từng giờ trong ngày; chuyển dần giữa các khung giờ |
 | `js/scene.js` | Cảnh sân thượng vẽ bằng Phaser (hình tạm) |
-| `tests/` | Kiểm thử luật chơi, chạy bằng `node tests/farm.test.mjs` |
+| `tests/` | Kiểm thử luật chơi: `node tests/farm.test.mjs` và `node tests/daylight.test.mjs` |
 | `js/ui.js` | Điều khiển giao diện HTML |
 | `js/pwa.js` | Bật chơi offline và theo dõi trạng thái |
 | `manifest.webmanifest` | Khai báo PWA: tên app, biểu tượng, mở toàn màn hình, màn dọc |
@@ -54,3 +55,15 @@ Dùng nút "Tua +10 phút" / "Tua +1 giờ" và "Thêm mỗi loại 3 hạt" tro
 - [ ] **F03 Thu hoạch:** chạm cây chín: nông sản bay về nút Túi đồ, hiện "+3 …". Rau muống, cải thu xong thì thùng trống; húng quế, dưa leo, ớt, cà chua quay về hình "lớn" rồi chín lại.
 - [ ] **F10** Bấm "Lấp đầy túi" trong bảng "Bản thử" (các ô trống được lấp bằng trứng gà), rồi thu hoạch một loại nông sản chưa có trong túi: hiện "Túi đồ đã đầy", cây vẫn giữ nông sản.
 - [ ] Gieo, tưới, thu xong thì đóng hẳn game ngay, mở lại: mọi thứ còn nguyên.
+
+## Kiểm thử chặng 2 – Thời gian
+
+- [ ] **F20 Tiến triển khi tắt game:** gieo vài cây (tưới một số), đóng hẳn game, đợi hơn 5 phút (hoặc chỉnh giờ máy tiến lên vài giờ), mở lại: bảng "Trong lúc bạn vắng …" kể cây nào đã chín, cây nào lớn thêm, cây nào khô đất. Bấm "Ra vườn" để đóng.
+- [ ] **F20** Không muốn chờ: bấm "Giả lập vắng 8 giờ" trong bảng "Bản thử".
+- [ ] **F20** Tắt game 8 tiếng rồi mở lại: cây lớn đúng như khi để game mở 8 tiếng.
+- [ ] **F20** Chỉnh giờ máy lùi rồi mở game: hiện "Giờ máy vừa bị lùi", cây không mất tiến độ.
+- [ ] **F20** Vắng dưới 5 phút: chỉ có lời chào ngắn, không hiện bảng.
+- [ ] **F08 Ngày và đêm:** chỉnh giờ máy sang 8h, 14h, 18h, 22h (hoặc dùng các nút Sáng/Chiều/Tối/Đêm trong bảng "Bản thử"): thấy 4 bầu trời khác nhau; ban đêm cửa sổ và đèn dây sáng, có sao và trăng.
+- [ ] **F08** Bấm "Chạy nhanh 24 giờ": trời đổi màu dần trong 24 giây, không giật; mặt trời mọc bên trái, lặn sau dãy nhà bên phải; phố lên đèn từ từ.
+- [ ] **F08** Để game mở qua 17:00: màu chuyển dần sang chiều tối, không đổi phắt.
+- [ ] **N06** Chơi 15 phút trên điện thoại tầm trung: máy không nóng lên rõ rệt.

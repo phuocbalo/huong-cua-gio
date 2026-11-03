@@ -85,6 +85,7 @@
         </div>
         <div class="actions">
           <button class="btn" type="button" id="fillBag" data-t="info_fill_bag"></button>
+          <button class="btn" type="button" id="simAway" data-t="info_sim_away"></button>
         </div>
         <p class="note" data-t="info_test_note"></p>
 
@@ -107,6 +108,7 @@
           <button class="chip" type="button" data-p="afternoon" aria-pressed="false" data-t="period_afternoon"></button>
           <button class="chip" type="button" data-p="evening" aria-pressed="false" data-t="period_evening"></button>
           <button class="chip" type="button" data-p="night" aria-pressed="false" data-t="period_night"></button>
+          <button class="chip" type="button" data-p="cycle" aria-pressed="false" data-t="period_cycle"></button>
         </div>
         <p class="note" data-t="info_note"></p>
         <button class="close" type="button" id="sheetClose" data-t="close"></button>
@@ -121,6 +123,16 @@
         <p class="note" data-t="seed_hint"></p>
         <ul class="seed-list" id="seedList"></ul>
         <button class="close" type="button" data-close data-t="close"></button>
+      </div>
+    </div>
+
+    <!-- F20: trong lúc bạn đi vắng -->
+    <div id="awayWrap" class="wrap" hidden>
+      <div class="sheet-backdrop" data-close></div>
+      <div class="sheet away" role="dialog" aria-modal="true" aria-labelledby="awayTitle">
+        <h2 id="awayTitle"></h2>
+        <ul class="away-list" id="awayList"></ul>
+        <button class="close primary" type="button" data-close data-t="away_go"></button>
       </div>
     </div>
 

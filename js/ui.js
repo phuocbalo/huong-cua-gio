@@ -4,7 +4,8 @@ import { W, H, APP_VERSION, periodOf, CROPS, ITEMS } from './config.js';
 import { itemIcon } from './icons.js';
 import * as inv from './inventory.js';
 import { T, fmt } from './text.vi.js';
-import { applyText, hhmm, hhmmss, duration } from './util.js';
+import { applyText, hhmm, hhmmss, duration, pad2 } from './util.js';
+import { hourOf } from './daylight.js';
 
 const $ = id => document.getElementById(id);
 
@@ -16,7 +17,8 @@ const ICONS = {
 };
 
 export class UI {
-  constructor({ store, clock, pwa, onFrameResize, onPeriodChange, onWaterAll, onPlant, onSkip, onAddSeeds, onFillBag }) {
+  constructor({ store, clock, pwa, onFrameResize, onTimeChange, onWaterAll, onPlant, onSkip, onAddSeeds, onFillBag, onSimAway }) {
+    this.onSimAway = onSimAway;
     this.onFillBag = onFillBag;
     this.onWaterAll = onWaterAll;
     this.onPlant = onPlant;
@@ -28,9 +30,11 @@ export class UI {
     this.clock = clock;
     this.pwa = pwa;
     this.onFrameResize = onFrameResize;
-    this.onPeriodChange = onPeriodChange;
+    this.onTimeChange = onTimeChange;
     this.override = 'auto';
     this.shownPeriod = null;
+    this.shownMinute = -1;
+    this.cycleTimer = 0;
     this.toastTimer = 0;
     this.resetArmed = 0;
   }
@@ -72,15 +76,15 @@ export class UI {
     $('skip1h').addEventListener('click', () => this.onSkip(60 * 60 * 1000));
     $('addSeeds').addEventListener('click', () => this.onAddSeeds());
     $('fillBag').addEventListener('click', () => this.onFillBag());
+    $('simAway').addEventListener('click', () => { this.closeSheet(); this.onSimAway(8 * 3600 * 1000); });
 
     $('infoBtn').addEventListener('click', () => this.openSheet());
     $('sheetClose').addEventListener('click', () => this.closeSheet());
     $('sheetBackdrop').addEventListener('click', () => this.closeSheet());
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('sheetWrap').hidden) this.closeSheet(); });
     document.querySelectorAll('#periodChips .chip').forEach(c => c.addEventListener('click', () => {
-      this.override = c.dataset.p;
+      this.setOverride(c.dataset.p);
       document.querySelectorAll('#periodChips .chip').forEach(x => x.setAttribute('aria-pressed', String(x === c)));
-      this.refreshClock();
     }));
 
     $('addCoins').addEventListener('click', () => {
@@ -125,21 +129,44 @@ export class UI {
     this.toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
   }
 
-  currentPeriod() { return this.override === 'auto' ? periodOf(new Date().getHours()) : this.override; }
+  // ----- Ngày và đêm (F08) -----
+  // Giờ đang hiển thị: giờ máy, hoặc giờ xem thử trong bảng "Bản thử"
+  static PREVIEW_HOURS = { morning: 8, afternoon: 14, evening: 18, night: 22 };
 
-  refreshClock() {
-    const p = this.currentPeriod();
-    $('clock').textContent = hhmm(new Date());
+  currentHour() {
+    if (this.override === 'auto') return hourOf(new Date());
+    if (this.override === 'cycle') return this.cycleHour;
+    return UI.PREVIEW_HOURS[this.override];
+  }
+
+  setOverride(mode) {
+    this.override = mode;
+    clearInterval(this.cycleTimer);
+    if (mode === 'cycle') {
+      // Xem nhanh: 24 giờ trong 24 giây, bắt đầu từ giờ máy hiện tại
+      this.cycleHour = hourOf(new Date());
+      this.cycleTimer = setInterval(() => { this.cycleHour = (this.cycleHour + 0.05) % 24; this.refreshClock(true); }, 50);
+    }
+    this.refreshClock(true);
+  }
+
+  // Cập nhật đồng hồ trên thanh trên; vẽ lại trời mỗi phút (hoặc ngay khi `force`)
+  refreshClock(force) {
+    const h = this.currentHour();
+    const hh = Math.floor(h), mm = Math.floor((h - hh) * 60);
+    const p = periodOf(hh);
+    $('clock').textContent = this.override === 'auto' ? hhmm(new Date()) : pad2(hh) + ':' + pad2(mm);
     $('period').textContent = T['period_' + p];
-    if (p !== this.shownPeriod) {
-      $('periodIcon').innerHTML = ICONS[p];
-      this.shownPeriod = p;
-      if (this.onPeriodChange) this.onPeriodChange(p);
+    if (p !== this.shownPeriod) { $('periodIcon').innerHTML = ICONS[p]; this.shownPeriod = p; }
+    const minuteKey = hh * 60 + mm;
+    if (force || minuteKey !== this.shownMinute) {
+      this.shownMinute = minuteKey;
+      if (this.onTimeChange) this.onTimeChange(h);
     }
   }
 
-  // Cảnh vừa sẵn sàng: vẽ lại khung giờ hiện tại
-  forcePeriod() { this.shownPeriod = null; this.refreshClock(); }
+  // Cảnh vừa sẵn sàng: vẽ trời cho giờ hiện tại
+  forceTime() { this.refreshClock(true); }
 
   refreshCoins() { $('coins').textContent = this.store.data.coins; }
 
@@ -172,6 +199,23 @@ export class UI {
     });
     $('seedList').innerHTML = rows.join('');
     this.openWrap($('seedWrap'), 'button[data-seed]:not([disabled])');
+  }
+
+  // ----- F20 Trong lúc bạn đi vắng -----
+  // s: { away, ripe: [crop], grew: [crop], dry: [crop] }
+  showAway(s) {
+    const name = c => T['crop_' + c];
+    const list = arr => arr.map(c => name(c).toLowerCase()).join(', ');
+    const rows = [];
+    const drop = '<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 6 C26 15 30 20 30 25 a10 10 0 0 1 -20 0 C10 20 14 15 20 6z" fill="#6fb4e0" stroke="#3b2f2a" stroke-width="2.4" stroke-linejoin="round"/></svg>';
+    const sprout = '<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 34V18" stroke="#3b2f2a" stroke-width="2.6" stroke-linecap="round"/><path d="M20 20 C12 20 8 14 9 9 C16 9 20 14 20 20z" fill="#7cc062" stroke="#3b2f2a" stroke-width="2.4" stroke-linejoin="round"/><path d="M20 22 C28 22 32 16 31 11 C24 11 20 16 20 22z" fill="#7cc062" stroke="#3b2f2a" stroke-width="2.4" stroke-linejoin="round"/></svg>';
+    if (s.ripe.length) rows.push([itemIcon(s.ripe[0]), s.ripe.length === 1 ? fmt(T.away_ripe_one, { crop: name(s.ripe[0]) }) : fmt(T.away_ripe_many, { n: s.ripe.length, list: list(s.ripe) })]);
+    if (s.grew.length) rows.push([sprout, s.grew.length === 1 ? fmt(T.away_grew_one, { crop: name(s.grew[0]) }) : fmt(T.away_grew_many, { n: s.grew.length })]);
+    if (s.dry.length) rows.push([drop, s.dry.length === 1 ? fmt(T.away_dry_one, { crop: name(s.dry[0]) }) : fmt(T.away_dry_many, { n: s.dry.length })]);
+    $('awayTitle').textContent = fmt(T.away_title, { time: duration(s.away) });
+    $('awayList').innerHTML = rows.map(([ico, txt]) => `<li><span class="ico">${ico}</span><span>${txt}</span></li>`).join('')
+      + (s.dry.length ? `<li class="hint">${T.away_hint_water}</li>` : '');
+    this.openWrap($('awayWrap'));
   }
 
   // ----- F10 Túi đồ -----

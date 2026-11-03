@@ -218,3 +218,13 @@
   .slot .nm { font-size: 2.4cqw; line-height: 1.15; text-align: center; color: var(--muted); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
   .slot.blank { border-style: dashed; border-color: #cbbba6; background: transparent; }
   .tool.active { background: #dcefd2; }
+
+  /* ---------- Trong lúc bạn đi vắng (F20) ---------- */
+  .away-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2.4cqw; }
+  .away-list li {
+    display: grid; grid-template-columns: 10cqw 1fr; align-items: center; gap: 3cqw;
+    font-size: 3.6cqw; line-height: 1.4;
+  }
+  .away-list li.hint { grid-template-columns: 1fr; font-size: 3.1cqw; color: var(--muted); }
+  .away-list .ico svg { width: 100%; height: auto; display: block; }
+  .close.primary { background: var(--leaf); }
