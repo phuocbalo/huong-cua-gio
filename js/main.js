@@ -150,12 +150,23 @@ async function boot() {
     const gone = orders.expire(state(), now());
     if (gone.length) {
       // Hết hạn lúc đang chơi: báo nhẹ. Hết hạn lúc vắng mặt: để bảng "Trong lúc bạn đi vắng" kể
-      if (delta < AWAY_NOTICE_MS) ui.toast(gone.length === 1 ? fmt(T.order_expired_one, { name: T['name_' + gone[0].from] }) : fmt(T.order_expired_many, { n: gone.length }));
-      else expiredSince += gone.length;
+      if (delta < AWAY_NOTICE_MS) toastExpired(gone.length, gone[0].from);
+      else { expiredSince += gone.length; lastExpiredFrom = gone[0].from; }
     }
     return a || b || gone.length > 0;
   }
-  let expiredSince = 0;
+  let expiredSince = 0, lastExpiredFrom = null;
+  function toastExpired(n, from) {
+    ui.toast(n === 1 ? fmt(T.order_expired_one, { name: T['name_' + from] }) : fmt(T.order_expired_many, { n }));
+  }
+  // Nút tua trong bản thử: người chơi vẫn đang ở trong game, nên đơn hết hạn trong lúc tua được báo ngay
+  // (sau thông báo tua), không dồn sang bảng "Trong lúc bạn đi vắng" của lần vắng sau.
+  function reportExpiredAfterSkip() {
+    if (!expiredSince) return;
+    const n = expiredSince, from = lastExpiredFrom;
+    expiredSince = 0;
+    setTimeout(() => toastExpired(n, from), 2600);
+  }
   function renderOrders() {
     if (!scene) return;
     const list = state().orders.list;
@@ -283,7 +294,7 @@ async function boot() {
   // ----- Công cụ kiểm thử (chỉ trong bản thử) -----
   function onSkip(ms) {
     clock.skip(ms);
-    ui.toast(fmt(T.skipped, { time: duration(ms) }));
+    ui.toast(fmt(T.skipped, { time: duration(ms) }));  reportExpiredAfterSkip();
   }
   function onAddSeeds() {
     const items = state().inventory;
@@ -303,6 +314,7 @@ async function boot() {
   function onNextDay() {
     clock.skip(coop.msToNextDay(state(), now()) + 6 * 3600 * 1000);   // sang 6 giờ sáng hôm sau
     ui.toast(T.next_day);
+    reportExpiredAfterSkip();
   }
 
   function onAddDust() {

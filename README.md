@@ -53,7 +53,7 @@ Dùng nút "Tua +10 phút" / "Tua +1 giờ" và "Thêm mỗi loại 3 hạt" tro
 
 - [ ] **F10 Túi đồ:** bấm "Túi đồ": thấy hạt rau muống ×3, hạt cải ×2, dòng "Đang dùng 2/12 ô"; tab "Hạt giống" và "Nông sản" lọc đúng.
 - [ ] **F01 Gieo hạt:** chạm thùng trống → bảng chọn hạt; loại hết hạt hiện mờ, nút "Hết hạt" không bấm được. Gieo xong, số hạt trong túi giảm 1.
-- [ ] **F01** Chạm thùng đã có cây: không mở bảng chọn hạt, hiện "Thùng đã có …, chín sau khoảng …".
+- [ ] **F01** Chạm thùng đã có cây (đã tưới; cây khô thì chạm sẽ tưới theo F02): không mở bảng chọn hạt, hiện "Thùng đã có …, chín sau khoảng …".
 - [ ] **F01** Tua nhanh: cây đi đủ 4 hình: hạt → mầm → lớn → chín (có ánh lấp lánh).
 - [ ] **F02 Tưới nước:** cây chưa tưới có đất màu nhạt và bong bóng giọt nước. Chạm cây khô để tưới, hoặc bấm "Bình tưới" để tưới mọi cây khô cùng lúc. Đất chuyển màu sẫm.
 - [ ] **F02** Gieo 2 cây cùng loại, chỉ tưới 1 cây: cây được tưới chín trước. Cây không tưới bao lâu cũng không chết.
@@ -115,7 +115,12 @@ Trong bảng "Bản thử" có "Thêm 10 xu" nếu cần thêm xu để thử mu
 - [ ] **F12** Thiếu hàng: nút ghi "Còn thiếu N" và không bấm được. "Đổi đơn khác" thay đơn mới ngay, không mất gì.
 - [ ] **F12 Hàng xóm mở dần (0.8.1):** lúc đầu chỉ bà Tư và bé Na; dòng "Sắp quen" ghi người kế tiếp và còn bao nhiêu đơn. Giao đủ 3 đơn: "Cô Mai mái bên nghe tiếng rau ngon, ghé hỏi mua!" và có đơn của cô Mai. Tiếp theo: anh Tuấn (6 đơn), chú Sáu (10), chị Hoa (15), ông Ba (20).
 - [ ] **F12** Mỗi người hay đặt món riêng (chú Sáu hay đặt trứng, chị Hoa đặt dưa leo/húng quế/ớt với số lượng lớn…), mỗi người có ảnh và câu thoại riêng.
-- [ ] **F12 Đơn quá hạn (0.8.1):** mỗi đơn ghi "Chờ thêm khoảng …". Để quá 3 ngày ("Tua tới sáng mai" 3 lần): đơn được thay bằng đơn mới đúng chỗ đó, hiện "… đã mua ngoài chợ", không mất xu hay điểm. Nếu hết hạn lúc vắng mặt thì bảng đi vắng ghi "N đơn cũ quá hạn đã được thay bằng đơn mới".
+- [ ] **F12 Đơn quá hạn (0.8.1):** mỗi đơn ghi "Chờ thêm khoảng …". Để quá 3 ngày ("Tua tới sáng mai" 4 lần, vì lần đầu chỉ tua tới 6 giờ sáng hôm sau): đơn được thay bằng đơn mới đúng chỗ đó, hiện "… đã mua ngoài chợ", không mất xu hay điểm. Nếu hết hạn lúc vắng mặt thì bảng đi vắng ghi "N đơn cũ quá hạn đã được thay bằng đơn mới".
 - [ ] **F14 Mua thùng:** ô trống kế tiếp có dấu "+" và giá. Chạm vào: bảng xác nhận "Thùng thứ 5 · 40 xu". Mua: thùng mới nảy lên, gieo được ngay; dấu "+" chuyển sang ô kế tiếp với giá mới (70, 110, 160).
 - [ ] **F14** Thiếu xu: bảng ghi "Còn thiếu N xu", nút mờ. Đủ 8 thùng thì không còn dấu "+".
 - [ ] **F14** Mua thùng rồi tải lại: số thùng giữ nguyên, mọi thùng chạm được bằng ngón cái.
+
+## Kiểm thử bản 0.8.2 – Sửa lỗi sau vòng test
+
+- [ ] **F12** Bấm "Tua tới sáng mai" tới khi đơn quá hạn: sau thông báo tua khoảng 2 giây hiện "… đã mua ngoài chợ" (hoặc "N đơn cũ đã được thay…").
+- [ ] **F12** Sau đó bấm "Giả lập vắng 8 giờ": bảng đi vắng **không** còn dòng "đơn cũ quá hạn" của lần tua trước.
