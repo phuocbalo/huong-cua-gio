@@ -62,7 +62,9 @@ async function boot() {
       crop: b.crop,
       stage: farm.stageOf(b),
       dry: farm.isDry(b, t),
-      ripe: farm.isRipe(b)
+      ripe: farm.isRipe(b),
+      // Tiến độ lứa hiện tại cho thanh trên thùng; cây chín lại tính từ lúc vừa thu
+      grow: !b.crop ? 0 : b.regrowing ? (b.progress - farm.REGROW_FROM) / (1 - farm.REGROW_FROM) : b.progress
     }));
   }
 

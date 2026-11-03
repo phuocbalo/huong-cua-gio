@@ -796,9 +796,35 @@ class Rooftop extends Phaser.Scene {
     c.sparkle.setPosition(-42, -52).setScale(1.35).setVisible(false);
     c.add(c.sparkle);
 
+    // Thanh tiến độ lớn lên, nằm trên mặt trước thùng (không đè lên cây, bong bóng tưới hay mũi tên)
+    c.bar = this.add.graphics().setVisible(false);
+    c.add(c.bar);
+    c.barKey = '';
+
     c.viewKey = '';
 
     return c;
+  }
+
+  // Vẽ thanh tiến độ: xanh lá khi đã tưới (lớn đủ tốc độ), cam nhạt khi đất khô (lớn chậm một nửa).
+  // Cây chín thì ẩn thanh, vì đã có ánh lấp lánh.
+  drawBar(c, v) {
+    const show = !!v.crop && !v.ripe;
+    const f = Math.max(0, Math.min(1, v.grow || 0));
+    const key = show ? Math.round(f * 100) + '|' + v.dry : 'off';
+    if (key === c.barKey) return;
+    c.barKey = key;
+    c.bar.setVisible(show);
+    if (!show) return;
+    const g = c.bar, x = -36, y = 7, w = 72, h = 13, r = 6.5;
+    g.clear();
+    g.fillStyle(0xe7dccb, 1); g.fillRoundedRect(x, y, w, h, r);
+    const fw = Math.max(h, w * f);
+    if (f > 0) {
+      g.fillStyle(v.dry ? 0xf0a85a : 0x6fb84f, 1); g.fillRoundedRect(x, y, fw, h, r);
+      g.fillStyle(0xffffff, 0.35); g.fillRoundedRect(x + 3, y + 2, Math.max(0, fw - 6), 3.5, 1.75);
+    }
+    g.lineStyle(2.6, INK, 1); g.strokeRoundedRect(x, y, w, h, r);
   }
 
   paintSoil(c, wet) {
@@ -945,6 +971,7 @@ class Rooftop extends Phaser.Scene {
   setBox(i, v) {
     const c = this.boxes[i];
     if (!c) return;
+    this.drawBar(c, v);
     const key = [v.crop, v.stage, v.dry, v.ripe].join('|');
     if (key === c.viewKey) return;
     const prev = c.viewKey.split('|');

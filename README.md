@@ -134,6 +134,15 @@ Trong bảng "Bản thử" có "Thêm 10 xu" nếu cần thêm xu để thử mu
 - [ ] **I-25** Đi hết hướng dẫn: ô "+ 40 xu" hiện ra ngay, chạm vào mở bảng mua thùng.
 - [ ] **I-25** Cài đặt → "Xem lại hướng dẫn": ô "+" ẩn đi; xong hướng dẫn thì hiện lại.
 
+## Kiểm thử bản 0.9.3 – Vòng trồng nhanh hơn, thanh tiến độ
+
+- [ ] **Thời gian trồng:** bảng chọn hạt ghi rau muống 2 phút, cải 4 phút, húng quế 6 phút, dưa leo 12 phút, ớt 18 phút, cà chua 30 phút.
+- [ ] **Tưới:** một lần tưới giữ ẩm 10 phút. Gieo cà chua, tưới, bấm "Tua +10 phút": đất khô, có bong bóng giọt nước.
+- [ ] **Thanh tiến độ:** mỗi thùng có cây hiện thanh trên mặt trước thùng, đầy dần theo thời gian. Xanh lá khi đã tưới, cam khi đất khô. Cây chín thì thanh ẩn, còn ánh lấp lánh. Thùng trống không có thanh.
+- [ ] Cây thu nhiều lần (húng quế, dưa leo, ớt, cà chua): thu xong thanh về 0 rồi đầy lại.
+- [ ] Chạm vào cây đang lớn vẫn hiện "chín sau khoảng …".
+- [ ] Bà Tư nói "Rau muống cần khoảng 2 phút mới chín".
+
 ## Kiểm thử bản 0.9.2 – Tinh chỉnh hướng dẫn và thời gian trồng
 
 Thử bằng cửa sổ ẩn danh hoặc sau khi Xóa dữ liệu.
@@ -146,8 +155,7 @@ Thử bằng cửa sổ ẩn danh hoặc sau khi Xóa dữ liệu.
 - [ ] **Thu hoạch:** rau lớn nhanh khoảng 3 giây, mũi tên hiện trên thùng; chạm để thu.
 - [ ] **Tiệm:** mũi tên chỉ nút "Tiệm"; mở ra luôn ở tab "Bán", mũi tên chỉ nút "Bán hết" của rau muống. Bấm tab "Mua", "Bán 1", "Đóng": bị chặn. Bấm "Bán hết": bán được, tiệm tự đóng.
 - [ ] **Cho gà ăn (mới):** bà Tư nhắc cho gà ăn, máng ăn sáng lên có mũi tên. Chạm máng: gà ăn, bà Tư nói lời cuối → "Bắt đầu chơi". Sau đó mọi nút bấm lại bình thường.
-- [ ] **Thời gian trồng mới:** bảng chọn hạt ghi rau muống 5 phút, cải 15 phút, húng quế 30 phút, dưa leo 45 phút, ớt 1 giờ, cà chua 2 giờ.
-- [ ] **Tưới:** một lần tưới giữ ẩm 30 phút (trước là 2 giờ). Gieo cà chua, tưới, bấm "Tua +1 giờ": cây đã khô, có bong bóng giọt nước.
+- (Thời gian trồng và tưới của 0.9.2 đã được thay bằng 0.9.3, xem mục trên.)
 
 ## Kiểm thử chặng 5 – Hoàn thiện (bản 0.9.0)
 

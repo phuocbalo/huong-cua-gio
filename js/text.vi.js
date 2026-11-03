@@ -159,7 +159,7 @@ export const T = {
   tut_intro: 'Chào cháu! Sân thượng này bỏ không lâu rồi. Bà để lại mấy thùng xốp với ít hạt giống, cháu trồng rau thử nhé.',
   tut_plant: 'Chạm vào thùng xốp có mũi tên, rồi bấm "Gieo" ở hạt rau muống.',
   tut_water: 'Đất còn khô đó. Bấm "Bình tưới" bên dưới để tưới cây.',
-  tut_grow: 'Rau muống cần khoảng 5 phút mới chín. Lần đầu bà giúp cháu cho lớn nhanh nhé!',
+  tut_grow: 'Rau muống cần khoảng {grow} mới chín. Lần đầu bà giúp cháu cho lớn nhanh nhé!',
   tut_harvest: 'Rau chín rồi! Chạm vào thùng để thu hoạch.',
   tut_sell: 'Giỏi lắm. Giờ bấm "Tiệm", rồi bấm "Bán hết" để bán rau cho anh Bảo, lấy tiền mua hạt mới.',
   tut_feed: 'Gà cũng đói rồi đó. Chạm vào máng ăn để đổ thức ăn. Ăn xong khoảng {time} là gà đẻ trứng. Mỗi ngày cho ăn một lần thôi nghen.',

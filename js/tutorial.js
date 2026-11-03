@@ -8,7 +8,7 @@
 
 import { T, fmt } from './text.vi.js';
 import { AVATARS } from './ui-economy.js';
-import { LAY_DELAY, FEED_ITEM } from './config.js';
+import { LAY_DELAY, FEED_ITEM, CROPS } from './config.js';
 import { duration } from './util.js';
 import * as farm from './farm.js';
 import * as shop from './shop.js';
@@ -169,7 +169,7 @@ export class TutorialUI {
   show() {
     const step = tut(this.s).step;
     $('tutWrap').hidden = false;
-    $('tutText').textContent = fmt(T['tut_' + step], { time: duration(LAY_DELAY) });
+    $('tutText').textContent = fmt(T['tut_' + step], { time: duration(LAY_DELAY), grow: duration(CROPS.rau_muong.growTime) });
     const talkOnly = step === 'intro' || step === 'done';
     $('tutNext').hidden = !talkOnly;
     $('tutNext').textContent = step === 'done' ? T.tut_start : T.tut_next;
