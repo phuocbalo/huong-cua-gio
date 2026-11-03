@@ -122,6 +122,7 @@ async function boot() {
       sound('feed');
       ui.toast(fmt(T.coop_fed, { time: duration(LAY_DELAY) }));
       store.flush();
+      tutor.event('feed');
     } else if (r.reason === 'no_feed') {
       sound('deny');
       ui.toast(T.coop_no_feed);
@@ -213,6 +214,7 @@ async function boot() {
   }
   const ecoHandlers = {
     onSell(id, qty) {
+      if (!tutor.allows('sell', id)) return;
       const r = shop.sell(state(), id, qty);
       if (!r.ok) return;
       ui.toast(fmt(T.sold, { coins: r.coins, qty, unit: unitOf(id), noun: nounOf(id) }));
@@ -281,7 +283,7 @@ async function boot() {
     if (farm.isRipe(b)) {
       const crop = b.crop;
       const r = farm.harvest(s, i, t);
-      if (!r.ok) { sound('deny'); ui.toast(T.harvest_full); return; }
+      if (!r.ok) { sound('deny'); ui.toast(T.harvest_full); tutor.event('harvestFull'); return; }
       const tg = ui.bagTarget();
       if (scene) scene.harvestFx(i, CROP_COLOR[crop], r.qty, tg.x, tg.y);
       sound('harvest');
@@ -302,6 +304,7 @@ async function boot() {
   }
 
   function onPlant(i, seedId) {
+    if (!tutor.allows('plant', seedId)) return;
     const s = state();
     const r = farm.plant(s, i, seedId, now());
     if (!r.ok) {
@@ -391,7 +394,12 @@ async function boot() {
   // Tiệm, đơn hàng, chuồng gà, bụi: chặn trong lúc hướng dẫn, có tiếng mở bảng
   const gate = (action, fn) => (...args) => { if (!tutor.allows(action)) return; fn(...args); };
   const baseOpenShop = eco.openShop.bind(eco);
-  eco.openShop = gate('shop', () => { sound('open'); baseOpenShop(); });
+  eco.openShop = gate('shop', () => {
+    sound('open');
+    // Trong lúc hướng dẫn bán rau: luôn mở ở tab "Bán"
+    if (!state().tutorialDone) eco.setTab('sell');
+    baseOpenShop();
+  });
   const baseOpenBag = ui.openBag.bind(ui);
   ui.openBag = () => { sound('open'); baseOpenBag(); };
 
@@ -455,7 +463,7 @@ async function boot() {
     },
     onTapBox,
     onTapCoop: gate('coop', onTapCoop),
-    onTapTrough: gate('coop', onTapTrough),
+    onTapTrough: gate('feed', onTapTrough),
     onTapDust: gate('dust', onTapDust),
     onTapOrders: gate('orders', () => { sound('open'); eco.openOrders(); }),
     onTapBuyBox: gate('buyBox', () => { sound('open'); eco.openBuyBox(); })

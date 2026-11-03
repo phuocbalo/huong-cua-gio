@@ -65,28 +65,63 @@ class Rooftop extends Phaser.Scene {
     hooks.onReady(this);
   }
 
-  // ----- F19 Vòng sáng chỉ chỗ cần chạm trong hướng dẫn -----
-  setSpotlight(index) {
+  // ----- F19 Chỉ chỗ cần chạm trong hướng dẫn -----
+  // spot: { kind: 'box', index, arrow } | { kind: 'trough', arrow } | null để ẩn.
+  // Không vẽ vòng quanh; thay vào đó làm sáng chính vật (lớp sáng cộng màu, nhấp nháy nhẹ) và
+  // mũi tên vàng to, viền nâu, có quầng trắng, nhún lên xuống phía trên.
+  setSpotlight(spot) {
     if (!this.spot) {
       this.spot = this.add.container(0, 0).setVisible(false);
-      const g = this.add.graphics();
-      g.lineStyle(4, 0xf2b544, 1); g.strokeEllipse(0, 0, 92, 70);
-      g.lineStyle(10, 0xf2b544, 0.25); g.strokeEllipse(0, 0, 98, 76);
-      // mũi tên nhỏ chỉ xuống
-      const arrow = this.add.graphics();
-      arrow.fillStyle(0xf2b544, 1); arrow.lineStyle(2.5, INK, 1);
-      const pts = [{ x: -9, y: -64 }, { x: 9, y: -64 }, { x: 9, y: -54 }, { x: 15, y: -54 }, { x: 0, y: -40 }, { x: -15, y: -54 }, { x: -9, y: -54 }];
-      arrow.fillPoints(pts, true); arrow.strokePoints(pts, true);
-      this.spot.add([g, arrow]);
-      this.children.moveBelow(this.spot, this.frontWall);
+      this.spotGlow = this.add.graphics().setBlendMode(Phaser.BlendModes.ADD);
+      this.spotArrow = this.add.container(0, 0);
+      const halo = this.add.graphics();
+      const shape = (k = 1) => [{ x: -8 * k, y: -44 * k }, { x: 8 * k, y: -44 * k }, { x: 8 * k, y: -22 * k }, { x: 19 * k, y: -22 * k }, { x: 0, y: 0 }, { x: -19 * k, y: -22 * k }, { x: -8 * k, y: -22 * k }];
+      halo.fillStyle(0xfff6c9, 0.55); halo.fillPoints(shape(1.22).map(p => ({ x: p.x, y: p.y + 4 })), true);
+      const ar = this.add.graphics();
+      ar.fillStyle(0xffd84a, 1); ar.fillPoints(shape(), true);
+      ar.lineStyle(3, INK, 1); ar.strokePoints(shape(), true);
+      ar.lineStyle(2.4, 0xfff6c9, 1); ar.lineBetween(-3, -40, -3, -24);
+      this.spotArrow.add([halo, ar]);
+      this.spot.add([this.spotGlow, this.spotArrow]);
       if (!reduceMotion) {
-        this.tweens.add({ targets: g, alpha: 0.45, duration: 650, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
-        this.tweens.add({ targets: arrow, y: -8, duration: 500, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+        this.tweens.add({ targets: this.spotGlow, alpha: 0.35, duration: 650, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+        this.spotBob = this.tweens.add({ targets: this.spotArrow, y: '-=9', duration: 480, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
       }
     }
-    const c = index >= 0 ? this.boxes[index] : null;
-    this.spot.setVisible(!!c);
-    if (c) { this.spot.setPosition(c.x, c.y - 4); this.children.bringToTop(this.spot); this.children.moveBelow(this.spot, this.frontWall); }
+    const g = this.spotGlow; g.clear();
+    // Quầng vàng phía sau thùng: ban ngày thùng màu trắng, lớp sáng phía trên khó thấy nên cần thêm quầng
+    if (!this.spotHalo) {
+      this.spotHalo = this.add.graphics();
+      if (!reduceMotion) this.tweens.add({ targets: this.spotHalo, alpha: 0.55, duration: 650, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    }
+    const hg = this.spotHalo; hg.clear(); hg.setVisible(false);
+    let at = null;
+    if (spot && spot.kind === 'box' && this.boxes[spot.index]) {
+      const c = this.boxes[spot.index];
+      // Làm sáng thân thùng và lớp đất (toạ độ theo hình thùng trong makeBox, đã thu nhỏ BOX_SCALE)
+      const s = BOX_SCALE;
+      [[18, 0.18], [12, 0.3], [7, 0.5], [3, 0.85]].forEach(([pad, a]) => {
+        hg.fillStyle(0xffd23f, a); hg.fillRoundedRect(c.x - 50 * s - pad, c.y - 26 * s - pad, 100 * s + pad * 2, 60 * s + pad * 2, 8 + pad);
+      });
+      hg.setVisible(true);
+      this.children.moveBelow(hg, c);
+      g.fillStyle(0xfff0b8, 0.32); g.fillRoundedRect(c.x - 50 * s, c.y - 26 * s, 100 * s, 60 * s, 8);
+      at = { x: c.x, y: c.y - 52 };
+    } else if (spot && spot.kind === 'trough' && this.trough) {
+      const p = this.coopPoint(this.trough.x, this.trough.y);
+      g.fillStyle(0xffe08a, 0.32); g.fillRoundedRect(p.x - 40, p.y - 16, 80, 32, 10);
+      g.fillStyle(0xfff0b8, 0.6); g.fillRoundedRect(p.x - 34, p.y - 11, 68, 20, 7);
+      // tránh bong bóng "đói" phía trên máng
+      at = { x: p.x, y: p.y - 64 };
+    }
+    this.spot.setVisible(!!at);
+    if (!at) return;
+    this.spotArrow.setVisible(!!spot.arrow);
+    if (this.spotBob) { this.spotBob.stop(); }
+    this.spotArrow.setPosition(at.x, at.y);
+    if (!reduceMotion) this.spotBob = this.tweens.add({ targets: this.spotArrow, y: at.y - 9, duration: 480, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    this.children.bringToTop(this.spot);
+    // Thùng hàng dưới có thể nằm sau tường trước; mũi tên và lớp sáng luôn nằm trên cùng cho dễ thấy
   }
 
   // ----- F14 Ô trống mua thêm thùng -----

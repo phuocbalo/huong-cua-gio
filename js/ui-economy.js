@@ -81,6 +81,11 @@ export class EconomyUI {
 
   get state() { return this.store.data; }
 
+  setTab(tab) {
+    this.tab = tab;
+    document.querySelectorAll('#shopTabs .chip').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.tab === tab)));
+  }
+
   // ----- F11 Tiệm -----
   openShop() {
     this.say(pick(T.shop_greet));

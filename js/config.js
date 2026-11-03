@@ -1,7 +1,7 @@
 // Bảng dữ liệu của game. Muốn cân bằng lại game thì sửa số ở đây, không cần đụng vào code khác.
 // Đơn vị thời gian là mili giây; dùng các hằng PHUT, GIO cho dễ đọc.
 
-export const APP_VERSION = '0.9.1';
+export const APP_VERSION = '0.9.2';
 
 const PHUT = 60 * 1000;
 const GIO = 60 * PHUT;
@@ -48,8 +48,9 @@ export const SUNRISE = 5.5, SUNSET = 18.5;
 
 // ---------- Trồng trọt (đã chốt: cây lớn theo giờ thực, chưa tưới lớn bằng 50%) ----------
 export const UNWATERED_SPEED = 0.5;
-// Tác dụng của một lần tưới. Đã chốt 2 giờ để người chơi quay lại chăm cây vài lần mỗi ngày.
-export const WATER_DURATION = 2 * GIO;
+// Tác dụng của một lần tưới. Bản 0.9.2 rút từ 2 giờ xuống 30 phút cho khớp với cây lớn nhanh hơn:
+// cây cơ bản tưới 1 lần là chín, cây lâu cần tưới lại vài lần.
+export const WATER_DURATION = 30 * PHUT;
 
 // Ngưỡng tiến độ của 4 giai đoạn hình: hạt, mầm, lớn, chín
 export const STAGES = [
@@ -59,17 +60,20 @@ export const STAGES = [
   { key: 'ripe',   from: 1 }
 ];
 
-// 6 cây MVP. Các con số là đề xuất ban đầu để chơi thử, chỉnh lại sau khi có phản hồi.
+// 6 cây MVP, chia 3 nhóm theo thời gian chín (bản 0.9.2, rút ngắn cho người chơi quay lại thường xuyên):
+//   Cơ bản (5–30 phút): rau muống, cải, húng quế
+//   Hơi khó (30–60 phút): dưa leo, ớt
+//   Lâu (trên 60 phút): cà chua
 // growTime: thời gian từ gieo tới chín khi luôn được tưới
 // harvests: số lần thu (1 = thu xong thùng trống lại)
 // regrowTime: thời gian chín lại sau mỗi lần thu, với cây thu nhiều lần
 export const CROPS = {
-  rau_muong: { growTime: 30 * PHUT, yield: 3, harvests: 1, regrowTime: 0,         seedPrice: 5,  sellPrice: 4 },
-  cai:       { growTime: 45 * PHUT, yield: 2, harvests: 1, regrowTime: 0,         seedPrice: 6,  sellPrice: 6 },
-  hung_que:  { growTime: 1 * GIO,   yield: 3, harvests: 3, regrowTime: 40 * PHUT, seedPrice: 10, sellPrice: 3 },
-  dua_leo:   { growTime: 4 * GIO,   yield: 2, harvests: 3, regrowTime: 2 * GIO,   seedPrice: 18, sellPrice: 9 },
-  ot:        { growTime: 6 * GIO,   yield: 4, harvests: 4, regrowTime: 3 * GIO,   seedPrice: 22, sellPrice: 5 },
-  ca_chua:   { growTime: 8 * GIO,   yield: 3, harvests: 4, regrowTime: 4 * GIO,   seedPrice: 30, sellPrice: 10 }
+  rau_muong: { growTime: 5 * PHUT,  yield: 3, harvests: 1, regrowTime: 0,         seedPrice: 5,  sellPrice: 4 },
+  cai:       { growTime: 15 * PHUT, yield: 2, harvests: 1, regrowTime: 0,         seedPrice: 6,  sellPrice: 6 },
+  hung_que:  { growTime: 30 * PHUT, yield: 3, harvests: 3, regrowTime: 20 * PHUT, seedPrice: 10, sellPrice: 3 },
+  dua_leo:   { growTime: 45 * PHUT, yield: 2, harvests: 3, regrowTime: 30 * PHUT, seedPrice: 18, sellPrice: 9 },
+  ot:        { growTime: 60 * PHUT, yield: 4, harvests: 4, regrowTime: 35 * PHUT, seedPrice: 22, sellPrice: 5 },
+  ca_chua:   { growTime: 2 * GIO,   yield: 3, harvests: 4, regrowTime: 1 * GIO,   seedPrice: 30, sellPrice: 10 }
 };
 
 // ---------- Vật phẩm trong kho ----------

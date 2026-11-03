@@ -23,7 +23,7 @@ Bản chơi thử: https://phuocbalo.github.io/huong-cua-gio/
 | `js/shop.js` | Luật tiệm anh Bảo: giá mua bán, mua thùng, nâng cấp túi đồ |
 | `js/orders.js` | Luật đơn hàng hàng xóm: 3 đơn, giao hàng, đổi đơn, tự đổi sau 3 ngày, 7 hàng xóm mở dần, điểm thân thiết |
 | `js/ui-economy.js` | Giao diện tiệm, bảng đơn hàng, xác nhận mua thùng |
-| `js/tutorial.js` | Hướng dẫn mở đầu cùng bà Tư: gieo → tưới → thu → bán, bỏ qua được, mở lại giữa chừng vẫn tiếp tục |
+| `js/tutorial.js` | Hướng dẫn mở đầu cùng bà Tư: gieo → tưới → thu → bán → cho gà ăn; không bỏ qua được, chỉ bấm được chỗ mũi tên chỉ, mở lại giữa chừng vẫn tiếp tục |
 | `js/audio.js` | Nhạc lo-fi và tiếng động tạo bằng code (không có file âm thanh), đổi nhạc ngày/đêm |
 | `js/ui-settings.js` | Cài đặt: âm lượng, xuất/nhập file lưu, xem lại hướng dẫn, xóa dữ liệu, thống kê |
 | `js/daylight.js` | Màu trời, phố, đèn cho từng giờ trong ngày; chuyển dần giữa các khung giờ |
@@ -131,8 +131,23 @@ Trong bảng "Bản thử" có "Thêm 10 xu" nếu cần thêm xu để thử mu
 ## Kiểm thử bản 0.9.1 – Sửa lỗi trước khi chơi thử
 
 - [ ] **I-25** Người chơi mới (cửa sổ ẩn danh, hoặc Cài đặt → Xóa dữ liệu): trong lúc bà Tư hướng dẫn **không** thấy ô "+ 40 xu" ở chỗ trống bên dưới 4 thùng.
-- [ ] **I-25** Bấm "Bỏ qua hướng dẫn" (hoặc đi hết hướng dẫn): ô "+ 40 xu" hiện ra ngay, chạm vào mở bảng mua thùng.
+- [ ] **I-25** Đi hết hướng dẫn: ô "+ 40 xu" hiện ra ngay, chạm vào mở bảng mua thùng.
 - [ ] **I-25** Cài đặt → "Xem lại hướng dẫn": ô "+" ẩn đi; xong hướng dẫn thì hiện lại.
+
+## Kiểm thử bản 0.9.2 – Tinh chỉnh hướng dẫn và thời gian trồng
+
+Thử bằng cửa sổ ẩn danh hoặc sau khi Xóa dữ liệu.
+
+- [ ] **Không bỏ qua được:** hộp thoại bà Tư không còn nút "Bỏ qua hướng dẫn".
+- [ ] **Mũi tên mới:** mũi tên vàng to, viền nâu, nhún lên xuống; không còn vòng tròn quanh thùng. Thùng cần chạm có quầng vàng và sáng lên (thấy rõ cả ban ngày lẫn ban đêm).
+- [ ] **Chỉ bấm chỗ được chỉ:** ở bước gieo, bấm "Túi đồ", "Tiệm", "Cài đặt", chuồng gà, thùng khác: không mở gì, hiện "Làm theo lời bà Tư nhé, chạm vào chỗ mũi tên đang chỉ."
+- [ ] **Bảng chọn hạt:** chạm thùng có mũi tên → mũi tên chỉ nút "Gieo" của hạt rau muống. Bấm "Gieo" hạt cải hoặc "Đóng": bị chặn. Bấm "Gieo" rau muống: gieo được.
+- [ ] **Tưới:** mũi tên chỉ nút "Bình tưới" (nút sáng vàng), thông báo "Đã gieo…" nằm cao hơn, không che mũi tên. Thùng vẫn sáng, không có mũi tên trên thùng.
+- [ ] **Thu hoạch:** rau lớn nhanh khoảng 3 giây, mũi tên hiện trên thùng; chạm để thu.
+- [ ] **Tiệm:** mũi tên chỉ nút "Tiệm"; mở ra luôn ở tab "Bán", mũi tên chỉ nút "Bán hết" của rau muống. Bấm tab "Mua", "Bán 1", "Đóng": bị chặn. Bấm "Bán hết": bán được, tiệm tự đóng.
+- [ ] **Cho gà ăn (mới):** bà Tư nhắc cho gà ăn, máng ăn sáng lên có mũi tên. Chạm máng: gà ăn, bà Tư nói lời cuối → "Bắt đầu chơi". Sau đó mọi nút bấm lại bình thường.
+- [ ] **Thời gian trồng mới:** bảng chọn hạt ghi rau muống 5 phút, cải 15 phút, húng quế 30 phút, dưa leo 45 phút, ớt 1 giờ, cà chua 2 giờ.
+- [ ] **Tưới:** một lần tưới giữ ẩm 30 phút (trước là 2 giờ). Gieo cà chua, tưới, bấm "Tua +1 giờ": cây đã khô, có bong bóng giọt nước.
 
 ## Kiểm thử chặng 5 – Hoàn thiện (bản 0.9.0)
 
@@ -140,12 +155,10 @@ Công cụ thử (bảng "Bản thử", tua giờ…) giờ **ẩn với ngườ
 mở link có thêm `?test=1`, hoặc vào Cài đặt và chạm 5 lần liền vào dòng "phiên bản 0.9.0". Bản lưu cũ của bạn tự bật sẵn.
 
 **F19 Hướng dẫn** (thử bằng cửa sổ ẩn danh hoặc sau khi Xóa dữ liệu)
-- [ ] Mở game lần đầu: bà Tư chào, có nút "Tiếp" và "Bỏ qua hướng dẫn".
-- [ ] Bấm Tiếp: một thùng sáng lên có mũi tên. Chạm chuồng gà hay tiệm: bị chặn, có lời nhắc.
-- [ ] Gieo rau muống → nút "Bình tưới" nhấp nháy → tưới → rau lớn nhanh trong khoảng 3 giây.
-- [ ] Thu hoạch → nút "Tiệm" nhấp nháy → bán 1 bó → bà Tư khen → "Bắt đầu chơi".
+- [ ] Mở game lần đầu: bà Tư chào, chỉ có nút "Tiếp" (đã bỏ nút "Bỏ qua hướng dẫn" từ 0.9.2).
 - [ ] Đóng game giữa chừng rồi mở lại: tiếp tục đúng bước.
-- [ ] Bấm "Bỏ qua hướng dẫn": chơi tự do ngay. Cài đặt → "Xem lại hướng dẫn" chạy lại từ đầu.
+- [ ] Cài đặt → "Xem lại hướng dẫn" chạy lại từ đầu.
+- Chi tiết từng bước: xem mục "Kiểm thử bản 0.9.2" bên dưới.
 
 **F20 Âm thanh**
 - [ ] Chạm lần đầu: nhạc lo-fi nhẹ, tiếng xe máy, chim sẻ (ngày); 18:30–5:00 nhạc chậm hơn, có tiếng dế.
