@@ -1,7 +1,7 @@
 // Bảng dữ liệu của game. Muốn cân bằng lại game thì sửa số ở đây, không cần đụng vào code khác.
 // Đơn vị thời gian là mili giây; dùng các hằng PHUT, GIO cho dễ đọc.
 
-export const APP_VERSION = '0.6.1';
+export const APP_VERSION = '0.7.0';
 
 const PHUT = 60 * 1000;
 const GIO = 60 * PHUT;
@@ -101,6 +101,14 @@ export const START_CHICKENS = 2;
 export const LAY_DELAY = 2 * GIO;     // đề xuất: đẻ 2 giờ sau khi ăn, cùng nhịp với tưới cây
 export const EGGS_PER_CHICKEN = 1;
 export const FEED_ITEM = 'thuc_an_ga';
+
+// ---------- Quét bụi sân thượng (F23) ----------
+// Cứ 3–4 ngày (thời gian game) sân lại bám vài vệt bụi; chạm từng vệt để quét, mỗi vệt được thưởng xu.
+export const DUST_INTERVAL_MIN = 3 * NGAY;
+export const DUST_INTERVAL_MAX = 4 * NGAY;
+export const DUST_SPOTS_MIN = 3, DUST_SPOTS_MAX = 4;
+export const DUST_SPOT_COUNT = 8;     // số chỗ có thể bám bụi trên sân (toạ độ nằm trong scene.js)
+export const DUST_REWARD = 5;         // xu cho mỗi vệt bụi
 
 // ---------- Khởi đầu ----------
 export const START_BOXES = 4;

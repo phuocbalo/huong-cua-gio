@@ -6,9 +6,10 @@
 
 import { START_BOXES, START_COINS, START_INVENTORY, INVENTORY_SLOTS, START_FEED_FOR_OLD_SAVES, FEED_ITEM } from './config.js';
 import { newCoop } from './coop.js';
+import { newDust } from './dust.js';
 import * as inv from './inventory.js';
 
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 const DB_NAME = 'san-thuong-xanh';
 const STORE = 'saves';
@@ -32,6 +33,7 @@ export function defaultSave(now = Date.now()) {
     inventory: { slots: INVENTORY_SLOTS, items: { ...START_INVENTORY } },
     boxes: Array.from({ length: START_BOXES }, () => ({ crop: null })),
     coop: newCoop(),
+    dust: newDust(0),
     tutorialDone: false,
     settings: { music: 0.6, sfx: 0.8 }
   };
@@ -44,7 +46,9 @@ const MIGRATIONS = {
     const next = { ...s, schemaVersion: 2, coop: newCoop(), inventory: { ...s.inventory, items: { ...s.inventory.items } } };
     inv.add(next.inventory, FEED_ITEM, START_FEED_FOR_OLD_SAVES);   // túi đầy thì thôi, không lỗi
     return next;
-  }
+  },
+  // 2 → 3 (bản 0.7): bụi bám sân thượng; lần đầu sau 3–4 ngày kể từ lúc cập nhật
+  2: s => ({ ...s, schemaVersion: 3, dust: newDust((s.clock && s.clock.gameTime) || 0) })
 };
 
 export function migrate(s) {

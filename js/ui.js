@@ -17,7 +17,8 @@ const ICONS = {
 };
 
 export class UI {
-  constructor({ store, clock, pwa, onFrameResize, onTimeChange, onWaterAll, onPlant, onSkip, onAddSeeds, onFillBag, onSimAway, onNextDay }) {
+  constructor({ store, clock, pwa, onFrameResize, onTimeChange, onWaterAll, onPlant, onSkip, onAddSeeds, onFillBag, onSimAway, onNextDay, onAddDust }) {
+    this.onAddDust = onAddDust;
     this.onNextDay = onNextDay;
     this.onSimAway = onSimAway;
     this.onFillBag = onFillBag;
@@ -79,6 +80,7 @@ export class UI {
     $('fillBag').addEventListener('click', () => this.onFillBag());
     $('simAway').addEventListener('click', () => { this.closeSheet(); this.onSimAway(8 * 3600 * 1000); });
     $('nextDay').addEventListener('click', () => this.onNextDay());
+    $('addDust').addEventListener('click', () => { this.closeSheet(); this.onAddDust(); });
 
     $('infoBtn').addEventListener('click', () => this.openSheet());
     $('sheetClose').addEventListener('click', () => this.closeSheet());
@@ -170,7 +172,16 @@ export class UI {
   // Cảnh vừa sẵn sàng: vẽ trời cho giờ hiện tại
   forceTime() { this.refreshClock(true); }
 
-  refreshCoins() { $('coins').textContent = this.store.data.coins; }
+  refreshCoins(pop) {
+    $('coins').textContent = this.store.data.coins;
+    if (pop) { const el = $('coins').closest('.pill'); el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); }
+  }
+
+  // Toạ độ ô xu trong cảnh, để xu bay về đó
+  coinTarget() {
+    const f = $('frame').getBoundingClientRect(), b = $('coins').closest('.pill').getBoundingClientRect();
+    return { x: (b.left + b.height / 2 - f.left) / f.width * W, y: (b.top + b.height / 2 - f.top) / f.height * H };
+  }
 
   // ----- Bảng chung -----
   openWrap(el, focusSel) {
@@ -215,6 +226,7 @@ export class UI {
     if (s.grew.length) rows.push([sprout, s.grew.length === 1 ? fmt(T.away_grew_one, { crop: name(s.grew[0]) }) : fmt(T.away_grew_many, { n: s.grew.length })]);
     if (s.eggs) rows.push([itemIcon('trung_ga'), fmt(T.away_eggs, { n: s.eggs })]);
     if (s.hungry) rows.push([itemIcon('thuc_an_ga'), T.away_hungry]);
+    if (s.dust) rows.push(['<svg viewBox="0 0 40 40" aria-hidden="true"><rect x="18" y="5" width="4" height="17" fill="#c89a5a" stroke="#3b2f2a" stroke-width="2.2"/><path d="M15 21h10l7 14H8z" fill="#e2b65a" stroke="#3b2f2a" stroke-width="2.2" stroke-linejoin="round"/><path d="M15 23h10" stroke="#d8352a" stroke-width="2.4"/></svg>', T.away_dust]);
     if (s.dry.length) rows.push([drop, s.dry.length === 1 ? fmt(T.away_dry_one, { crop: name(s.dry[0]) }) : fmt(T.away_dry_many, { n: s.dry.length })]);
     $('awayTitle').textContent = fmt(T.away_title, { time: duration(s.away) });
     $('awayList').innerHTML = rows.map(([ico, txt]) => `<li><span class="ico">${ico}</span><span>${txt}</span></li>`).join('')

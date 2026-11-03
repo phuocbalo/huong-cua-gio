@@ -228,3 +228,8 @@
   .away-list li.hint { grid-template-columns: 1fr; font-size: 3.1cqw; color: var(--muted); }
   .away-list .ico svg { width: 100%; height: auto; display: block; }
   .close.primary { background: var(--leaf); }
+
+  /* Ô xu nảy nhẹ khi được cộng xu (F23) */
+  .pill.pop { animation: pill-pop 0.45s ease; }
+  @keyframes pill-pop { 0% { transform: scale(1); } 40% { transform: scale(1.12); } 100% { transform: scale(1); } }
+  @media (prefers-reduced-motion: reduce) { .pill.pop { animation: none; } }

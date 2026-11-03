@@ -19,9 +19,10 @@ Bản chơi thử: https://phuocbalo.github.io/huong-cua-gio/
 | `js/inventory.js` | Luật túi đồ: số ô, gộp cùng loại, đầy thì từ chối |
 | `js/icons.js` | Biểu tượng vật phẩm |
 | `js/coop.js` | Luật nuôi gà: cho ăn mỗi ngày, đẻ trứng, nhặt trứng |
+| `js/dust.js` | Luật bụi sân thượng: bám bụi sau 3–4 ngày, quét để nhận xu |
 | `js/daylight.js` | Màu trời, phố, đèn cho từng giờ trong ngày; chuyển dần giữa các khung giờ |
 | `js/scene.js` | Cảnh sân thượng vẽ bằng Phaser (hình tạm) |
-| `tests/` | Kiểm thử luật chơi: `node tests/farm.test.mjs`, `node tests/daylight.test.mjs`, `node tests/coop.test.mjs` |
+| `tests/` | Kiểm thử luật chơi: `node tests/farm.test.mjs`, `node tests/daylight.test.mjs`, `node tests/coop.test.mjs`, `node tests/dust.test.mjs` |
 | `js/ui.js` | Điều khiển giao diện HTML |
 | `js/pwa.js` | Bật chơi offline và theo dõi trạng thái |
 | `manifest.webmanifest` | Khai báo PWA: tên app, biểu tượng, mở toàn màn hình, màn dọc |
@@ -84,3 +85,14 @@ Dùng "Tua +1 giờ", "Tua tới sáng mai" và "Giả lập vắng 8 giờ" tro
 - [ ] **F05** Hết thức ăn (cho ăn đủ 5 ngày): chạm máng hiện "Hết thức ăn gà".
 - [ ] **F05** Túi đầy ("Lấp đầy túi") rồi nhặt trứng: hiện "Túi đồ đã đầy", trứng vẫn nằm trong chuồng.
 - [ ] **F20** Cho gà ăn, đóng game hơn 5 phút rồi mở lại (hoặc "Giả lập vắng 8 giờ"): bảng đi vắng có dòng "Gà đã đẻ 2 quả trứng…". Sang ngày mới thì có dòng "Gà đang đói…".
+
+## Kiểm thử bản 0.7 – Tinh chỉnh và quét bụi (F23)
+
+- [ ] **Chuồng gà to hơn:** chuồng, sân gà và gà to hơn bản 0.6; chạm chuồng (nhặt trứng) và chạm máng (cho ăn) vẫn trúng.
+- [ ] **Vùng chạm thùng xốp:** rê chuột/chạm vào đáy thùng phía trên thì luôn chọn thùng phía trên, không nhảy sang thùng phía dưới. Chạm vào cây cao của thùng phía dưới thì chọn thùng phía dưới. Chạm khe trống giữa các thùng thì không có gì xảy ra.
+- [ ] **F23 Bụi:** bấm "Cho bụi bám ngay" (hoặc "Tua tới sáng mai" 3–4 lần): sân hiện 3–4 vệt bụi có lá khô, kèm bong bóng cái chổi.
+- [ ] **F23** Chạm từng vệt: chổi quét qua lại, bụi bay, xu bay về ô xu, "+5 xu". Vệt cuối cùng hiện "Sân thượng sạch bóng!".
+- [ ] **F23** Sau khi quét sạch, phải 3–4 ngày sau mới bám bụi lại (tua thử 2 ngày: chưa có bụi).
+- [ ] **F23** Đóng game khi đang có bụi rồi mở lại: bụi còn đúng chỗ cũ.
+- [ ] **F23** Vắng mặt lúc bụi bám: bảng "Trong lúc bạn vắng …" có dòng "Sân thượng bám bụi…".
+- [ ] **Bản lưu cũ:** người chơi bản 0.6 mở bản 0.7: mọi thứ còn nguyên; bụi đầu tiên bám sau 3–4 ngày.

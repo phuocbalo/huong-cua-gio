@@ -3,12 +3,17 @@ import { W, H, ZOOM, INK } from './config.js';
 import { skyAt, mixColor } from './daylight.js';
 import { rng, reduceMotion } from './util.js';
 
-let hooks = { onReady() {}, onTapBox() {}, onTapCoop() {}, onTapTrough() {} };
+let hooks = { onReady() {}, onTapBox() {}, onTapCoop() {}, onTapTrough() {}, onTapDust() {} };
 
 // Thùng xốp nhỏ để sân chứa được nhiều thùng. Lưới có chỗ cho tối đa 8 thùng (mua thêm ở F14):
 // hàng 1 hai thùng bên trái (bên phải là sân gà), hàng 2 và 3 mỗi hàng ba thùng. 4 thùng đầu là khối 2×2 bên trái.
 export const BOX_SLOTS = [[86, 456], [202, 456], [86, 550], [202, 550], [318, 550], [86, 640], [202, 640], [318, 640]];
 const BOX_SCALE = 0.68;
+// Chuồng gà vẽ to hơn 18%, phóng quanh góc trước bên phải của sân gà
+const COOP_SCALE = 1.18;
+const COOP_ANCHOR = { x: 386, y: 436 };
+// Các chỗ trên sân có thể bám bụi (F23): khe giữa các thùng và mép sân, không nằm dưới thùng hay chuồng gà
+export const DUST_POS = [[36, 398], [146, 402], [248, 410], [30, 508], [144, 506], [260, 506], [144, 598], [260, 598]];
 // Cây vẽ to so với thùng (1,5 × 0,68 ≈ cỡ gốc) cho dễ nhìn trên điện thoại
 const PLANT_SCALE = 1.5;
 
@@ -33,12 +38,128 @@ class Rooftop extends Phaser.Scene {
     const n = Math.min(BOX_SLOTS.length, hooks.boxCount ? hooks.boxCount() : 4);
     this.boxes = BOX_SLOTS.slice(0, n).map(([bx, by]) => this.makeBox(bx, by, BOX_SCALE));
     this.drawFrontWall();
+    this.dustLayer = this.add.container(0, 0);
+    this.dustSpots = DUST_POS.map(([dx, dy], i) => this.makeDust(dx, dy, i));
+    this.broom = this.makeBroomBubble().setVisible(false);
 
     this.shade = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0).setBlendMode(Phaser.BlendModes.MULTIPLY);
     this.glow = this.add.graphics(); // đèn dây sáng ban đêm, vẽ sau lớp tối
     this.drawLights();
 
+    // Chạm và rê chuột trên sân: thùng xốp (và sau này vệt bụi) được chọn bằng hàm boxAt/dustAt
+    this.input.on('pointerup', pointer => {
+      if (!this.isCanvasTap(pointer)) return;
+      const d = this.dustAt ? this.dustAt(pointer.worldX, pointer.worldY) : -1;
+      if (d >= 0) { hooks.onTapDust(d); return; }
+      const i = this.boxAt(pointer.worldX, pointer.worldY);
+      if (i >= 0) { this.bounce(this.boxes[i]); hooks.onTapBox(i); }
+    });
+    this.input.on('pointermove', pointer => {
+      if (pointer.event && pointer.event.target !== this.game.canvas) return;
+      const over = this.boxAt(pointer.worldX, pointer.worldY) >= 0 || (this.dustAt && this.dustAt(pointer.worldX, pointer.worldY) >= 0);
+      if (over) this.game.canvas.style.cursor = 'pointer';
+      else if (this.game.canvas.style.cursor === 'pointer' && !this.input.manager.isOver) this.game.canvas.style.cursor = '';
+    });
+
     hooks.onReady(this);
+  }
+
+  // ----- F23 Bụi trên sân -----
+  makeDust(x, y, i) {
+    const g = this.add.graphics({ x, y }).setVisible(false);
+    const r = rng(300 + i * 17);
+    g.fillStyle(0x7d6e60, 0.42); g.fillEllipse(0, 0, 46, 17);
+    g.fillStyle(0x6b5d50, 0.5); g.fillEllipse(-6 + r() * 4, -1, 26, 10); g.fillEllipse(9, 2, 18, 7);
+    g.fillStyle(0x4f443a, 0.75);
+    for (let k = 0; k < 9; k++) g.fillCircle(-16 + r() * 32, -5 + r() * 10, 0.8 + r() * 0.9);
+    // một chiếc lá khô và mẩu giấy vụn cho có chuyện để quét
+    g.fillStyle(0xc9963f, 1); g.lineStyle(1.2, INK, 0.8);
+    const lx = -10 + r() * 20, ly = -2 + r() * 4;
+    g.fillEllipse(lx, ly, 7, 3.5); g.strokeEllipse(lx, ly, 7, 3.5);
+    g.fillStyle(0xf3ead7, 0.9); g.fillRect(6 + r() * 4, -4, 4, 3);
+    this.dustLayer.add(g);
+    return g;
+  }
+
+  // Bong bóng cái chổi đót nhắc người chơi quét bụi
+  makeBroomBubble() {
+    const b = this.add.container(0, 0);
+    const g = this.add.graphics();
+    g.fillStyle(0xfff8ec, 1); g.lineStyle(2.5, INK, 1);
+    g.fillCircle(0, 0, 13); g.strokeCircle(0, 0, 13);
+    g.fillTriangle(-4, 10, 2, 11, -2, 19); g.lineBetween(-4, 11, -2, 19); g.lineBetween(2, 11, -2, 19);
+    this.broomIcon(g, 0, 0, 0.8);
+    b.add(g);
+    if (!reduceMotion) this.tweens.add({ targets: g, y: -4, angle: { from: -6, to: 6 }, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    return b;
+  }
+
+  // Chổi đót: cán tre, bông chổi vàng buộc dây đỏ (vẽ quanh tâm (cx, cy), cỡ k)
+  broomIcon(g, cx, cy, k) {
+    const P = (x, y) => ({ x: cx + x * k, y: cy + y * k });
+    g.lineStyle(2.4 * k, INK, 1); g.fillStyle(0xc89a5a, 1);
+    const handle = [P(-1.5, -12), P(1.5, -12), P(1.5, 1), P(-1.5, 1)];
+    g.fillPoints(handle, true); g.strokePoints(handle, true);
+    const head = [P(-3, 0), P(3, 0), P(8, 11), P(-8, 11)];
+    g.fillStyle(0xe2b65a, 1); g.fillPoints(head, true); g.strokePoints(head, true);
+    g.lineStyle(1.1 * k, 0xa9813a, 1);
+    [-4, 0, 4].forEach(x => g.lineBetween(cx + x * 0.4 * k, cy + 2 * k, cx + x * k, cy + 10 * k));
+    g.lineStyle(2 * k, 0xd8352a, 1); g.lineBetween(cx - 3.4 * k, cy + 2 * k, cx + 3.4 * k, cy + 2 * k);
+  }
+
+  // Hiện các vệt bụi đang có; bong bóng chổi nằm trên vệt đầu tiên
+  setDust(spots) {
+    const key = spots.join(',');
+    if (key === this.dustView) return;
+    this.dustView = key;
+    this.dustSpots.forEach((g, i) => { if (!g.sweeping) g.setVisible(spots.includes(i)).setAlpha(1); });
+    if (spots.length) {
+      const [bx, by] = DUST_POS[spots[0]];
+      this.broom.setPosition(bx + 4, by - 26).setVisible(true);
+    } else this.broom.setVisible(false);
+  }
+
+  dustAt(x, y) {
+    for (let i = 0; i < this.dustSpots.length; i++) {
+      const g = this.dustSpots[i];
+      if (g.visible && !g.sweeping && Math.abs(x - g.x) <= 24 && Math.abs(y - g.y) <= 14) return i;
+    }
+    return -1;
+  }
+
+  // Chổi quét qua lại, bụi bay, vệt mờ dần; xu bay về ô xu (tx, ty)
+  sweepFx(i, reward, tx, ty) {
+    const g = this.dustSpots[i];
+    g.sweeping = true;
+    const done = () => { g.sweeping = false; g.setVisible(false).setAlpha(1); };
+    const label = this.add.text(g.x, g.y - 16, '+' + reward + ' xu', { fontFamily: '"Baloo 2", system-ui, sans-serif', fontSize: '18px', fontStyle: '700', color: '#ffe08a', stroke: '#3b2f2a', strokeThickness: 5 }).setOrigin(0.5);
+    this.tweens.add({ targets: label, y: g.y - 50, alpha: 0, duration: 1000, ease: 'Quad.easeOut', onComplete: () => label.destroy() });
+    if (reduceMotion) { done(); return; }
+    const bg = this.add.graphics({ x: g.x - 14, y: g.y - 6 });
+    this.broomIcon(bg, 0, 0, 1.2);
+    bg.setAngle(-25);
+    this.tweens.add({ targets: bg, x: g.x + 14, angle: 20, duration: 160, yoyo: true, repeat: 1, ease: 'Sine.easeInOut', onComplete: () => bg.destroy() });
+    for (let k = 0; k < 7; k++) {
+      const p = this.add.circle(g.x + (k - 3) * 4, g.y, 2 + (k % 3), 0x9a8a7a, 0.6);
+      this.tweens.add({ targets: p, x: p.x + (k - 3) * 6, y: g.y - 14 - (k % 3) * 6, alpha: 0, delay: 120, duration: 520, ease: 'Quad.easeOut', onComplete: () => p.destroy() });
+    }
+    this.tweens.add({ targets: g, alpha: 0, delay: 260, duration: 380, onComplete: done });
+    const coin = this.add.circle(g.x, g.y - 10, 7, 0xf2b544).setStrokeStyle(2, INK);
+    this.tweens.add({ targets: coin, x: tx, y: ty, scale: 0.6, delay: 300, duration: 650, ease: 'Cubic.easeIn', onComplete: () => coin.destroy() });
+  }
+
+  // Thùng nào nằm dưới điểm chạm. Thân thùng luôn được ưu tiên, để chạm đáy thùng trên không bị tính
+  // cho cây của thùng dưới; chỉ khi không trúng thân thùng nào mới xét phần cây mọc phía trên mỗi thùng.
+  boxAt(x, y) {
+    for (let i = 0; i < this.boxes.length; i++) {
+      const c = this.boxes[i], s = c.scaleX;
+      if (Math.abs(x - c.x) <= 52 * s && y >= c.y - 28 * s && y <= c.y + 36 * s) return i;
+    }
+    for (let i = 0; i < this.boxes.length; i++) {
+      const c = this.boxes[i], s = c.scaleX, top = c.y - 28 * s;
+      if (Math.abs(x - c.x) <= 40 * s && y < top && y >= top - 75) return i;
+    }
+    return -1;
   }
 
   // Phaser nghe cả lần nhả chuột trên nút HTML nằm đè lên cảnh (ví dụ nút "Gieo").
@@ -183,6 +304,7 @@ class Rooftop extends Phaser.Scene {
 
   // ----- Chuồng gà (F05): chuồng sàn chân cao, sân quây lưới B40, máng tre, bình nước -----
   drawCoop() {
+    const firstChild = this.children.list.length;
     const WOOD = 0xc89a6a, WOOD_D = 0x9c6b45, POST = 0x7a5236;
     const RUN = { x0: 284, x1: 386, back: 352, front: 436 };
     this.run = RUN;
@@ -280,6 +402,22 @@ class Rooftop extends Phaser.Scene {
     front.lineStyle(2.5, POST, 1);
     front.lineBetween(RUN.x0, RUN.back - 22, RUN.x0, RUN.front - 30); front.lineBetween(RUN.x1, RUN.back - 22, RUN.x1, RUN.front - 30);
     this.coopView = '';
+
+    // Phóng cả cụm chuồng quanh góc trước bên phải của sân gà (COOP_ANCHOR): nở lên trên và sang trái,
+    // không đè lên thùng xốp. Mọi thứ bên trong vẫn vẽ theo toạ độ gốc; vùng chạm đổi theo coopPoint().
+    const made = this.children.list.slice(firstChild);
+    const zones = made.filter(o => o.type === 'Zone');
+    this.coopLayer = this.add.container(COOP_ANCHOR.x * (1 - COOP_SCALE), COOP_ANCHOR.y * (1 - COOP_SCALE)).setScale(COOP_SCALE);
+    this.coopLayer.add(made.filter(o => o.type !== 'Zone'));
+    zones.forEach(z => {
+      const p = this.coopPoint(z.x, z.y);
+      z.setPosition(p.x, p.y).setSize(z.width * COOP_SCALE, z.height * COOP_SCALE);
+    });
+  }
+
+  // Đổi toạ độ vẽ gốc của chuồng sang toạ độ trên cảnh sau khi phóng to
+  coopPoint(x, y) {
+    return { x: COOP_ANCHOR.x + (x - COOP_ANCHOR.x) * COOP_SCALE, y: COOP_ANCHOR.y + (y - COOP_ANCHOR.y) * COOP_SCALE };
   }
 
   // Lưới thép mắt cáo (B40) giữa hai cọc: các đường chéo đan nhau, có thanh trên và dưới
@@ -441,6 +579,7 @@ class Rooftop extends Phaser.Scene {
     const tx = this.trough.x, ty = this.trough.y;
     for (let k = 0; k < 10; k++) {
       const d = this.add.ellipse(tx - 18 + k * 4, ty - 44 - (k % 3) * 6, 4, 3, 0xe8b84a).setStrokeStyle(1, INK);
+      this.coopLayer.add(d);
       this.tweens.add({ targets: d, y: ty - 5, delay: k * 35, duration: 360, ease: 'Quad.easeIn', onComplete: () => d.destroy() });
     }
     // Gà chạy lại máng ăn
@@ -452,7 +591,8 @@ class Rooftop extends Phaser.Scene {
   }
 
   eggsFx(qty, tx, ty) {
-    this.flyToBag(this.coopPos.x, this.coopPos.y, 0xfbf3e4, qty, tx, ty);
+    const p = this.coopPoint(this.coopPos.x, this.coopPos.y);
+    this.flyToBag(p.x, p.y, 0xfbf3e4, qty, tx, ty);
   }
 
   // Vật phẩm bay về nút túi đồ, kèm chữ "+n"
@@ -513,9 +653,6 @@ class Rooftop extends Phaser.Scene {
 
     c.viewKey = '';
 
-    // Vùng chạm phủ cả thùng và cây
-    const zone = this.add.zone(x, y - 30 * s, 112 * s, 140 * s).setInteractive({ useHandCursor: true });
-    zone.on('pointerup', pointer => { if (!this.isCanvasTap(pointer)) return; this.bounce(c); hooks.onTapBox(this.boxes.indexOf(c)); });
     return c;
   }
 

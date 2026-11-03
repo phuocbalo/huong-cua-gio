@@ -57,6 +57,10 @@ export const T = {
   coop_empty_digesting: 'Chưa có trứng. Gà sẽ đẻ sau khoảng {time}.',
   coop_empty_done: 'Hôm nay gà đã đẻ rồi. Mai cho ăn để có trứng mới.',
 
+  // ----- F23 Quét bụi -----
+  dust_swept: '+{n} xu. Sân sạch hơn rồi.',
+  dust_clean: '+{n} xu. Sân thượng sạch bóng!',
+
   // ----- F20 Trong lúc bạn đi vắng -----
   away_title: 'Trong lúc bạn vắng {time}',
   away_ripe_one: '{crop} đã chín, chờ bạn thu hoạch.',
@@ -67,6 +71,7 @@ export const T = {
   away_dry_many: '{n} cây đang khô đất nên lớn chậm lại.',
   away_eggs: 'Gà đã đẻ {n} quả trứng, đang chờ bạn nhặt.',
   away_hungry: 'Gà đang đói, đổ thức ăn vào máng nhé.',
+  away_dust: 'Sân thượng bám bụi. Chạm vào vệt bụi để quét và nhận xu.',
   away_hint_water: 'Bấm "Bình tưới" để tưới hết cây khô một lần.',
   away_go: 'Ra vườn',
 
@@ -138,6 +143,8 @@ export const T = {
   info_fill_bag: 'Lấp đầy túi (thử túi đầy)',
   info_sim_away: 'Giả lập vắng 8 giờ',
   info_next_day: 'Tua tới sáng mai',
+  info_add_dust: 'Cho bụi bám ngay',
+  dust_added: 'Sân thượng vừa bám bụi. Chạm vào vệt bụi để quét.',
   next_day: 'Đã tua sang sáng hôm sau. Gà đói rồi đấy.',
   bag_filled: 'Đã lấp đầy các ô trống bằng trứng gà. Xóa dữ liệu để dọn lại.',
   skipped: 'Đã tua nhanh {time}.',

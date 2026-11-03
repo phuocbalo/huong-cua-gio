@@ -13,6 +13,7 @@ import { CROP_COLOR } from './icons.js';
 import * as farm from './farm.js';
 import * as inv from './inventory.js';
 import * as coop from './coop.js';
+import * as dust from './dust.js';
 import { LAY_DELAY } from './config.js';
 
 const AWAY_NOTICE_MS = 60000;         // vắng từ 1 phút: lời chào ngắn
@@ -49,12 +50,14 @@ async function boot() {
     const boxes = state().boxes.map(b => ({ crop: b.crop, stage: farm.stageOf(b), ripe: farm.isRipe(b), dry: farm.isDry(b, t) }));
     boxes.eggs = state().coop.eggs;
     boxes.hungry = coop.status(state(), t).key === 'hungry';
+    boxes.dust = state().dust.spots.length;
     return boxes;
   }
   function awaySummary(before, away) {
     const t = now(), s = { away, ripe: [], grew: [], dry: [] };
     s.eggs = Math.max(0, state().coop.eggs - (before.eggs || 0));
     s.hungry = coop.status(state(), t).key === 'hungry' && !before.hungry;
+    s.dust = state().dust.spots.length > 0 && !before.dust;
     state().boxes.forEach((b, i) => {
       const a = before[i] || {};
       if (!b.crop || a.crop !== b.crop) return;            // thùng đổi cây trong lúc vắng: bỏ qua
@@ -72,7 +75,7 @@ async function boot() {
     if (r.away < AWAY_NOTICE_MS) return;
     const s = awaySummary(lastSnapshot, r.away);
     lastSnapshot = snapshot();
-    if (r.away >= AWAY_SUMMARY_MS && (s.ripe.length || s.grew.length || s.dry.length || s.eggs || s.hungry)) ui.showAway(s);
+    if (r.away >= AWAY_SUMMARY_MS && (s.ripe.length || s.grew.length || s.dry.length || s.eggs || s.hungry || s.dust)) ui.showAway(s);
     else ui.toast(fmt(T.welcome_back, { time: duration(r.away) }));
   }
 
@@ -117,6 +120,19 @@ async function boot() {
     }
     renderCoop();
     ui.refreshOpenSheets();
+  }
+
+  // ----- F23 Quét bụi -----
+  function renderDust() { if (scene) scene.setDust(state().dust.spots); }
+  function onTapDust(spot) {
+    const r = dust.sweep(state(), spot, now());
+    if (!r.ok) return;
+    const tg = ui.coinTarget();
+    if (scene) scene.sweepFx(spot, r.reward, tg.x, tg.y);
+    setTimeout(() => ui.refreshCoins(true), 900);
+    ui.toast(fmt(r.clean ? T.dust_clean : T.dust_swept, { n: r.reward }));
+    store.flush();
+    renderDust();
   }
 
   // ----- Hành động của người chơi -----
@@ -205,6 +221,13 @@ async function boot() {
     ui.toast(T.next_day);
   }
 
+  function onAddDust() {
+    dust.forceNow(state(), now());
+    ui.toast(T.dust_added);
+    store.flush();
+    renderDust();
+  }
+
   function onFillBag() {
     const items = state().inventory;
     const free = items.slots - inv.usedSlots(items);
@@ -218,7 +241,7 @@ async function boot() {
     store, clock, pwa,
     onFrameResize: () => { if (game) game.scale.refresh(); },
     onTimeChange: h => { if (scene) scene.applyTime(h); },
-    onWaterAll, onPlant, onSkip, onAddSeeds, onFillBag, onSimAway, onNextDay
+    onWaterAll, onPlant, onSkip, onAddSeeds, onFillBag, onSimAway, onNextDay, onAddDust
   });
   ui.init();
 
@@ -227,8 +250,10 @@ async function boot() {
     if (type !== 'tick') return;
     farm.updateAll(state(), now());
     if (coop.update(state(), now())) store.markDirty();
+    if (dust.update(state(), now())) store.markDirty();
     renderBoxes();
     renderCoop();
+    renderDust();
   });
 
   // Bắt đầu đồng hồ: tính phần thời gian đã trôi khi game tắt, cây lớn bù phần đó (F20)
@@ -236,7 +261,7 @@ async function boot() {
   clock.on((type, r) => { if (type === 'return') greet(r); });
 
   // Xóa dữ liệu thì vẽ lại thùng
-  store.onChange(() => { renderBoxes(); renderCoop(); });
+  store.onChange(() => { renderBoxes(); renderCoop(); renderDust(); });
 
   game = createGame({
     boxCount: () => state().boxes.length,
@@ -246,18 +271,20 @@ async function boot() {
       ui.forceTime();
       renderBoxes();
       renderCoop();
+      renderDust();
       greet(first);
     },
     onTapBox,
     onTapCoop,
-    onTapTrough
+    onTapTrough,
+    onTapDust
   });
 
   window.addEventListener('offline', () => ui.toast(T.went_offline));
   pwa.register(firstInstall => { if (firstInstall) ui.toast(T.offline_ready); });
 
   // Cửa sổ kiểm thử cho người phát triển (gõ trong console): __game.store.data
-  window.__game = { store, clock, ui, pwa, farm, coop };
+  window.__game = { store, clock, ui, pwa, farm, coop, dust };
 }
 
 boot();
