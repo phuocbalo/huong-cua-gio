@@ -31,8 +31,11 @@ async function boot() {
   await store.load();
   const state = () => store.data;   // store.reset() thay cả đối tượng, nên luôn đọc qua hàm này
 
-  // Chế độ kiểm thử: bật bằng ?test=1 trên đường dẫn, hoặc chạm 5 lần vào số phiên bản trong Cài đặt
-  if (/[?&]test=1\b/.test(location.search)) state().settings.testMode = true;
+  // Chế độ kiểm thử: bật bằng ?test=1 trên đường dẫn, hoặc chạm 5 lần vào số phiên bản trong Cài đặt.
+  // Mọi nơi ngoài GitHub Pages (link test artifact, máy của người phát triển) luôn bật sẵn, vì ở đó
+  // không thêm ?test=1 được và trong lúc hướng dẫn nút Cài đặt bị khóa. Link GitHub Pages cho người chơi thử vẫn ẩn.
+  const isPublicBuild = /(^|\.)github\.io$/.test(location.hostname);
+  if (/[?&]test=1\b/.test(location.search) || !isPublicBuild) state().settings.testMode = true;
 
   // Thống kê chơi thử: số ngày đã mở game (theo ngày thật), số lần mở, tổng thời gian chơi
   const st = state().stats || (state().stats = { days: [], sessions: 0, playMs: 0 });
