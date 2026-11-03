@@ -20,12 +20,40 @@ export const T = {
   tool_water: 'Bình tưới',
   tool_shop: 'Tiệm',
   tool_settings: 'Cài đặt',
-  soon_bag: 'Túi đồ sẽ có ở chặng 1 (F10).',
-  soon_water: 'Bình tưới sẽ có ở chặng 1 (F02).',
   soon_shop: 'Tiệm anh Bảo sẽ mở ở chặng 4 (F11).',
   soon_settings: 'Cài đặt sẽ có ở chặng 5 (F21).',
-  soon_box: 'Thùng xốp còn trống. Gieo hạt sẽ có ở chặng 1 (F01).',
   soon_coop: 'Chuồng gà sẽ mở ở chặng 3 (F05).',
+
+  // ----- F01 Gieo hạt -----
+  seed_title: 'Gieo vào thùng xốp',
+  seed_hint: 'Chọn một loại hạt trong túi. Thời gian chín tính khi cây được tưới đủ.',
+  seed_row_info: 'Chín sau {time} · thu {n} lần',
+  seed_row_info_once: 'Chín sau {time} · thu 1 lần',
+  seed_plant: 'Gieo',
+  seed_none_left: 'Hết hạt',
+  planted: 'Đã gieo {crop}. Chín sau khoảng {time} nếu tưới đủ.',
+  box_occupied: 'Thùng đã có {crop}, chín sau khoảng {time}.',
+  box_regrowing: '{crop} đang ra lứa mới, chín sau khoảng {time}.',
+  box_occupied_dry: '{crop} đang khô đất, lớn chậm lại. Chạm lần nữa để tưới.',
+
+  // ----- F02 Tưới nước -----
+  watered_one: 'Đã tưới {crop}.',
+  watered_many: 'Đã tưới {n} cây.',
+  water_nothing: 'Không có cây nào cần tưới lúc này.',
+
+  // ----- F03 Thu hoạch -----
+  harvested: '+{qty} {item} vào túi đồ.',
+  harvest_full: 'Túi đồ đã đầy. Nông sản vẫn nằm trên cây chờ bạn.',
+  harvest_last: 'Cây đã cho hết lứa. Thùng trống, có thể gieo hạt mới.',
+
+  // ----- F10 Túi đồ -----
+  bag_title: 'Túi đồ',
+  bag_slots: 'Đang dùng {used}/{total} ô',
+  bag_tab_all: 'Tất cả',
+  bag_tab_seed: 'Hạt giống',
+  bag_tab_produce: 'Nông sản',
+  bag_empty: 'Chưa có gì ở đây.',
+  bag_upgrade_note: 'Nâng cấp thêm ô cho túi đồ sẽ có ở tiệm anh Bảo (chặng 4).',
 
   // ----- Thông báo -----
   offline_ready: 'Đã lưu game vào máy. Lần sau tắt mạng vẫn chơi được.',
@@ -77,7 +105,15 @@ export const T = {
   info_add_coins: 'Thêm 10 xu (thử lưu)',
   info_reset: 'Xóa dữ liệu',
   info_reset_confirm: 'Bấm lần nữa để xóa hẳn',
-  info_note: 'Hình trong bản này là hình tạm. Nút công cụ và thùng đất chỉ hiện thông báo; tính năng thật được lắp ở các chặng sau.',
+  info_section_test: 'Công cụ kiểm thử',
+  info_test_note: 'Chỉ có trong bản thử. Tua nhanh làm cây lớn như khi thời gian trôi thật, không đổi giờ máy.',
+  info_skip_10m: 'Tua +10 phút',
+  info_skip_1h: 'Tua +1 giờ',
+  info_add_seeds: 'Thêm mỗi loại 3 hạt',
+  skipped: 'Đã tua nhanh {time}.',
+  seeds_added: 'Đã thêm hạt giống vào túi.',
+  seeds_full: 'Túi đồ không đủ chỗ cho tất cả hạt giống.',
+  info_note: 'Hình trong bản này là hình tạm. Tiệm, cài đặt và chuồng gà sẽ được lắp ở các chặng sau.',
   close: 'Đóng',
 
   // ----- Tên cây và vật phẩm -----

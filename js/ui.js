@@ -1,6 +1,8 @@
 // Giao diện HTML phủ trên cảnh: khung dọc, thanh trên, thông báo, thanh công cụ, bảng thông tin bản thử.
 
-import { W, H, APP_VERSION, periodOf } from './config.js';
+import { W, H, APP_VERSION, periodOf, CROPS, ITEMS } from './config.js';
+import { itemIcon } from './icons.js';
+import * as inv from './inventory.js';
 import { T, fmt } from './text.vi.js';
 import { applyText, hhmm, hhmmss, duration } from './util.js';
 
@@ -14,7 +16,13 @@ const ICONS = {
 };
 
 export class UI {
-  constructor({ store, clock, pwa, onFrameResize, onPeriodChange }) {
+  constructor({ store, clock, pwa, onFrameResize, onPeriodChange, onWaterAll, onPlant, onSkip, onAddSeeds }) {
+    this.onWaterAll = onWaterAll;
+    this.onPlant = onPlant;
+    this.onSkip = onSkip;
+    this.onAddSeeds = onAddSeeds;
+    this.seedBox = -1;
+    this.bagKind = 'all';
     this.store = store;
     this.clock = clock;
     this.pwa = pwa;
@@ -35,7 +43,33 @@ export class UI {
     window.addEventListener('resize', () => this.fitFrame());
     window.addEventListener('orientationchange', () => setTimeout(() => this.fitFrame(), 200));
 
-    document.querySelectorAll('.tool').forEach(b => b.addEventListener('click', () => this.toast(T[b.dataset.soon])));
+    document.querySelectorAll('.tool[data-soon]').forEach(b => b.addEventListener('click', () => this.toast(T[b.dataset.soon])));
+    $('toolBag').addEventListener('click', () => this.openBag());
+    $('toolWater').addEventListener('click', () => this.onWaterAll());
+
+    // Các bảng dùng chung cách đóng: nền tối, nút Đóng, phím Esc
+    document.querySelectorAll('.wrap [data-close]').forEach(el => el.addEventListener('click', () => this.closeWrap(el.closest('.wrap'))));
+    document.addEventListener('keydown', e => {
+      if (e.key !== 'Escape') return;
+      const open = document.querySelector('.wrap:not([hidden])');
+      if (open) this.closeWrap(open);
+    });
+    $('seedList').addEventListener('click', e => {
+      const b = e.target.closest('button[data-seed]');
+      if (!b || b.disabled) return;
+      const box = this.seedBox;
+      this.closeWrap($('seedWrap'));
+      this.onPlant(box, b.dataset.seed);
+    });
+    document.querySelectorAll('#bagTabs .chip').forEach(c => c.addEventListener('click', () => {
+      this.bagKind = c.dataset.kind;
+      document.querySelectorAll('#bagTabs .chip').forEach(x => x.setAttribute('aria-pressed', String(x === c)));
+      this.renderBag();
+    }));
+
+    $('skip10m').addEventListener('click', () => this.onSkip(10 * 60 * 1000));
+    $('skip1h').addEventListener('click', () => this.onSkip(60 * 60 * 1000));
+    $('addSeeds').addEventListener('click', () => this.onAddSeeds());
 
     $('infoBtn').addEventListener('click', () => this.openSheet());
     $('sheetClose').addEventListener('click', () => this.closeSheet());
@@ -106,6 +140,60 @@ export class UI {
   forcePeriod() { this.shownPeriod = null; this.refreshClock(); }
 
   refreshCoins() { $('coins').textContent = this.store.data.coins; }
+
+  // ----- Bảng chung -----
+  openWrap(el, focusSel) {
+    this.lastFocus = document.activeElement;
+    el.hidden = false;
+    el.querySelector('.sheet').scrollTop = 0;
+    const f = el.querySelector(focusSel || '[data-close].close');
+    if (f) f.focus({ preventScroll: true });
+  }
+  closeWrap(el) {
+    el.hidden = true;
+    if (this.lastFocus && this.lastFocus.focus) this.lastFocus.focus({ preventScroll: true });
+  }
+
+  // ----- F01 Bảng chọn hạt -----
+  openSeedPicker(boxIndex) {
+    this.seedBox = boxIndex;
+    const items = this.store.data.inventory;
+    const rows = Object.keys(ITEMS).filter(id => ITEMS[id].kind === 'seed').map(id => {
+      const crop = ITEMS[id].crop, c = CROPS[crop], n = inv.count(items, id);
+      const info = c.harvests > 1 ? fmt(T.seed_row_info, { time: duration(c.growTime), n: c.harvests }) : fmt(T.seed_row_info_once, { time: duration(c.growTime) });
+      return `<li class="seed-row${n ? '' : ' empty'}">
+        <span class="ico">${itemIcon(id)}</span>
+        <span class="meta"><b>${T['item_' + id]}</b><small>${info}</small></span>
+        <span class="qty" aria-label="${n}">×${n}</span>
+        <button class="btn small${n ? ' primary' : ''}" type="button" data-seed="${id}"${n ? '' : ' disabled'}>${n ? T.seed_plant : T.seed_none_left}</button>
+      </li>`;
+    });
+    $('seedList').innerHTML = rows.join('');
+    this.openWrap($('seedWrap'), 'button[data-seed]:not([disabled])');
+  }
+
+  // ----- F10 Túi đồ -----
+  openBag() { this.renderBag(); this.openWrap($('bagWrap')); }
+
+  renderBag() {
+    const items = this.store.data.inventory;
+    $('bagSlots').textContent = fmt(T.bag_slots, { used: inv.usedSlots(items), total: items.slots });
+    const list = inv.slotList(items, this.bagKind);
+    const cells = list.map(s => `<div class="slot" role="img" aria-label="${T['item_' + s.id]}: ${s.qty}">${itemIcon(s.id)}<span class="q">${s.qty}</span><span class="nm">${T['item_' + s.id]}</span></div>`);
+    // Tab "Tất cả" hiện cả ô trống để thấy kho còn bao nhiêu chỗ
+    if (this.bagKind === 'all') for (let k = list.length; k < items.slots; k++) cells.push('<div class="slot blank" aria-hidden="true"></div>');
+    $('bagGrid').innerHTML = cells.length ? cells.join('') : `<p class="note">${T.bag_empty}</p>`;
+  }
+
+  refreshOpenSheets() {
+    if (!$('bagWrap').hidden) this.renderBag();
+  }
+
+  // Toạ độ nút túi đồ trong cảnh, để nông sản bay về đó
+  bagTarget() {
+    const f = $('frame').getBoundingClientRect(), b = $('toolBag').getBoundingClientRect();
+    return { x: (b.left + b.width / 2 - f.left) / f.width * W, y: (b.top + b.height / 2 - f.top) / f.height * H };
+  }
 
   // ----- Bảng thông tin bản thử -----
   openSheet() {

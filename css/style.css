@@ -183,3 +183,38 @@
   .btn.danger { border-color: #b4472e; color: #b4472e; }
   .btn.danger.armed { background: #b4472e; color: var(--paper); }
   .btn:focus-visible { outline: 0.8cqw solid var(--marigold); outline-offset: 0.6cqw; }
+
+  /* ---------- Bảng chọn hạt (F01) ---------- */
+  .actions.three { grid-template-columns: repeat(3, 1fr); }
+  .seed-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2cqw; }
+  .seed-row {
+    display: grid; grid-template-columns: 11cqw 1fr auto auto; align-items: center; gap: 2.6cqw;
+    padding: 2cqw 2.4cqw; border: 0.5cqw solid var(--paper-2); border-radius: 4cqw; background: #fffdf7;
+  }
+  .seed-row.empty { opacity: 0.5; }
+  .seed-row .ico svg, .slot svg { width: 100%; height: auto; display: block; }
+  .seed-row .meta { min-width: 0; display: grid; gap: 0.6cqw; }
+  .seed-row .meta b { font: 600 3.6cqw/1.2 var(--font-body); }
+  .seed-row .meta small { font-size: 2.9cqw; color: var(--muted); line-height: 1.3; }
+  .seed-row .qty { font: 700 4cqw/1 var(--font-display); font-variant-numeric: tabular-nums; }
+  .btn.small { min-height: 40px; padding: 1.8cqw 3.4cqw; }
+  .btn.primary { background: var(--leaf); border-color: var(--leaf); color: var(--paper); }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; background: transparent; border-color: var(--muted); color: var(--muted); }
+
+  /* ---------- Túi đồ (F10) ---------- */
+  .sheet-head { display: flex; align-items: baseline; justify-content: space-between; gap: 3cqw; }
+  .sheet-head .slots { font-size: 3.2cqw; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .bag-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2cqw; }
+  .slot {
+    position: relative; aspect-ratio: 1 / 1.15; max-width: 100%;
+    border: 0.6cqw solid var(--ink); border-radius: 3.6cqw; background: #fffdf7;
+    display: grid; grid-template-rows: 1fr auto; justify-items: center; padding: 1.4cqw 1cqw 1.2cqw; box-sizing: border-box;
+  }
+  .slot svg { width: 70%; }
+  .slot .q {
+    position: absolute; top: 0.8cqw; right: 1.2cqw;
+    font: 700 3.4cqw/1 var(--font-display); font-variant-numeric: tabular-nums;
+  }
+  .slot .nm { font-size: 2.4cqw; line-height: 1.15; text-align: center; color: var(--muted); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .slot.blank { border-style: dashed; border-color: #cbbba6; background: transparent; }
+  .tool.active { background: #dcefd2; }

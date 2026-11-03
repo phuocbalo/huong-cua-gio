@@ -17,8 +17,8 @@ export const hhmmss = d => hhmm(d) + ':' + pad2(d.getSeconds());
 export function duration(ms) {
   const s = Math.floor(ms / 1000);
   const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60);
-  if (d) return d + ' ngày ' + h + ' giờ';
-  if (h) return h + ' giờ ' + m + ' phút';
+  if (d) return h ? d + ' ngày ' + h + ' giờ' : d + ' ngày';
+  if (h) return m ? h + ' giờ ' + m + ' phút' : h + ' giờ';
   if (m) return m + ' phút';
   return s + ' giây';
 }

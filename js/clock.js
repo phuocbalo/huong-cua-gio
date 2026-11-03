@@ -59,6 +59,13 @@ export class GameClock {
     return { away: delta, rewound };
   }
 
+  // Chỉ dùng trong bản thử: cho thời gian game trôi thêm `ms` mà không đổi giờ máy
+  skip(ms) {
+    this.state.gameTime += ms;
+    this.store.markDirty();
+    this.emit('tick', { delta: ms, rewound: false });
+  }
+
   on(fn) { this.listeners.add(fn); }
   emit(type, data) { this.listeners.forEach(fn => fn(type, data)); }
 }
