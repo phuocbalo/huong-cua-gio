@@ -113,6 +113,12 @@ class Rooftop extends Phaser.Scene {
       g.fillStyle(0xfff0b8, 0.6); g.fillRoundedRect(p.x - 34, p.y - 11, 68, 20, 7);
       // tránh bong bóng "đói" phía trên máng
       at = { x: p.x, y: p.y - 64 };
+    } else if (spot && spot.kind === 'notes') {
+      // Giấy đặt hàng trên dây phơi (x 204–248, treo dưới dây)
+      const y0 = this.lineY(226);
+      g.fillStyle(0xffe08a, 0.32); g.fillRoundedRect(190, y0 - 2, 72, 34, 9);
+      g.fillStyle(0xfff0b8, 0.55); g.fillRoundedRect(195, y0 + 1, 62, 27, 7);
+      at = { x: 207, y: this.lineY(207) - 6 };
     }
     this.spot.setVisible(!!at);
     if (!at) return;

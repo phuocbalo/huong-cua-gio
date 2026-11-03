@@ -203,9 +203,9 @@ export class UI {
     const rows = Object.keys(ITEMS).filter(id => ITEMS[id].kind === 'seed').map(id => {
       const crop = ITEMS[id].crop, c = CROPS[crop], n = inv.count(items, id);
       const info = c.harvests > 1 ? fmt(T.seed_row_info, { time: duration(c.growTime), n: c.harvests }) : fmt(T.seed_row_info_once, { time: duration(c.growTime) });
-      return `<li class="seed-row${n ? '' : ' empty'}">
+      return `<li class="seed-row tier-${c.tier}${n ? '' : ' empty'}">
         <span class="ico">${itemIcon(id)}</span>
-        <span class="meta"><b>${T['item_' + id]}</b><small>${info}</small></span>
+        <span class="meta"><b>${T['item_' + id]} <i class="tier-tag">${T['tier_' + c.tier]}</i></b><small>${info}</small></span>
         <span class="qty" aria-label="${n}">×${n}</span>
         <button class="btn small${n ? ' primary' : ''}" type="button" data-seed="${id}"${n ? '' : ' disabled'}>${n ? T.seed_plant : T.seed_none_left}</button>
       </li>`;
@@ -242,7 +242,8 @@ export class UI {
     const items = this.store.data.inventory;
     $('bagSlots').textContent = fmt(T.bag_slots, { used: inv.usedSlots(items), total: items.slots });
     const list = inv.slotList(items, this.bagKind);
-    const cells = list.map(s => `<div class="slot" role="img" aria-label="${T['item_' + s.id]}: ${s.qty}">${itemIcon(s.id)}<span class="q">${s.qty}</span><span class="nm">${T['item_' + s.id]}</span></div>`);
+    const tierOf = id => ITEMS[id].kind === 'seed' ? ' tier-' + CROPS[ITEMS[id].crop].tier : '';
+    const cells = list.map(s => `<div class="slot${tierOf(s.id)}" role="img" aria-label="${T['item_' + s.id]}: ${s.qty}">${itemIcon(s.id)}<span class="q">${s.qty}</span><span class="nm">${T['item_' + s.id]}</span></div>`);
     // Tab "Tất cả" hiện cả ô trống để thấy kho còn bao nhiêu chỗ
     if (this.bagKind === 'all') for (let k = list.length; k < items.slots; k++) cells.push('<div class="slot blank" aria-hidden="true"></div>');
     $('bagGrid').innerHTML = cells.length ? cells.join('') : `<p class="note">${T.bag_empty}</p>`;

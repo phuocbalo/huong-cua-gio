@@ -134,6 +134,16 @@ Trong bảng "Bản thử" có "Thêm 10 xu" nếu cần thêm xu để thử mu
 - [ ] **I-25** Đi hết hướng dẫn: ô "+ 40 xu" hiện ra ngay, chạm vào mở bảng mua thùng.
 - [ ] **I-25** Cài đặt → "Xem lại hướng dẫn": ô "+" ẩn đi; xong hướng dẫn thì hiện lại.
 
+## Kiểm thử bản 0.9.4 – Nút Đóng, nhóm hạt giống, hướng dẫn trả đơn
+
+- [ ] **Nút Đóng luôn hiện:** mở Tiệm (tab Mua) và Đơn hàng hàng xóm: nút "Đóng" nằm sẵn ở đáy bảng, không phải cuộn xuống. Cuộn danh sách: chữ trượt phía sau nút, không lộ ra bên dưới. (Áp dụng cho mọi bảng: chọn hạt, túi đồ, cài đặt…)
+- [ ] **Nhóm hạt giống:** trong bảng chọn hạt, tab Mua của tiệm và túi đồ, hạt giống có khung màu theo nhóm kèm nhãn: Cơ bản (xanh lá: rau muống, cải, húng quế), Hơi khó (xanh dương: dưa leo, ớt), Lâu (tím: cà chua). Nông sản, trứng, thức ăn gà giữ khung thường.
+- [ ] **Hướng dẫn trả đơn – khi nào hiện:** chỉ hiện sau khi xong hướng dẫn chính, vào lần **đầu tiên** túi đồ có đủ hàng cho một đơn (thử nhanh: bảng Bản thử → "Thêm mỗi loại 3 hạt", trồng/thu, hoặc dùng "Lấp đầy túi" nếu đơn cần trứng gà).
+- [ ] Bà Tư nhắc chạm dây phơi; giấy đặt hàng sáng lên, có mũi tên. Các nút khác vẫn bấm bình thường (hướng dẫn này không khóa gì).
+- [ ] Mở bảng đơn hàng: mũi tên chỉ nút "Giao hàng" (vàng) của đơn đủ hàng. Giao xong, bảng tự đóng, bà Tư nói lời cuối, bấm "Đã hiểu" là xong. Không hiện lại lần nào nữa.
+- [ ] Đang hiện hướng dẫn mà bán hết hàng (không còn đủ cho đơn nào): hướng dẫn tạm ẩn; có đủ lại thì hiện lại.
+- [ ] Bản lưu đã từng giao đơn trước đây: không hiện hướng dẫn trả đơn.
+
 ## Kiểm thử bản 0.9.3 – Vòng trồng nhanh hơn, thanh tiến độ
 
 - [ ] **Thời gian trồng:** bảng chọn hạt ghi rau muống 2 phút, cải 4 phút, húng quế 6 phút, dưa leo 12 phút, ớt 18 phút, cà chua 30 phút.

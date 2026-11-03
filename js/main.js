@@ -21,7 +21,7 @@ import { MAX_BOXES } from './config.js';
 import { LAY_DELAY } from './config.js';
 import { AudioEngine } from './audio.js';
 import { SettingsUI } from './ui-settings.js';
-import { TutorialUI, restart as restartTutorial } from './tutorial.js';
+import { TutorialUI, OrdersTipUI, restart as restartTutorial } from './tutorial.js';
 
 const AWAY_NOTICE_MS = 60000;         // vắng từ 1 phút: lời chào ngắn
 const AWAY_SUMMARY_MS = 5 * 60000;    // vắng từ 5 phút và có thay đổi: bảng "Trong lúc bạn đi vắng"
@@ -30,6 +30,7 @@ async function boot() {
   const store = new SaveStore();
   await store.load();
   const state = () => store.data;   // store.reset() thay cả đối tượng, nên luôn đọc qua hàm này
+  let tipRef = null;   // hướng dẫn trả đơn, tạo sau khi giao diện sẵn sàng
 
   // Chế độ kiểm thử: bật bằng ?test=1 trên đường dẫn, hoặc chạm 5 lần vào số phiên bản trong Cài đặt.
   // Mọi nơi ngoài GitHub Pages (link test artifact, máy của người phát triển) luôn bật sẵn, vì ở đó
@@ -251,6 +252,7 @@ async function boot() {
       ui.toast(fmt(T.delivered, { name: T['name_' + o.from], coins: o.coins, hearts: o.hearts }));
       sound('coin');
       if (r.met.length) setTimeout(() => { ui.toast(T['met_' + r.met[0]]); sound('chime'); }, 2600);
+      ordersTip.delivered();
       afterTrade();
     },
     onSkipOrder(id) {
@@ -393,7 +395,7 @@ async function boot() {
   eco.init();
   // Bảng nào đang mở thì cập nhật theo túi đồ mới (thu hoạch, nhặt trứng…)
   const baseRefresh = ui.refreshOpenSheets.bind(ui);
-  ui.refreshOpenSheets = () => { baseRefresh(); eco.refresh(); renderOrders(); };
+  ui.refreshOpenSheets = () => { baseRefresh(); eco.refresh(); renderOrders(); if (tipRef) tipRef.update(); };
   if (syncOrders()) store.flush();
 
   // Tiệm, đơn hàng, chuồng gà, bụi: chặn trong lúc hướng dẫn, có tiếng mở bảng
@@ -425,6 +427,12 @@ async function boot() {
   // F19 Mở đầu cùng bà Tư (bắt đầu khi cảnh đã vẽ xong)
   const tutor = new TutorialUI({ store, ui, scene: () => scene, now, render: () => renderBoxes(), onToggle: () => renderBuySlot(), sound });
   tutor.init();
+  // Hướng dẫn trả đơn: bật lần đầu có đủ hàng giao một đơn (luật trong tutorial.js)
+  const ordersTip = new OrdersTipUI({ store, ui, scene: () => scene, sound });
+  ordersTip.init();
+  tipRef = ordersTip;
+  // Đóng bảng đơn hàng (nút Đóng, nền tối, Esc) thì quay về bước "chạm dây phơi"
+  new MutationObserver(() => ordersTip.update()).observe(document.getElementById('ordersWrap'), { attributes: true, attributeFilter: ['hidden'] });
 
   // Mỗi nhịp đồng hồ: cây lớn theo thời gian game
   clock.on((type, r) => {
@@ -439,6 +447,7 @@ async function boot() {
     renderCoop();
     renderDust();
     renderOrders();
+    ordersTip.update();
   });
 
   // Bắt đầu đồng hồ: tính phần thời gian đã trôi khi game tắt, cây lớn bù phần đó (F20)
@@ -470,7 +479,7 @@ async function boot() {
     onTapCoop: gate('coop', onTapCoop),
     onTapTrough: gate('feed', onTapTrough),
     onTapDust: gate('dust', onTapDust),
-    onTapOrders: gate('orders', () => { sound('open'); eco.openOrders(); }),
+    onTapOrders: gate('orders', () => { sound('open'); eco.openOrders(); ordersTip.update(); }),
     onTapBuyBox: gate('buyBox', () => { sound('open'); eco.openBuyBox(); })
   });
 

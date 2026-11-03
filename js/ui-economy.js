@@ -1,7 +1,7 @@
 // Giao diện chặng 4: tiệm anh Bảo (F11), bảng đơn hàng hàng xóm (F12), xác nhận mua thùng (F14).
 // Luật nằm trong shop.js và orders.js; file này chỉ vẽ và gọi hàm xử lý do main.js truyền vào.
 
-import { ITEMS, SHOP_BUY } from './config.js';
+import { ITEMS, SHOP_BUY, CROPS } from './config.js';
 import { T, fmt } from './text.vi.js';
 import { itemIcon } from './icons.js';
 import * as shop from './shop.js';
@@ -127,9 +127,10 @@ export class EconomyUI {
         const price = shop.buyPrice(id);
         const one = shop.canBuy(s, id, 1), five = shop.canBuy(s, id, 5);
         const why = one.ok ? '' : one.reason === 'coins' ? fmt(T.shop_missing, { n: one.missing }) : T.shop_bag_full;
-        html += `<li class="shop-row">
+        const tier = ITEMS[id].kind === 'seed' ? CROPS[ITEMS[id].crop].tier : 0;
+        html += `<li class="shop-row${tier ? ' tier-' + tier : ''}">
           <span class="ico">${itemIcon(id)}</span>
-          <span class="meta"><b>${T['item_' + id]}</b><small>${fmt(T.shop_price, { price, unit: unitOf(id) })} · ${fmt(T.shop_have, { n: inv.count(s.inventory, id), price, unit: unitOf(id) }).split(' · ')[0]}</small>${why ? `<small class="why">${why}</small>` : ''}</span>
+          <span class="meta"><b>${T['item_' + id]}${tier ? ` <i class="tier-tag">${T['tier_' + tier]}</i>` : ''}</b><small>${fmt(T.shop_price, { price, unit: unitOf(id) })} · ${fmt(T.shop_have, { n: inv.count(s.inventory, id), price, unit: unitOf(id) }).split(' · ')[0]}</small>${why ? `<small class="why">${why}</small>` : ''}</span>
           <span class="acts">
             <button class="btn small${one.ok ? ' primary' : ''}" type="button" data-act="buy" data-id="${id}" data-qty="1"${one.ok ? '' : ' disabled'}>${T.shop_buy_one}</button>
             <button class="btn small" type="button" data-act="buy" data-id="${id}" data-qty="5"${five.ok ? '' : ' disabled'}>${T.shop_buy_five}</button>

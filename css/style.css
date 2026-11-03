@@ -325,3 +325,23 @@
   .confirm { display: grid; gap: 2cqw; padding: 2.6cqw; border: 0.6cqw solid #b4472e; border-radius: 4cqw; background: #fff4ef; }
   .confirm p { margin: 0; font-size: 3.2cqw; line-height: 1.4; }
   .version { margin: 0; text-align: center; font-size: 2.9cqw; color: var(--muted); user-select: none; cursor: default; }
+
+  /* ---------- Nút Đóng luôn nằm trong màn hình (0.9.4) ----------
+     Bảng dài cuộn được, nút Đóng dính ở đáy bảng; viền màu giấy che phần chữ cuộn phía sau */
+  .sheet > .close { position: sticky; bottom: 0; z-index: 2; box-shadow: 0 0 0 2cqw var(--paper), 0 6cqw 0 2cqw var(--paper), 0 -3cqw 3cqw 1cqw var(--paper); }
+
+  /* ---------- Hạt giống chia nhóm (tier) bằng khung màu (0.9.4) ---------- */
+  :root { --tier-1: #5fa843; --tier-1-bg: #eef8e6; --tier-2: #3f86c9; --tier-2-bg: #e8f2fb; --tier-3: #9161c9; --tier-3-bg: #f3ecfb; }
+  .seed-row.tier-1, .shop-row.tier-1, .slot.tier-1 { border-color: var(--tier-1); background: var(--tier-1-bg); }
+  .seed-row.tier-2, .shop-row.tier-2, .slot.tier-2 { border-color: var(--tier-2); background: var(--tier-2-bg); }
+  .seed-row.tier-3, .shop-row.tier-3, .slot.tier-3 { border-color: var(--tier-3); background: var(--tier-3-bg); }
+  .seed-row[class*="tier-"], .shop-row[class*="tier-"] { border-width: 0.8cqw; }
+  .slot[class*="tier-"] { border-width: 0.8cqw; }
+  .tier-tag {
+    display: inline-block; vertical-align: 0.3cqw; margin-left: 1cqw;
+    font: 600 2.4cqw/1 var(--font-body); font-style: normal; letter-spacing: 0.02em;
+    color: #fff; border-radius: 999px; padding: 0.7cqw 1.8cqw;
+  }
+  .tier-1 .tier-tag { background: var(--tier-1); }
+  .tier-2 .tier-tag { background: var(--tier-2); }
+  .tier-3 .tier-tag { background: var(--tier-3); }

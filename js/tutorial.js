@@ -13,6 +13,7 @@ import { duration } from './util.js';
 import * as farm from './farm.js';
 import * as shop from './shop.js';
 import * as coop from './coop.js';
+import * as orders from './orders.js';
 
 export const STEPS = ['intro', 'plant', 'water', 'grow', 'harvest', 'sell', 'feed', 'done'];
 export const TUTORIAL_SEED = 'hat_rau_muong';
@@ -295,4 +296,111 @@ export class TutorialUI {
       if (b.progress >= 1) { clearInterval(this.growTimer); this.h.sound('harvest'); this.event('ripe'); }
     }, 170);
   }
+}
+
+
+// ===== Hướng dẫn trả đơn cho hàng xóm (0.9.4) =====
+// Khi nào bật: lần ĐẦU TIÊN người chơi có đủ hàng để giao một đơn, sau khi đã xong hướng dẫn chính.
+// Đó là lúc tính năng có ý nghĩa: chỉ cần chạm dây phơi rồi bấm "Giao hàng".
+// Không khóa nút nào khác (khác hướng dẫn chính). Chỉ chạy một lần; ai đã tự giao đơn trước đó thì bỏ qua.
+// Bước: notes (chạm dây phơi) → deliver (bấm Giao hàng trong bảng đơn) → thanks (lời cuối, bấm "Đã hiểu") → xong.
+// Bán bớt hàng làm không còn đủ cho đơn nào: hướng dẫn tạm ẩn, có đủ lại thì hiện lại.
+
+const tips = s => s.tips || (s.tips = {});
+
+// Trả về bước đang hiện, hoặc null nếu không hiện. ordersOpen: bảng đơn hàng đang mở.
+export function ordersTipStep(s, ordersOpen) {
+  if (!s.tutorialDone) return null;
+  const t = tips(s);
+  if (t.orders === 'done') return null;
+  if (t.orders === 'thanks') return 'thanks';
+  // Đã tự giao đơn trước khi hướng dẫn kịp hiện: coi như đã biết, không hiện nữa
+  if ((s.orders.delivered || 0) > 0 && t.orders !== 'active') { t.orders = 'done'; return null; }
+  const ready = s.orders.list.some(o => orders.canDeliver(s, o));
+  if (!ready) return null;
+  t.orders = 'active';
+  return ordersOpen ? 'deliver' : 'notes';
+}
+
+// Vừa giao một đơn: nếu hướng dẫn đang hiện thì sang lời cuối, không thì coi như xong
+export function ordersTipDelivered(s, wasShowing) { tips(s).orders = wasShowing ? 'thanks' : 'done'; }
+export function ordersTipFinish(s) { tips(s).orders = 'done'; }
+
+export class OrdersTipUI {
+  // h: { store, ui, scene(), sound(name) }
+  constructor(h) { this.h = h; this.raf = 0; this.step = null; this.spotKey = ''; this.targetEl = null; }
+  get s() { return this.h.store.data; }
+
+  init() {
+    $('tutNext').addEventListener('click', () => {
+      if (this.step !== 'thanks') return;
+      ordersTipFinish(this.s); this.h.store.flush(); this.h.sound('chime'); this.update();
+    });
+  }
+
+  // Gọi mỗi nhịp đồng hồ và mỗi khi túi đồ / đơn hàng đổi
+  update() {
+    const step = ordersTipStep(this.s, isOpen('ordersWrap'));
+    if (step === this.step) return;
+    this.step = step;
+    if (!step) { this.hide(); return; }
+    $('tutWrap').hidden = false;
+    $('tutText').textContent = T['tip_orders_' + step];
+    $('tutNext').hidden = step !== 'thanks';
+    $('tutNext').textContent = T.tip_orders_ok;
+    if (this.h.sound) this.h.sound('open');
+    this.loop();
+  }
+
+  delivered() {
+    const t = tips(this.s).orders;
+    if (t === 'done' || t === 'thanks') return;
+    ordersTipDelivered(this.s, t === 'active');
+    this.h.store.flush();
+    // Đóng bảng đơn hàng để người chơi đọc lời cuối của bà Tư (bảng che hộp thoại)
+    if (t === 'active') setTimeout(() => { if (isOpen('ordersWrap')) this.h.ui.closeWrap($('ordersWrap')); this.update(); }, 1100);
+    this.update();
+  }
+
+  hide() {
+    if (!isActive(this.s)) $('tutWrap').hidden = true;   // không đụng tới hộp thoại của hướng dẫn chính
+    cancelAnimationFrame(this.raf); this.raf = 0;
+    if (this.targetEl) { this.targetEl.classList.remove('tut-target'); this.targetEl = null; }
+    const a = $('tutArrow'); if (a) a.hidden = true;
+    const sc = this.h.scene(); if (sc && this.spotKey) sc.setSpotlight(null);
+    this.spotKey = '';
+  }
+
+  loop() {
+    cancelAnimationFrame(this.raf);
+    const tick = () => {
+      if (!this.step) { this.raf = 0; return; }
+      const el = this.step === 'deliver' ? document.querySelector('#orderList button.primary[data-act="deliver"]') : null;
+      if (el !== this.targetEl) {
+        if (this.targetEl) this.targetEl.classList.remove('tut-target');
+        this.targetEl = el; if (el) el.classList.add('tut-target');
+      }
+      placeArrow(el);
+      const sc = this.h.scene();
+      if (sc) {
+        const spot = this.step === 'notes' && !anySheetOpen() ? { kind: 'notes', arrow: true } : null;
+        const key = JSON.stringify(spot);
+        if (key !== this.spotKey) { this.spotKey = key; sc.setSpotlight(spot); }
+      }
+      this.raf = requestAnimationFrame(tick);
+    };
+    tick();
+  }
+}
+
+// Đặt mũi tên HTML phía trên một nút (ẩn nếu không có nút)
+function placeArrow(el) {
+  const arrow = $('tutArrow');
+  if (!arrow) return;
+  const r = el ? el.getBoundingClientRect() : null;
+  if (!r || r.width <= 0) { arrow.hidden = true; return; }
+  const f = $('frame').getBoundingClientRect();
+  arrow.hidden = false;
+  arrow.style.left = (r.left + r.width / 2 - f.left) + 'px';
+  arrow.style.top = (r.top - f.top) + 'px';
 }

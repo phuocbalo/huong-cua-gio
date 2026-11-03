@@ -28,6 +28,9 @@ export const T = {
   seed_row_info: 'Chín sau {time} · thu {n} lần',
   seed_row_info_once: 'Chín sau {time} · thu 1 lần',
   seed_plant: 'Gieo',
+  tier_1: 'Cơ bản',
+  tier_2: 'Hơi khó',
+  tier_3: 'Lâu',
   seed_none_left: 'Hết hạt',
   planted: 'Đã gieo {crop}. Chín sau khoảng {time} nếu tưới đủ.',
   box_occupied: 'Thùng đã có {crop}, chín sau khoảng {time}.',
@@ -166,6 +169,10 @@ export const T = {
   tut_done: 'Vậy là cháu biết trồng rau, nuôi gà rồi đó. Mỗi ngày nhớ tưới cây, cho gà ăn, nhặt trứng. Có rau tươi thì nhớ phần bà với nghen!',
   tut_next: 'Tiếp',
   tut_start: 'Bắt đầu chơi',
+  tip_orders_notes: 'Ồ, cháu có đủ hàng cho một đơn rồi đó! Hàng xóm ghim giấy đặt hàng trên dây phơi. Chạm vào dây phơi xem thử nhé.',
+  tip_orders_deliver: 'Đơn nào có viền xanh là đủ hàng rồi. Bấm "Giao hàng" để nhận xu và tim thân thiết.',
+  tip_orders_thanks: 'Giỏi lắm! Giao đơn được trả nhiều hơn bán ở tiệm. Giao càng nhiều, càng có thêm hàng xóm ghé hỏi mua đó.',
+  tip_orders_ok: 'Đã hiểu',
   tut_blocked: 'Làm theo lời bà Tư nhé, chạm vào chỗ mũi tên đang chỉ.',
 
   // ----- F23 Quét bụi -----

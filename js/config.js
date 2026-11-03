@@ -1,7 +1,7 @@
 // Bảng dữ liệu của game. Muốn cân bằng lại game thì sửa số ở đây, không cần đụng vào code khác.
 // Đơn vị thời gian là mili giây; dùng các hằng PHUT, GIO cho dễ đọc.
 
-export const APP_VERSION = '0.9.3';
+export const APP_VERSION = '0.9.4';
 
 const PHUT = 60 * 1000;
 const GIO = 60 * PHUT;
@@ -65,16 +65,17 @@ export const STAGES = [
 //   Cơ bản (2–6 phút): rau muống, cải, húng quế
 //   Hơi khó (12–18 phút): dưa leo, ớt
 //   Lâu (30 phút): cà chua
+// tier: nhóm cây 1 cơ bản, 2 hơi khó, 3 lâu — hạt giống hiện trong khung màu theo nhóm (xanh lá, xanh dương, tím)
 // growTime: thời gian từ gieo tới chín khi luôn được tưới
 // harvests: số lần thu (1 = thu xong thùng trống lại)
 // regrowTime: thời gian chín lại sau mỗi lần thu, với cây thu nhiều lần
 export const CROPS = {
-  rau_muong: { growTime: 2 * PHUT,  yield: 3, harvests: 1, regrowTime: 0,         seedPrice: 5,  sellPrice: 4 },
-  cai:       { growTime: 4 * PHUT,  yield: 2, harvests: 1, regrowTime: 0,         seedPrice: 6,  sellPrice: 6 },
-  hung_que:  { growTime: 6 * PHUT,  yield: 3, harvests: 3, regrowTime: 4 * PHUT,  seedPrice: 10, sellPrice: 3 },
-  dua_leo:   { growTime: 12 * PHUT, yield: 2, harvests: 3, regrowTime: 8 * PHUT,  seedPrice: 18, sellPrice: 9 },
-  ot:        { growTime: 18 * PHUT, yield: 4, harvests: 4, regrowTime: 10 * PHUT, seedPrice: 22, sellPrice: 5 },
-  ca_chua:   { growTime: 30 * PHUT, yield: 3, harvests: 4, regrowTime: 15 * PHUT, seedPrice: 30, sellPrice: 10 }
+  rau_muong: { tier: 1, growTime: 2 * PHUT,  yield: 3, harvests: 1, regrowTime: 0,         seedPrice: 5,  sellPrice: 4 },
+  cai:       { tier: 1, growTime: 4 * PHUT,  yield: 2, harvests: 1, regrowTime: 0,         seedPrice: 6,  sellPrice: 6 },
+  hung_que:  { tier: 1, growTime: 6 * PHUT,  yield: 3, harvests: 3, regrowTime: 4 * PHUT,  seedPrice: 10, sellPrice: 3 },
+  dua_leo:   { tier: 2, growTime: 12 * PHUT, yield: 2, harvests: 3, regrowTime: 8 * PHUT,  seedPrice: 18, sellPrice: 9 },
+  ot:        { tier: 2, growTime: 18 * PHUT, yield: 4, harvests: 4, regrowTime: 10 * PHUT, seedPrice: 22, sellPrice: 5 },
+  ca_chua:   { tier: 3, growTime: 30 * PHUT, yield: 3, harvests: 4, regrowTime: 15 * PHUT, seedPrice: 30, sellPrice: 10 }
 };
 
 // ---------- Vật phẩm trong kho ----------
