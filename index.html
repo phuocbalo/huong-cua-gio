@@ -4,6 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Sân Thượng Xanh</title>
+<meta name="theme-color" content="#262c40">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Sân Thượng">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700&family=Be+Vietnam+Pro:wght@400;500;600&display=swap">
@@ -37,7 +45,8 @@
     height: 100%;
     display: grid;
     place-items: center;
-    padding-block: 12px;
+    padding-top: max(12px, env(safe-area-inset-top, 0px));
+    padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
     padding-left: max(16px, env(safe-area-inset-left, 0px));
     padding-right: max(16px, env(safe-area-inset-right, 0px));
     box-sizing: border-box;
@@ -189,7 +198,7 @@
         <svg id="periodIcon" viewBox="0 0 32 32" aria-hidden="true"></svg>
         <span><span id="clock">--:--</span> <span class="sub" id="period">Sáng</span></span>
       </div>
-      <button class="tag" id="infoBtn" type="button" aria-haspopup="dialog" aria-label="Thông tin bản thử">BẢN THỬ 0.1</button>
+      <button class="tag" id="infoBtn" type="button" aria-haspopup="dialog" aria-label="Thông tin bản thử">BẢN THỬ 0.2</button>
       <div class="pill" aria-label="Số xu">
         <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="12" fill="#f2b544" stroke="#3b2f2a" stroke-width="2.5"/><circle cx="16" cy="16" r="7" fill="none" stroke="#c98a1c" stroke-width="2"/></svg>
         <span id="coins">120</span>
@@ -222,7 +231,10 @@
       <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
         <h2 id="sheetTitle">Thông tin bản thử</h2>
         <dl>
-          <dt>Phiên bản</dt><dd>0.1 · khung chặng 0</dd>
+          <dt>Phiên bản</dt><dd id="iVer">0.2 · PWA chặng 0</dd>
+          <dt>Mở dạng</dt><dd id="iMode">–</dd>
+          <dt>Chơi offline</dt><dd id="iOffline">Đang chuẩn bị…</dd>
+          <dt>Mạng</dt><dd id="iNet">–</dd>
           <dt>Kích thước khung</dt><dd id="iSize">–</dd>
           <dt>Màn hình thiết bị</dt><dd id="iScreen">–</dd>
           <dt>Mật độ điểm ảnh</dt><dd id="iDpr">–</dd>
@@ -244,7 +256,7 @@
   </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.80.1/phaser.min.js"></script>
+<script src="vendor/phaser-3.80.1.min.js"></script>
 <script>
 (() => {
   // ---------- Kích thước logic của cảnh ----------
@@ -623,6 +635,37 @@
   window.addEventListener('resize', fitFrame);
   window.addEventListener('orientationchange', () => setTimeout(fitFrame, 200));
   setInterval(tick, 20000);
+
+  // ---------- PWA: bộ nhớ offline và trạng thái cho bảng thông tin ----------
+  const isStandalone = () => (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
+  let offlineState = 'Đang chuẩn bị…';
+  function updatePwaInfo() {
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    set('iMode', isStandalone() ? 'App trên màn hình chính' : 'Trình duyệt');
+    set('iOffline', offlineState);
+    set('iNet', navigator.onLine ? 'Có mạng' : 'Mất mạng');
+  }
+  window.addEventListener('online', () => { updatePwaInfo(); });
+  window.addEventListener('offline', () => { updatePwaInfo(); toast('Đã mất mạng. Game vẫn chơi bình thường.'); });
+  document.getElementById('infoBtn').addEventListener('click', updatePwaInfo);
+  setInterval(updatePwaInfo, 1000);
+
+  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+    navigator.serviceWorker.register('sw.js').then(reg => {
+      const firstInstall = !navigator.serviceWorker.controller;
+      return navigator.serviceWorker.ready.then(ready => {
+        offlineState = 'Sẵn sàng';
+        if (firstInstall) toast('Đã lưu game vào máy. Lần sau tắt mạng vẫn chơi được.');
+        const ch = new MessageChannel();
+        ch.port1.onmessage = e => { const el = document.getElementById('iVer'); if (el) el.textContent = e.data + ' · PWA chặng 0'; };
+        if (ready.active) ready.active.postMessage('version', [ch.port2]);
+        updatePwaInfo();
+      });
+    }).catch(() => { offlineState = 'Không bật được'; updatePwaInfo(); });
+  } else {
+    offlineState = 'Trình duyệt không hỗ trợ';
+  }
+  updatePwaInfo();
 })();
 </script>
 </body>
