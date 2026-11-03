@@ -277,7 +277,7 @@ async function boot() {
     const r = farm.water(b, now());
     if (r.ok && scene) scene.waterFx(i);
     if (r.ok && !quiet) sound('water');
-    if (r.ok && !quiet) ui.toast(fmt(T.watered_one, { crop: cropName(b.crop) }));
+    if (r.ok && scene) scene.floatAtBox(i, T.float_watered);
     return r.ok;
   }
 
@@ -294,7 +294,7 @@ async function boot() {
       const tg = ui.bagTarget();
       if (scene) scene.harvestFx(i, CROP_COLOR[crop], r.qty, tg.x, tg.y);
       sound('harvest');
-      ui.toast(fmt(T.harvested, { qty: r.qty, item: T['item_' + crop].toLowerCase() }) + (s.boxes[i].crop ? '' : ' ' + T.harvest_last));
+      // Số lượng đã hiện bằng chữ "+n" bay về túi đồ, không cần thông báo to
       store.flush();
       tutor.event('harvest', i);
     } else if (farm.isDry(b, t)) {
@@ -302,9 +302,7 @@ async function boot() {
       store.flush();
       tutor.event('water', i);
     } else {
-      const msg = b.regrowing ? T.box_regrowing : T.box_occupied;
-      const name = T['crop_' + b.crop];
-      ui.toast(fmt(msg, { crop: b.regrowing ? name : cropName(b.crop), time: duration(farm.timeLeft(b, t)) }));
+      if (scene) scene.floatAtBox(i, fmt(b.regrowing ? T.float_regrow : T.float_left, { time: duration(farm.timeLeft(b, t)) }));
     }
     renderBoxes();
     ui.refreshOpenSheets();
@@ -324,7 +322,7 @@ async function boot() {
     const crop = ITEMS[seedId].crop;
     if (scene) scene.plantFx(i);
     sound('plant');
-    ui.toast(fmt(T.planted, { crop: cropName(crop), time: duration(farm.timeLeft({ ...s.boxes[i], wateredUntil: Infinity }, now())) }));
+    if (scene) scene.floatAtBox(i, fmt(T.float_planted, { time: duration(farm.timeLeft({ ...s.boxes[i], wateredUntil: Infinity }, now())) }));
     store.flush();
     renderBoxes();
     tutor.event('plant', i);
@@ -336,7 +334,7 @@ async function boot() {
     let n = 0, last = null;
     state().boxes.forEach((b, i) => { farm.update(b, t); if (farm.isDry(b, t) && waterBox(i, true)) { n++; last = b.crop; } });
     if (n === 0) ui.toast(T.water_nothing);
-    else { sound('water'); ui.toast(n === 1 ? fmt(T.watered_one, { crop: cropName(last) }) : fmt(T.watered_many, { n })); }
+    else sound('water');   // mỗi thùng vừa tưới có chữ nổi "Đã tưới" riêng
     if (n) store.flush();
     renderBoxes();
     if (n) tutor.event('water', 'all');

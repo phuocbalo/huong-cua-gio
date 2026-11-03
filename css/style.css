@@ -101,19 +101,20 @@
 
   /* ---------- Thông báo nhẹ ---------- */
   .toast {
-    position: absolute; left: 50%; bottom: 25cqw;
-    transform: translate(-50%, 2cqw);
-    width: max-content; max-width: 84cqw;
-    background: var(--paper);
-    border: 0.8cqw solid var(--ink);
-    border-radius: 4cqw;
-    padding: 2.4cqw 3.6cqw;
-    font: 500 3.5cqw/1.4 var(--font-body);
+    /* Thông báo gọn (0.9.5): viên nhỏ ngay trên thanh công cụ, chữ nhỏ, tự ẩn nhanh */
+    position: absolute; left: 50%; bottom: 22.5cqw;
+    transform: translate(-50%, 1.5cqw);
+    width: max-content; max-width: 78cqw;
+    background: rgba(255, 248, 236, 0.97);
+    border: 0.6cqw solid var(--ink);
+    border-radius: 999px;
+    padding: 1.4cqw 3.4cqw;
+    font: 500 3cqw/1.35 var(--font-body);
     text-align: center;
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.2s ease, transform 0.2s ease;
-    box-shadow: 0 1.2cqw 0 rgba(59, 47, 42, 0.25);
+    box-shadow: 0 0.8cqw 0 rgba(59, 47, 42, 0.2);
   }
   .toast.show { opacity: 1; transform: translate(-50%, 0); }
 

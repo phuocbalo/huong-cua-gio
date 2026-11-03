@@ -130,7 +130,7 @@ export class UI {
     el.textContent = msg;
     el.classList.add('show');
     clearTimeout(this.toastTimer);
-    this.toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
+    this.toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
   }
 
   // ----- Ngày và đêm (F08) -----

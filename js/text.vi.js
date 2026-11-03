@@ -39,6 +39,11 @@ export const T = {
 
   // ----- F02 Tưới nước -----
   watered_one: 'Đã tưới {crop}.',
+  // Chữ nổi nhỏ ngay trên thùng (0.9.5), thay cho thông báo to ở dưới
+  float_watered: 'Đã tưới',
+  float_planted: 'Chín sau {time}',
+  float_left: 'Chín sau {time}',
+  float_regrow: 'Ra lứa mới sau {time}',
   watered_many: 'Đã tưới {n} cây.',
   water_nothing: 'Không có cây nào cần tưới lúc này.',
 

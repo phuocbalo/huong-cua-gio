@@ -707,6 +707,24 @@ class Rooftop extends Phaser.Scene {
     this.flyToBag(p.x, p.y, 0xfbf3e4, qty, tx, ty);
   }
 
+  // Chữ nổi nhỏ trên thùng: một nhãn giấy nhỏ hiện lên, nổi nhẹ rồi mờ dần (không che giao diện)
+  floatAtBox(i, msg) {
+    const c = this.boxes[i];
+    if (!c) return;
+    // Thùng này đang có nhãn cũ thì bỏ nhãn cũ, tránh chồng chữ khi chạm liên tục
+    if (c.floatLabel) { c.floatLabel.destroy(); c.floatLabel = null; }
+    const t = this.add.text(0, 0, msg, { fontFamily: '"Be Vietnam Pro", system-ui, sans-serif', fontSize: '10px', fontStyle: '600', color: '#3b2f2a' }).setOrigin(0.5).setResolution(3);
+    const w = t.width + 12, h = t.height + 5;
+    const g = this.add.graphics();
+    g.fillStyle(0xfff8ec, 0.96); g.fillRoundedRect(-w / 2, -h / 2, w, h, h / 2);
+    g.lineStyle(1.6, INK, 1); g.strokeRoundedRect(-w / 2, -h / 2, w, h, h / 2);
+    const y = c.y - 46;
+    const lbl = this.add.container(c.x, y, [g, t]).setAlpha(0);
+    c.floatLabel = lbl;
+    this.tweens.add({ targets: lbl, alpha: 1, y: y - 6, duration: 180, ease: 'Quad.easeOut' });
+    this.tweens.add({ targets: lbl, alpha: 0, y: y - 18, delay: 1500, duration: 450, ease: 'Quad.easeIn', onComplete: () => { lbl.destroy(); if (c.floatLabel === lbl) c.floatLabel = null; } });
+  }
+
   // Vật phẩm bay về nút túi đồ, kèm chữ "+n"
   flyToBag(x, y, col, qty, tx, ty) {
     const label = this.add.text(x, y - 20, '+' + qty, { fontFamily: '"Baloo 2", system-ui, sans-serif', fontSize: '22px', fontStyle: '700', color: '#fff8ec', stroke: '#3b2f2a', strokeThickness: 5 }).setOrigin(0.5);

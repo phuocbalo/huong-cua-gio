@@ -134,6 +134,14 @@ Trong bảng "Bản thử" có "Thêm 10 xu" nếu cần thêm xu để thử mu
 - [ ] **I-25** Đi hết hướng dẫn: ô "+ 40 xu" hiện ra ngay, chạm vào mở bảng mua thùng.
 - [ ] **I-25** Cài đặt → "Xem lại hướng dẫn": ô "+" ẩn đi; xong hướng dẫn thì hiện lại.
 
+## Kiểm thử bản 0.9.5 – Thông báo gọn hơn
+
+- [ ] Gieo hạt: nhãn nhỏ "Chín sau …" nổi lên ngay trên thùng rồi mờ dần (khoảng 2 giây), không còn thông báo to bên dưới.
+- [ ] Tưới (chạm cây hoặc bấm "Bình tưới"): mỗi thùng vừa tưới có nhãn "Đã tưới".
+- [ ] Chạm cây đang lớn: nhãn "Chín sau …" (cây thu nhiều lần đang ra lứa mới: "Ra lứa mới sau …"). Chạm liên tục không chồng chữ.
+- [ ] Thu hoạch: chỉ còn chữ "+n" bay về túi đồ, không có thông báo to.
+- [ ] Các thông báo còn lại (bán hàng, túi đầy, bị chặn…) là viên nhỏ ngay trên thanh công cụ, chữ nhỏ, tự ẩn sau khoảng 2 giây.
+
 ## Kiểm thử bản 0.9.4 – Nút Đóng, nhóm hạt giống, hướng dẫn trả đơn
 
 - [ ] **Nút Đóng luôn hiện:** mở Tiệm (tab Mua) và Đơn hàng hàng xóm: nút "Đóng" nằm sẵn ở đáy bảng, không phải cuộn xuống. Cuộn danh sách: chữ trượt phía sau nút, không lộ ra bên dưới. (Áp dụng cho mọi bảng: chọn hạt, túi đồ, cài đặt…)
