@@ -21,7 +21,6 @@ export const T = {
   tool_water: 'Bình tưới',
   tool_shop: 'Tiệm',
   tool_settings: 'Cài đặt',
-  soon_settings: 'Cài đặt sẽ có ở chặng 5 (F21).',
 
   // ----- F01 Gieo hạt -----
   seed_title: 'Gieo vào thùng xốp',
@@ -128,6 +127,48 @@ export const T = {
   buybox_later: 'Để sau',
   box_bought: 'Có thùng xốp mới! Chạm vào để gieo hạt.',
 
+  // ----- F21 Cài đặt -----
+  settings_title: 'Cài đặt',
+  settings_sound: 'Âm thanh',
+  settings_music: 'Nhạc nền',
+  settings_sfx: 'Hiệu ứng',
+  settings_sound_note: 'Nhạc và tiếng phố bắt đầu sau lần chạm đầu tiên vào game.',
+  settings_progress: 'Tiến độ',
+  settings_export: 'Xuất file lưu',
+  settings_import: 'Nhập file lưu',
+  settings_backup_note: 'Xuất file để chuyển sang máy khác, hoặc phòng khi trình duyệt xóa dữ liệu.',
+  settings_replay: 'Xem lại hướng dẫn',
+  settings_reset: 'Xóa dữ liệu, chơi lại',
+  settings_reset_confirm: 'Bấm lần nữa để xóa hẳn',
+  settings_stats: 'Thống kê',
+  settings_stats_line: 'Đã chơi {days} ngày · {sessions} lần mở · tổng {time}',
+  settings_version: 'Sân Thượng Xanh · phiên bản {v}',
+  exported: 'Đã tạo file lưu. Giữ file này để nhập lại khi cần.',
+  import_info: 'File lưu có {coins} xu, {boxes} thùng xốp, lưu lúc {time}. Thay toàn bộ tiến độ hiện tại bằng file này?',
+  import_apply: 'Thay tiến độ',
+  import_cancel: 'Hủy',
+  import_not_json: 'File này không đọc được. Hãy chọn file .json đã xuất từ game.',
+  import_not_save: 'File này không phải file lưu của Sân Thượng Xanh.',
+  import_newer: 'File này được lưu từ bản game mới hơn. Hãy mở lại game khi có mạng để cập nhật rồi nhập lại.',
+  imported: 'Đã nhập file lưu.',
+  test_on: 'Đã bật chế độ kiểm thử. Nhãn "Bản thử" hiện trên thanh trên.',
+  test_off: 'Đã tắt chế độ kiểm thử.',
+
+  // ----- F19 Mở đầu cùng bà Tư -----
+  tut_name: 'Bà Tư',
+  tut_intro: 'Chào cháu! Sân thượng này bỏ không lâu rồi. Bà để lại mấy thùng xốp với ít hạt giống, cháu trồng rau thử nhé.',
+  tut_plant: 'Chạm vào thùng xốp đang sáng, rồi chọn hạt rau muống để gieo.',
+  tut_water: 'Đất còn khô đó. Bấm "Bình tưới" bên dưới, hoặc chạm vào cây để tưới.',
+  tut_grow: 'Rau muống cần khoảng 30 phút mới chín. Lần đầu bà giúp cháu cho lớn nhanh nhé!',
+  tut_harvest: 'Rau chín rồi! Chạm vào thùng để thu hoạch.',
+  tut_sell: 'Giỏi lắm. Giờ bấm "Tiệm", mang rau xuống bán cho anh Bảo lấy tiền mua hạt mới.',
+  tut_done: 'Vậy là cháu biết trồng rau rồi đó. Mỗi ngày nhớ tưới cây, cho gà ăn. Có rau tươi thì nhớ phần bà với nghen!',
+  tut_next: 'Tiếp',
+  tut_start: 'Bắt đầu chơi',
+  tut_skip: 'Bỏ qua hướng dẫn',
+  tut_blocked: 'Làm theo lời bà Tư nhé, hoặc bấm "Bỏ qua hướng dẫn".',
+  tut_skipped: 'Đã bỏ qua hướng dẫn. Có thể xem lại trong Cài đặt.',
+
   // ----- F23 Quét bụi -----
   dust_swept: '+{n} xu. Sân sạch hơn rồi.',
   dust_clean: '+{n} xu. Sân thượng sạch bóng!',
@@ -221,7 +262,7 @@ export const T = {
   skipped: 'Đã tua nhanh {time}.',
   seeds_added: 'Đã thêm hạt giống vào túi.',
   seeds_full: 'Túi đồ không đủ chỗ cho tất cả hạt giống.',
-  info_note: 'Hình trong bản này là hình tạm. Cài đặt sẽ được lắp ở chặng 5.',
+  info_note: 'Hình trong bản này là hình tạm. Bảng này chỉ hiện ở chế độ kiểm thử.',
   close: 'Đóng',
 
   // ----- Tên cây và vật phẩm -----

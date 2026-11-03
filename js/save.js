@@ -10,7 +10,7 @@ import { newDust } from './dust.js';
 import { newOrders, newFriends, syncSeen } from './orders.js';
 import * as inv from './inventory.js';
 
-export const SCHEMA_VERSION = 5;
+export const SCHEMA_VERSION = 6;
 
 const DB_NAME = 'san-thuong-xanh';
 const STORE = 'saves';
@@ -40,7 +40,9 @@ export function defaultSave(now = Date.now()) {
     seen: [],
     bagUpgrades: 0,
     tutorialDone: false,
-    settings: { music: 0.6, sfx: 0.8 }
+    tutorial: { step: 'intro', box: null },
+    settings: { music: 0.6, sfx: 0.8, testMode: false },
+    stats: { days: [], sessions: 0, playMs: 0 }
   };
 }
 
@@ -66,8 +68,36 @@ const MIGRATIONS = {
     const orders = { ...s.orders, delivered: (s.orders && s.orders.delivered) || 0,
       list: ((s.orders && s.orders.list) || []).map(o => ({ ...o, createdAt: o.createdAt ?? now })) };
     return { ...s, schemaVersion: 5, orders, friends: { ...newFriends(), ...(s.friends || {}) } };
-  }
+  },
+  // 5 → 6 (bản 0.9, chặng 5): cài đặt, hướng dẫn bà Tư, thống kê chơi thử.
+  // Bản lưu cũ đều là của người làm game và người kiểm thử: bỏ qua hướng dẫn, bật sẵn công cụ kiểm thử.
+  5: s => ({
+    ...s, schemaVersion: 6,
+    tutorialDone: true, tutorial: { step: 'done', box: null },
+    settings: { music: 0.6, sfx: 0.8, ...(s.settings || {}), testMode: true },
+    stats: { days: [], sessions: 0, playMs: 0 }
+  })
 };
+
+// ----- F21 Nhập file lưu (N04) -----
+// Kiểm tra file người chơi chọn: đúng là bản lưu của game, không mới hơn bản game đang chạy.
+// Trả về { ok, data, summary } hoặc { ok: false, reason: 'not_json' | 'not_save' | 'newer' }
+export function validateImport(text) {
+  let obj;
+  try { obj = JSON.parse(text); } catch (e) { return { ok: false, reason: 'not_json' }; }
+  const looksLikeSave = obj && typeof obj === 'object' && obj.app === 'san-thuong-xanh' && obj.save && typeof obj.save === 'object';
+  const s = looksLikeSave ? obj.save : null;
+  if (!s || !Number.isInteger(s.schemaVersion) || !s.inventory || !Array.isArray(s.boxes) || !s.clock) return { ok: false, reason: 'not_save' };
+  if (s.schemaVersion > SCHEMA_VERSION) return { ok: false, reason: 'newer' };
+  let data;
+  try { data = migrate(JSON.parse(JSON.stringify(s))); } catch (e) { return { ok: false, reason: 'not_save' }; }
+  return { ok: true, data, summary: { coins: data.coins, boxes: data.boxes.length, savedAt: data.savedAt || obj.exportedAt || 0 } };
+}
+
+// Gói bản lưu thành nội dung file để người chơi tải về
+export function exportText(data, now = Date.now()) {
+  return JSON.stringify({ app: 'san-thuong-xanh', exportedAt: now, save: data }, null, 1);
+}
 
 export function migrate(s) {
   let cur = s;
@@ -154,6 +184,15 @@ export class SaveStore {
       this.emit('failed');
       return false;
     }
+  }
+
+  // Thay toàn bộ bằng bản lưu nhập từ file (đã qua validateImport)
+  async replace(data) {
+    this.data = data;
+    // Coi như vừa mở game lúc này, để không tính khoảng thời gian từ lúc xuất file là "đi vắng"
+    this.data.clock.lastSeen = Date.now();
+    await this.flush();
+    return this.data;
   }
 
   // Xóa sạch và bắt đầu lại

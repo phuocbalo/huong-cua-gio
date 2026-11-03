@@ -65,6 +65,30 @@ class Rooftop extends Phaser.Scene {
     hooks.onReady(this);
   }
 
+  // ----- F19 Vòng sáng chỉ chỗ cần chạm trong hướng dẫn -----
+  setSpotlight(index) {
+    if (!this.spot) {
+      this.spot = this.add.container(0, 0).setVisible(false);
+      const g = this.add.graphics();
+      g.lineStyle(4, 0xf2b544, 1); g.strokeEllipse(0, 0, 92, 70);
+      g.lineStyle(10, 0xf2b544, 0.25); g.strokeEllipse(0, 0, 98, 76);
+      // mũi tên nhỏ chỉ xuống
+      const arrow = this.add.graphics();
+      arrow.fillStyle(0xf2b544, 1); arrow.lineStyle(2.5, INK, 1);
+      const pts = [{ x: -9, y: -64 }, { x: 9, y: -64 }, { x: 9, y: -54 }, { x: 15, y: -54 }, { x: 0, y: -40 }, { x: -15, y: -54 }, { x: -9, y: -54 }];
+      arrow.fillPoints(pts, true); arrow.strokePoints(pts, true);
+      this.spot.add([g, arrow]);
+      this.children.moveBelow(this.spot, this.frontWall);
+      if (!reduceMotion) {
+        this.tweens.add({ targets: g, alpha: 0.45, duration: 650, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+        this.tweens.add({ targets: arrow, y: -8, duration: 500, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+      }
+    }
+    const c = index >= 0 ? this.boxes[index] : null;
+    this.spot.setVisible(!!c);
+    if (c) { this.spot.setPosition(c.x, c.y - 4); this.children.bringToTop(this.spot); this.children.moveBelow(this.spot, this.frontWall); }
+  }
+
   // ----- F14 Ô trống mua thêm thùng -----
   // index: vị trí trong BOX_SLOTS (bằng số thùng đang có), -1 để ẩn; price: giá hiện trên ô
   setBuySlot(index, price) {

@@ -23,9 +23,12 @@ Bản chơi thử: https://phuocbalo.github.io/huong-cua-gio/
 | `js/shop.js` | Luật tiệm anh Bảo: giá mua bán, mua thùng, nâng cấp túi đồ |
 | `js/orders.js` | Luật đơn hàng hàng xóm: 3 đơn, giao hàng, đổi đơn, tự đổi sau 3 ngày, 7 hàng xóm mở dần, điểm thân thiết |
 | `js/ui-economy.js` | Giao diện tiệm, bảng đơn hàng, xác nhận mua thùng |
+| `js/tutorial.js` | Hướng dẫn mở đầu cùng bà Tư: gieo → tưới → thu → bán, bỏ qua được, mở lại giữa chừng vẫn tiếp tục |
+| `js/audio.js` | Nhạc lo-fi và tiếng động tạo bằng code (không có file âm thanh), đổi nhạc ngày/đêm |
+| `js/ui-settings.js` | Cài đặt: âm lượng, xuất/nhập file lưu, xem lại hướng dẫn, xóa dữ liệu, thống kê |
 | `js/daylight.js` | Màu trời, phố, đèn cho từng giờ trong ngày; chuyển dần giữa các khung giờ |
 | `js/scene.js` | Cảnh sân thượng vẽ bằng Phaser (hình tạm) |
-| `tests/` | Kiểm thử luật chơi: `node tests/farm.test.mjs`, `node tests/daylight.test.mjs`, `node tests/coop.test.mjs`, `node tests/dust.test.mjs`, `node tests/economy.test.mjs` |
+| `tests/` | Kiểm thử luật chơi: `node tests/farm.test.mjs`, `node tests/daylight.test.mjs`, `node tests/coop.test.mjs`, `node tests/dust.test.mjs`, `node tests/economy.test.mjs`, `node tests/settings.test.mjs`, `node tests/tutorial.test.mjs` |
 | `js/ui.js` | Điều khiển giao diện HTML |
 | `js/pwa.js` | Bật chơi offline và theo dõi trạng thái |
 | `manifest.webmanifest` | Khai báo PWA: tên app, biểu tượng, mở toàn màn hình, màn dọc |
@@ -124,3 +127,31 @@ Trong bảng "Bản thử" có "Thêm 10 xu" nếu cần thêm xu để thử mu
 
 - [ ] **F12** Bấm "Tua tới sáng mai" tới khi đơn quá hạn: sau thông báo tua khoảng 2 giây hiện "… đã mua ngoài chợ" (hoặc "N đơn cũ đã được thay…").
 - [ ] **F12** Sau đó bấm "Giả lập vắng 8 giờ": bảng đi vắng **không** còn dòng "đơn cũ quá hạn" của lần tua trước.
+
+## Kiểm thử chặng 5 – Hoàn thiện (bản 0.9.0)
+
+Công cụ thử (bảng "Bản thử", tua giờ…) giờ **ẩn với người chơi mới**. Bật lại bằng một trong hai cách:
+mở link có thêm `?test=1`, hoặc vào Cài đặt và chạm 5 lần liền vào dòng "phiên bản 0.9.0". Bản lưu cũ của bạn tự bật sẵn.
+
+**F19 Hướng dẫn** (thử bằng cửa sổ ẩn danh hoặc sau khi Xóa dữ liệu)
+- [ ] Mở game lần đầu: bà Tư chào, có nút "Tiếp" và "Bỏ qua hướng dẫn".
+- [ ] Bấm Tiếp: một thùng sáng lên có mũi tên. Chạm chuồng gà hay tiệm: bị chặn, có lời nhắc.
+- [ ] Gieo rau muống → nút "Bình tưới" nhấp nháy → tưới → rau lớn nhanh trong khoảng 3 giây.
+- [ ] Thu hoạch → nút "Tiệm" nhấp nháy → bán 1 bó → bà Tư khen → "Bắt đầu chơi".
+- [ ] Đóng game giữa chừng rồi mở lại: tiếp tục đúng bước.
+- [ ] Bấm "Bỏ qua hướng dẫn": chơi tự do ngay. Cài đặt → "Xem lại hướng dẫn" chạy lại từ đầu.
+
+**F20 Âm thanh**
+- [ ] Chạm lần đầu: nhạc lo-fi nhẹ, tiếng xe máy, chim sẻ (ngày); 18:30–5:00 nhạc chậm hơn, có tiếng dế.
+- [ ] Mỗi thao tác có tiếng riêng: gieo, tưới, thu, bán (tiếng xu), cho gà ăn, quét bụi, bị chặn.
+- [ ] Chuyển sang app khác: nhạc tắt; quay lại: nhạc chạy tiếp.
+
+**F21 Cài đặt và N04 Sao lưu**
+- [ ] Kéo thanh Nhạc nền / Hiệu ứng: âm lượng đổi ngay, mở lại game vẫn giữ.
+- [ ] "Xuất file lưu": điện thoại mở bảng chia sẻ (lưu vào Tệp/Zalo), máy tính tải file `.json`.
+- [ ] "Nhập file lưu" chọn file vừa xuất: hiện số xu, số thùng, giờ lưu và hỏi lại → Đồng ý → game tải lại đúng tiến độ.
+- [ ] Nhập file linh tinh (không phải file lưu): báo lỗi, không mất gì.
+- [ ] "Xóa dữ liệu": bấm lần 1 đổi chữ thành "Bấm lần nữa để xóa hẳn", bấm lần 2 trong 4 giây mới xóa.
+- [ ] Thống kê hiện số ngày đã chơi, số lần mở, tổng thời gian.
+
+**N05 Dung lượng**: lần đầu tải khoảng 420 KB (đã nén), gồm cả Phaser. Sau đó chơi offline.

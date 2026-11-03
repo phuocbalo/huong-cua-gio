@@ -19,6 +19,9 @@ import * as orders from './orders.js';
 import { EconomyUI, unitOf, nounOf } from './ui-economy.js';
 import { MAX_BOXES } from './config.js';
 import { LAY_DELAY } from './config.js';
+import { AudioEngine } from './audio.js';
+import { SettingsUI } from './ui-settings.js';
+import { TutorialUI, restart as restartTutorial } from './tutorial.js';
 
 const AWAY_NOTICE_MS = 60000;         // vắng từ 1 phút: lời chào ngắn
 const AWAY_SUMMARY_MS = 5 * 60000;    // vắng từ 5 phút và có thay đổi: bảng "Trong lúc bạn đi vắng"
@@ -27,6 +30,22 @@ async function boot() {
   const store = new SaveStore();
   await store.load();
   const state = () => store.data;   // store.reset() thay cả đối tượng, nên luôn đọc qua hàm này
+
+  // Chế độ kiểm thử: bật bằng ?test=1 trên đường dẫn, hoặc chạm 5 lần vào số phiên bản trong Cài đặt
+  if (/[?&]test=1\b/.test(location.search)) state().settings.testMode = true;
+
+  // Thống kê chơi thử: số ngày đã mở game (theo ngày thật), số lần mở, tổng thời gian chơi
+  const st = state().stats || (state().stats = { days: [], sessions: 0, playMs: 0 });
+  const today = new Date().toLocaleDateString('sv-SE');
+  st.sessions += 1;
+  if (!st.days.includes(today)) st.days = st.days.concat(today).slice(-400);
+
+  // Âm thanh: bật ở lần chạm đầu tiên (trình duyệt không cho phát tiếng trước đó)
+  const audio = new AudioEngine(state().settings);
+  const unlockAudio = () => audio.unlock();
+  document.addEventListener('pointerdown', unlockAudio, { capture: true });
+  document.addEventListener('keydown', unlockAudio, { capture: true });
+  const sound = name => audio.play(name);
 
   const clock = new GameClock(store);
   const pwa = new Pwa();
@@ -100,9 +119,11 @@ async function boot() {
     const r = coop.feed(state(), now());
     if (r.ok) {
       if (scene) scene.feedFx();
+      sound('feed');
       ui.toast(fmt(T.coop_fed, { time: duration(LAY_DELAY) }));
       store.flush();
     } else if (r.reason === 'no_feed') {
+      sound('deny');
       ui.toast(T.coop_no_feed);
     } else {
       const st = coop.status(state(), now());
@@ -116,9 +137,11 @@ async function boot() {
     if (r.ok) {
       const tg = ui.bagTarget();
       if (scene) scene.eggsFx(r.qty, tg.x, tg.y);
+      sound('egg');
       ui.toast(fmt(T.eggs_collected, { n: r.qty }));
       store.flush();
     } else if (r.reason === 'full') {
+      sound('deny');
       ui.toast(T.eggs_full);
     } else {
       ui.toast(coopStatusText('coop_empty_'));
@@ -134,7 +157,8 @@ async function boot() {
     if (!r.ok) return;
     const tg = ui.coinTarget();
     if (scene) scene.sweepFx(spot, r.reward, tg.x, tg.y);
-    setTimeout(() => ui.refreshCoins(true), 900);
+    sound('sweep');
+    setTimeout(() => { ui.refreshCoins(true); sound('coin'); }, 900);
     ui.toast(fmt(r.clean ? T.dust_clean : T.dust_swept, { n: r.reward }));
     store.flush();
     renderDust();
@@ -191,13 +215,16 @@ async function boot() {
       if (!r.ok) return;
       ui.toast(fmt(T.sold, { coins: r.coins, qty, unit: unitOf(id), noun: nounOf(id) }));
       eco.say(pickLine(T.shop_after_sell));
+      sound('coin');
       afterTrade();
+      tutor.event('sell');
     },
     onBuy(id, qty) {
       const r = shop.buy(state(), id, qty);
       if (!r.ok) return;
       ui.toast(fmt(T.bought, { coins: r.cost, qty, unit: unitOf(id), noun: nounOf(id) }));
       eco.say(pickLine(T.shop_after_buy));
+      sound('buy');
       if (syncOrders()) renderOrders();
       afterTrade();
     },
@@ -205,6 +232,7 @@ async function boot() {
       const r = shop.buyBagUpgrade(state());
       if (!r.ok) return;
       ui.toast(fmt(T.bag_upgraded, { slots: r.slots }));
+      sound('buy');
       afterTrade();
     },
     onDeliver(id) {
@@ -212,7 +240,8 @@ async function boot() {
       if (!r.ok) return;
       const o = r.order;
       ui.toast(fmt(T.delivered, { name: T['name_' + o.from], coins: o.coins, hearts: o.hearts }));
-      if (r.met.length) setTimeout(() => ui.toast(T['met_' + r.met[0]]), 2600);
+      sound('coin');
+      if (r.met.length) setTimeout(() => { ui.toast(T['met_' + r.met[0]]); sound('chime'); }, 2600);
       afterTrade();
     },
     onSkipOrder(id) {
@@ -224,6 +253,7 @@ async function boot() {
       const r = shop.buyBox(state());
       if (!r.ok) return;
       if (scene) scene.addBox(r.index);
+      sound('buy');
       ui.toast(T.box_bought);
       renderBoxes();
       afterTrade();
@@ -235,26 +265,31 @@ async function boot() {
     const b = state().boxes[i];
     const r = farm.water(b, now());
     if (r.ok && scene) scene.waterFx(i);
+    if (r.ok && !quiet) sound('water');
     if (r.ok && !quiet) ui.toast(fmt(T.watered_one, { crop: cropName(b.crop) }));
     return r.ok;
   }
 
   function onTapBox(i) {
     const s = state(), b = s.boxes[i], t = now();
+    if (!tutor.allows('tapBox', i)) return;
     farm.update(b, t);
-    if (!b.crop) { ui.openSeedPicker(i); return; }
+    if (!b.crop) { sound('open'); ui.openSeedPicker(i); return; }
 
     if (farm.isRipe(b)) {
       const crop = b.crop;
       const r = farm.harvest(s, i, t);
-      if (!r.ok) { ui.toast(T.harvest_full); return; }
+      if (!r.ok) { sound('deny'); ui.toast(T.harvest_full); return; }
       const tg = ui.bagTarget();
       if (scene) scene.harvestFx(i, CROP_COLOR[crop], r.qty, tg.x, tg.y);
+      sound('harvest');
       ui.toast(fmt(T.harvested, { qty: r.qty, item: T['item_' + crop].toLowerCase() }) + (s.boxes[i].crop ? '' : ' ' + T.harvest_last));
       store.flush();
+      tutor.event('harvest', i);
     } else if (farm.isDry(b, t)) {
       waterBox(i, false);
       store.flush();
+      tutor.event('water', i);
     } else {
       const msg = b.regrowing ? T.box_regrowing : T.box_occupied;
       const name = T['crop_' + b.crop];
@@ -276,19 +311,23 @@ async function boot() {
     }
     const crop = ITEMS[seedId].crop;
     if (scene) scene.plantFx(i);
+    sound('plant');
     ui.toast(fmt(T.planted, { crop: cropName(crop), time: duration(farm.timeLeft({ ...s.boxes[i], wateredUntil: Infinity }, now())) }));
     store.flush();
     renderBoxes();
+    tutor.event('plant', i);
   }
 
   function onWaterAll() {
+    if (!tutor.allows('waterAll')) return;
     const t = now();
     let n = 0, last = null;
     state().boxes.forEach((b, i) => { farm.update(b, t); if (farm.isDry(b, t) && waterBox(i, true)) { n++; last = b.crop; } });
     if (n === 0) ui.toast(T.water_nothing);
-    else ui.toast(n === 1 ? fmt(T.watered_one, { crop: cropName(last) }) : fmt(T.watered_many, { n }));
+    else { sound('water'); ui.toast(n === 1 ? fmt(T.watered_one, { crop: cropName(last) }) : fmt(T.watered_many, { n })); }
     if (n) store.flush();
     renderBoxes();
+    if (n) tutor.event('water', 'all');
   }
 
   // ----- Công cụ kiểm thử (chỉ trong bản thử) -----
@@ -336,7 +375,7 @@ async function boot() {
   const ui = new UI({
     store, clock, pwa,
     onFrameResize: () => { if (game) game.scale.refresh(); },
-    onTimeChange: h => { if (scene) scene.applyTime(h); },
+    onTimeChange: h => { if (scene) scene.applyTime(h); audio.setTime(h); },
     onWaterAll, onPlant, onSkip, onAddSeeds, onFillBag, onSimAway, onNextDay, onAddDust
   });
   ui.init();
@@ -347,6 +386,31 @@ async function boot() {
   ui.refreshOpenSheets = () => { baseRefresh(); eco.refresh(); renderOrders(); };
   if (syncOrders()) store.flush();
 
+  // Tiệm, đơn hàng, chuồng gà, bụi: chặn trong lúc hướng dẫn, có tiếng mở bảng
+  const gate = (action, fn) => (...args) => { if (!tutor.allows(action)) return; fn(...args); };
+  const baseOpenShop = eco.openShop.bind(eco);
+  eco.openShop = gate('shop', () => { sound('open'); baseOpenShop(); });
+  const baseOpenBag = ui.openBag.bind(ui);
+  ui.openBag = () => { sound('open'); baseOpenBag(); };
+
+  // F21 Cài đặt
+  const applyTestMode = on => { document.getElementById('infoBtn').hidden = !on; };
+  applyTestMode(state().settings.testMode);
+  const settings = new SettingsUI(ui, store, {
+    onMusic: v => audio.setMusic(v),
+    onSfx: v => audio.setSfx(v),
+    onReplayTutorial: () => { restartTutorial(state()); store.flush(); tutor.start(); },
+    onReset: async () => { await store.reset(); location.reload(); },
+    onImported: () => setTimeout(() => location.reload(), 800),
+    onTestMode: applyTestMode,
+    sound
+  });
+  settings.init();
+
+  // F19 Mở đầu cùng bà Tư (bắt đầu khi cảnh đã vẽ xong)
+  const tutor = new TutorialUI({ store, ui, scene: () => scene, now, render: () => renderBoxes(), sound });
+  tutor.init();
+
   // Mỗi nhịp đồng hồ: cây lớn theo thời gian game
   clock.on((type, r) => {
     if (type !== 'tick') return;
@@ -354,6 +418,8 @@ async function boot() {
     if (coop.update(state(), now())) store.markDirty();
     if (dust.update(state(), now())) store.markDirty();
     if (syncOrders(r ? r.delta : 0)) store.markDirty();
+    // Chỉ cộng thời gian chơi cho các nhịp bình thường (không tính lúc vắng hay lúc tua)
+    if (r && r.delta > 0 && r.delta < 5000 && !document.hidden) state().stats.playMs += r.delta;
     renderBoxes();
     renderCoop();
     renderDust();
@@ -383,20 +449,21 @@ async function boot() {
       renderOrders();
       renderBuySlot();
       greet(first);
+      tutor.start();
     },
     onTapBox,
-    onTapCoop,
-    onTapTrough,
-    onTapDust,
-    onTapOrders: () => eco.openOrders(),
-    onTapBuyBox: () => eco.openBuyBox()
+    onTapCoop: gate('coop', onTapCoop),
+    onTapTrough: gate('coop', onTapTrough),
+    onTapDust: gate('dust', onTapDust),
+    onTapOrders: gate('orders', () => { sound('open'); eco.openOrders(); }),
+    onTapBuyBox: gate('buyBox', () => { sound('open'); eco.openBuyBox(); })
   });
 
   window.addEventListener('offline', () => ui.toast(T.went_offline));
   pwa.register(firstInstall => { if (firstInstall) ui.toast(T.offline_ready); });
 
   // Cửa sổ kiểm thử cho người phát triển (gõ trong console): __game.store.data
-  window.__game = { store, clock, ui, pwa, farm, coop, dust, shop, orders, eco, get scene() { return scene; } };
+  window.__game = { store, clock, ui, pwa, farm, coop, dust, shop, orders, eco, audio, tutor, settings, get scene() { return scene; } };
 }
 
 boot();
