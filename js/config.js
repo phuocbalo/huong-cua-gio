@@ -1,7 +1,7 @@
 // Bảng dữ liệu của game. Muốn cân bằng lại game thì sửa số ở đây, không cần đụng vào code khác.
 // Đơn vị thời gian là mili giây; dùng các hằng PHUT, GIO cho dễ đọc.
 
-export const APP_VERSION = '0.9.5';
+export const APP_VERSION = '0.10.0';
 
 const PHUT = 60 * 1000;
 const GIO = 60 * PHUT;
@@ -109,16 +109,16 @@ export const BAG_UPGRADES = [{ slots: 4, price: 60 }, { slots: 4, price: 120 }, 
 export const ORDER_SLOTS = 3;          // luôn có 3 đơn trên dây phơi
 export const ORDER_BONUS = 1.6;        // đơn hàng trả hơn bán ở tiệm 60%
 export const ORDER_EXPIRE = 3 * NGAY;  // đơn để quá 3 ngày: người đặt đã mua ngoài chợ, đơn mới thay vào, không phạt
-// Hàng xóm mở dần: unlock = tổng số đơn đã giao để người đó bắt đầu ghé hỏi mua.
+// Hàng xóm mở dần theo level (bản 0.10): level = level người chơi cần đạt để người đó bắt đầu ghé hỏi mua.
 // likes = món hay đặt (7 phần 10 số đơn chọn trong đây nếu người chơi đã có món đó); bulk = hệ số số lượng
 export const NEIGHBORS = {
-  ba_tu:    { unlock: 0,  likes: ['rau_muong', 'cai', 'ca_chua'] },
-  be_na:    { unlock: 0,  likes: ['trung_ga', 'dua_leo', 'ca_chua'] },
-  co_mai:   { unlock: 3,  likes: ['hung_que', 'cai'] },
-  anh_tuan: { unlock: 6,  likes: ['rau_muong', 'trung_ga'], bulk: 0.8 },
-  chu_sau:  { unlock: 10, likes: ['trung_ga'] },
-  chi_hoa:  { unlock: 15, likes: ['dua_leo', 'hung_que', 'ot'], bulk: 1.5 },
-  ong_ba:   { unlock: 20, likes: ['ca_chua', 'ot'] }
+  ba_tu:    { level: 1,  likes: ['rau_muong', 'cai', 'ca_chua'] },
+  be_na:    { level: 1,  likes: ['trung_ga', 'dua_leo', 'ca_chua'] },
+  co_mai:   { level: 4,  likes: ['hung_que', 'cai'] },
+  anh_tuan: { level: 6,  likes: ['rau_muong', 'trung_ga'], bulk: 0.8 },
+  chu_sau:  { level: 8,  likes: ['trung_ga'] },
+  chi_hoa:  { level: 9,  likes: ['dua_leo', 'hung_que', 'ot'], bulk: 1.5 },
+  ong_ba:   { level: 10, likes: ['ca_chua', 'ot'] }
 };
 export const LIKE_CHANCE = 0.7;
 
@@ -151,3 +151,32 @@ export const START_BOXES = 4;
 export const START_COINS = 120;
 export const START_INVENTORY = { hat_rau_muong: 3, hat_cai: 2, thuc_an_ga: 5 };
 export const START_FEED_FOR_OLD_SAVES = 5;   // tặng người chơi bản cũ khi chuồng gà mở
+
+// ---------- Level (bản 0.10) ----------
+// Điểm kinh nghiệm (KN) có được từ việc chăm sân. Không bao giờ mất điểm, không phạt.
+//   Thu hoạch: theo nhóm cây (tier) · giao đơn hàng xóm nhiều nhất · việc vặt hằng ngày ít
+export const XP = {
+  harvest: { 1: 4, 2: 7, 3: 12 },   // mỗi lần thu, theo tier của cây
+  deliver: 15,                      // mỗi đơn hàng xóm
+  feed: 3,                          // cho gà ăn
+  eggs: 2,                          // mỗi lần nhặt trứng
+  dust: 1                           // mỗi vệt bụi quét
+};
+
+// 10 level đầu. xp: tổng điểm KN cần để đạt level đó (lên nhanh lúc đầu, chậm dần).
+// unlock: mở khóa · reward: quà khi lên level (xu và vật phẩm; túi đầy thì đổi vật phẩm ra xu)
+//   seeds: hạt bán ở tiệm · neighbor: hàng xóm bắt đầu đặt đơn · boxes: mua thêm thùng xốp
+//   bag: nâng cấp túi đồ · chickens: thêm gà · decor: món trang trí sân
+export const LEVELS = [
+  { xp: 0,   unlock: { seeds: ['hat_rau_muong', 'hat_cai'], neighbors: ['ba_tu', 'be_na'] } },
+  { xp: 20,  unlock: { seeds: ['hat_hung_que'], boxes: true },              reward: { coins: 20, items: { hat_hung_que: 2 } } },
+  { xp: 50,  unlock: { seeds: ['hat_dua_leo'] },                            reward: { coins: 25, items: { hat_dua_leo: 2 } } },
+  { xp: 90,  unlock: { neighbors: ['co_mai'] },                             reward: { coins: 30 } },
+  { xp: 140, unlock: { seeds: ['hat_ot'], bag: true },                      reward: { coins: 35, items: { hat_ot: 2 } } },
+  { xp: 200, unlock: { neighbors: ['anh_tuan'] },                           reward: { coins: 40, items: { thuc_an_ga: 5 } } },
+  { xp: 270, unlock: { seeds: ['hat_ca_chua'] },                            reward: { coins: 45, items: { hat_ca_chua: 2 } } },
+  { xp: 350, unlock: { neighbors: ['chu_sau'], chickens: 1 },               reward: { coins: 50 } },
+  { xp: 440, unlock: { neighbors: ['chi_hoa'] },                            reward: { coins: 55 } },
+  { xp: 540, unlock: { neighbors: ['ong_ba'], decor: 'hoa_giay' },          reward: { coins: 60 } }
+];
+export const MAX_LEVEL = LEVELS.length;

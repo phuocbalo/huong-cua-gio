@@ -23,23 +23,23 @@ t('Bán 3 rau muống: xu tăng đúng giá × 3, túi giảm 3', () => {
 });
 t('Bán nhiều hơn số đang có: từ chối, không đổi gì', () => { const s = fresh(); s.inventory.items.cai = 1; const c0 = s.coins; assert.equal(S.sell(s, 'cai', 2).reason, 'not_enough'); assert.equal(s.coins, c0); assert.equal(I.count(s.inventory, 'cai'), 1); });
 t('Không bán được hạt giống', () => { const s = fresh(); assert.equal(S.sell(s, 'hat_cai', 1).reason, 'not_sellable'); });
-t('Mua 2 hạt cà chua: trừ đúng xu, hạt vào túi', () => { const s = fresh(); s.coins = 100; const r = S.buy(s, 'hat_ca_chua', 2); assert.equal(r.ok, true); assert.equal(s.coins, 100 - 2 * C.CROPS.ca_chua.seedPrice); assert.equal(I.count(s.inventory, 'hat_ca_chua'), 2); });
-t('Không đủ xu: báo thiếu bao nhiêu, không trừ gì', () => { const s = fresh(); s.coins = 20; const r = S.canBuy(s, 'hat_ca_chua', 1); assert.equal(r.reason, 'coins'); assert.equal(r.missing, 10); assert.equal(S.buy(s, 'hat_ca_chua', 1).ok, false); assert.equal(s.coins, 20); });
-t('Túi đầy: không mua được hạt mới, không trừ xu', () => { const s = fresh(); s.coins = 999; s.inventory.slots = I.usedSlots(s.inventory); assert.equal(S.buy(s, 'hat_ot', 1).reason, 'bag_full'); assert.equal(s.coins, 999); });
+t('Mua 2 hạt cà chua: trừ đúng xu, hạt vào túi', () => { const s = fresh(); s.xp = 9999; s.coins = 100; const r = S.buy(s, 'hat_ca_chua', 2); assert.equal(r.ok, true); assert.equal(s.coins, 100 - 2 * C.CROPS.ca_chua.seedPrice); assert.equal(I.count(s.inventory, 'hat_ca_chua'), 2); });
+t('Không đủ xu: báo thiếu bao nhiêu, không trừ gì', () => { const s = fresh(); s.xp = 9999; s.coins = 20; const r = S.canBuy(s, 'hat_ca_chua', 1); assert.equal(r.reason, 'coins'); assert.equal(r.missing, 10); assert.equal(S.buy(s, 'hat_ca_chua', 1).ok, false); assert.equal(s.coins, 20); });
+t('Túi đầy: không mua được hạt mới, không trừ xu', () => { const s = fresh(); s.xp = 9999; s.coins = 999; s.inventory.slots = I.usedSlots(s.inventory); assert.equal(S.buy(s, 'hat_ot', 1).reason, 'bag_full'); assert.equal(s.coins, 999); });
 t('Túi đầy nhưng mua thêm món đang có (còn chỗ trong ô): vẫn mua được', () => { const s = fresh(); s.coins = 999; s.inventory.slots = I.usedSlots(s.inventory); assert.equal(S.buy(s, 'thuc_an_ga', 3).ok, true); });
 t('Nâng cấp túi đồ: +4 ô, giá tăng dần, tối đa 3 lần', () => {
-  const s = fresh(); s.coins = 1000; const slots0 = s.inventory.slots;
+  const s = fresh(); s.xp = 9999; s.coins = 1000; const slots0 = s.inventory.slots;
   C.BAG_UPGRADES.forEach((u, k) => { assert.equal(S.nextBagUpgrade(s).price, u.price); assert.equal(S.buyBagUpgrade(s).ok, true); });
   assert.equal(s.inventory.slots, slots0 + 12); assert.equal(S.buyBagUpgrade(s).reason, 'max'); assert.equal(s.coins, 1000 - C.BAG_UPGRADES.reduce((a, u) => a + u.price, 0));
 });
 
 // ----- F14 Mua thùng -----
 t('Mua thùng: trừ xu, thêm thùng trống gieo được ngay; giá tăng; tối đa 8', () => {
-  const s = fresh(); s.coins = 1000;
+  const s = fresh(); s.xp = 9999; s.coins = 1000;
   C.BOX_PRICES.forEach((p, k) => { assert.equal(S.nextBoxPrice(s), p); const r = S.buyBox(s); assert.equal(r.ok, true); assert.equal(r.index, 4 + k); assert.equal(s.boxes[r.index].crop, null); });
   assert.equal(s.boxes.length, C.MAX_BOXES); assert.equal(S.nextBoxPrice(s), 0); assert.equal(S.buyBox(s).reason, 'max');
 });
-t('Mua thùng khi thiếu xu: không có thùng mới', () => { const s = fresh(); s.coins = 10; assert.equal(S.buyBox(s).reason, 'coins'); assert.equal(s.boxes.length, 4); });
+t('Mua thùng khi thiếu xu: không có thùng mới', () => { const s = fresh(); s.xp = 9999; s.coins = 10; assert.equal(S.buyBox(s).reason, 'coins'); assert.equal(s.boxes.length, 4); });
 
 // ----- F12 Đơn hàng -----
 t('Người chơi mới: 3 đơn, chỉ đặt món đã có (rau muống, cải, trứng)', () => {
@@ -89,24 +89,24 @@ t('Lúc đầu chỉ quen bà Tư và bé Na; đơn chỉ từ hai người này
   assert.deepEqual(O.unlocked(s), ['ba_tu', 'be_na']);
   for (let k = 0; k < 30; k++) O.skip(s, s.orders.list[0].id, 0);
   assert.ok(s.orders.list.every(o => ['ba_tu', 'be_na'].includes(o.from)));
-  assert.deepEqual(O.nextNeighbor(s), { id: 'co_mai', left: 3 });
+  assert.deepEqual(O.nextNeighbor(s), { id: 'co_mai', level: 4 });
 });
-t('Giao đủ 3 đơn thì quen cô Mai, và cô Mai gửi đơn ngay', () => {
+t('Lên level 4 thì quen cô Mai; welcome gửi ngay đơn của cô Mai, vẫn đủ 3 đơn', () => {
   const s = fresh(); O.syncSeen(s); O.refill(s, 0);
-  let met = [];
-  for (let k = 0; k < 3; k++) { const o = s.orders.list[0]; s.inventory.items[o.item] = 99; const r = O.deliver(s, o.id, 0); met = met.concat(r.met); }
-  assert.deepEqual(met, ['co_mai']); assert.ok(O.unlocked(s).includes('co_mai'));
+  assert.ok(!O.unlocked(s).includes('co_mai'));
+  s.xp = C.LEVELS[3].xp; assert.ok(O.unlocked(s).includes('co_mai'));
+  assert.equal(O.welcome(s, 'co_mai', 0), true);
   assert.ok(s.orders.list.some(o => o.from === 'co_mai')); assert.equal(s.orders.list.length, 3);
   assert.equal(new Set(s.orders.list.map(o => o.id)).size, 3, 'mã đơn không trùng');
+  assert.equal(O.welcome(s, 'co_mai', 0), false, 'đã có đơn của cô Mai thì không gửi thêm');
 });
-t('Thứ tự quen: cô Mai 3, anh Tuấn 6, chú Sáu 10, chị Hoa 15, ông Ba 20 đơn', () => {
-  const s = fresh(); const order = [];
-  for (let d = 0; d <= 20; d++) { s.orders.delivered = d; const u = O.unlocked(s); u.forEach(n => { if (!order.includes(n)) order.push(n + '@' + d); }); }
-  const firsts = {}; order.forEach(x => { const [n, d] = x.split('@'); if (!(n in firsts)) firsts[n] = +d; });
-  assert.deepEqual(firsts, { ba_tu: 0, be_na: 0, co_mai: 3, anh_tuan: 6, chu_sau: 10, chi_hoa: 15, ong_ba: 20 });
+t('Thứ tự quen theo level: cô Mai 4, anh Tuấn 6, chú Sáu 8, chị Hoa 9, ông Ba 10', () => {
+  const s = fresh(); const firsts = {};
+  C.LEVELS.forEach((L, i) => { s.xp = L.xp; O.unlocked(s).forEach(n => { if (!(n in firsts)) firsts[n] = i + 1; }); });
+  assert.deepEqual(firsts, { ba_tu: 1, be_na: 1, co_mai: 4, anh_tuan: 6, chu_sau: 8, chi_hoa: 9, ong_ba: 10 });
 });
 t('Hàng xóm hay đặt món mình thích khi người chơi đã có món đó', () => {
-  const s = fresh(); s.orders.delivered = 10; s.seen = ['rau_muong', 'cai', 'trung_ga', 'dua_leo', 'ca_chua'];
+  const s = fresh(); s.xp = 9999; s.seen = ['rau_muong', 'cai', 'trung_ga', 'dua_leo', 'ca_chua'];
   let egg = 0, total = 0;
   for (let k = 0; k < 200; k++) { const o = O.makeOrder({ ...s, orders: { ...s.orders, list: [] } }, 0, Math.random, 'chu_sau'); total++; if (o.item === 'trung_ga') egg++; }
   assert.ok(egg / total > 0.55, 'chú Sáu đặt trứng ' + egg + '/' + total);

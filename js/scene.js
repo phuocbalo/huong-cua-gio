@@ -505,9 +505,11 @@ class Rooftop extends Phaser.Scene {
 
     // Gà trống và gà mái đi lại trong sân
     this.chickens = [this.makeChicken(304, 396, 1, 'rooster'), this.makeChicken(356, 424, -1, 'hen')];
+    this.chickenSpots = [[330, 418, 1], [296, 426, -1], [372, 400, -1]];   // chỗ cho gà mái thêm (level 8)
 
     // Lưới phía trước, vẽ sau gà để gà nằm trong sân
     const front = this.add.graphics();
+    this.coopFront = front;
     this.mesh(front, RUN.x0, RUN.x1, RUN.front - 26, RUN.front);
     front.lineStyle(3, INK, 1); front.fillStyle(POST, 1);
     [RUN.x0, 335, RUN.x1].forEach(px => { front.fillRect(px - 2, RUN.front - 30, 4, 32); front.strokeRect(px - 2, RUN.front - 30, 4, 32); });
@@ -525,6 +527,48 @@ class Rooftop extends Phaser.Scene {
       const p = this.coopPoint(z.x, z.y);
       z.setPosition(p.x, p.y).setSize(z.width * COOP_SCALE, z.height * COOP_SCALE);
     });
+  }
+
+  // Số gà trong sân theo bản lưu: thêm gà mái khi lên level (gà đi trong sân, sau lưới phía trước)
+  setChickens(n) {
+    while (this.chickens.length < n && this.chickens.length - 2 < this.chickenSpots.length) {
+      const [x, y, dir] = this.chickenSpots[this.chickens.length - 2];
+      const c = this.makeChicken(x, y, dir, 'hen');
+      this.coopLayer.addAt(c, this.coopLayer.getIndex(this.coopFront));
+      this.chickens.push(c);
+      if (!reduceMotion) { c.setAlpha(0); this.tweens.add({ targets: c, alpha: 1, duration: 500 }); }
+    }
+  }
+
+  // ----- Trang trí sân (level 10: chậu hoa giấy) -----
+  setDecor(list) {
+    if (list.includes('hoa_giay') && !this.hoaGiay) this.hoaGiay = this.makeHoaGiay(368, 492);
+  }
+
+  makeHoaGiay(x, y) {
+    const c = this.add.container(x, y);
+    const g = this.add.graphics();
+    g.fillStyle(0x000000, 0.18); g.fillEllipse(0, 2, 34, 8);
+    // chậu đất nung
+    g.lineStyle(2.4, INK, 1); g.fillStyle(0xc8703f, 1);
+    g.fillPoints([{ x: -13, y: -16 }, { x: 13, y: -16 }, { x: 10, y: 1 }, { x: -10, y: 1 }], true);
+    g.strokePoints([{ x: -13, y: -16 }, { x: 13, y: -16 }, { x: 10, y: 1 }, { x: -10, y: 1 }], true);
+    g.fillStyle(0xa9592f, 1); g.fillRect(-15, -20, 30, 5); g.strokeRect(-15, -20, 30, 5);
+    // cành và lá
+    g.lineStyle(2, 0x6b4a2e, 1); g.lineBetween(0, -20, -8, -44); g.lineBetween(0, -20, 9, -46); g.lineBetween(0, -20, 1, -54);
+    g.fillStyle(0x5f9a4c, 1); g.lineStyle(1.6, INK, 1);
+    [[-12, -36], [12, -38], [-4, -48], [6, -30], [-9, -27]].forEach(([lx, ly]) => { g.fillEllipse(lx, ly, 8, 5); g.strokeEllipse(lx, ly, 8, 5); });
+    // chùm hoa giấy hồng tím
+    const cols = [0xe0559a, 0xef7ab4, 0xd9418a];
+    [[-10, -48], [-15, -40], [10, -50], [15, -42], [2, -58], [-3, -52], [6, -44], [-6, -42]].forEach(([fx, fy], k) => {
+      g.fillStyle(cols[k % 3], 1); g.lineStyle(1.5, INK, 1);
+      g.fillCircle(fx, fy, 5); g.strokeCircle(fx, fy, 5);
+      g.fillStyle(0xfff4c9, 1); g.fillCircle(fx, fy, 1.2);
+    });
+    c.add(g);
+    this.children.moveBelow(c, this.frontWall);
+    if (!reduceMotion) { c.setScale(0.3); this.tweens.add({ targets: c, scale: 1, duration: 500, ease: 'Back.easeOut' }); }
+    return c;
   }
 
   // Đổi toạ độ vẽ gốc của chuồng sang toạ độ trên cảnh sau khi phóng to

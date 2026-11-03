@@ -4,13 +4,13 @@
 // tăng SCHEMA_VERSION và viết thêm một bước nâng cấp trong MIGRATIONS để bản lưu cũ của người chơi
 // được nâng lên mà không mất gì.
 
-import { START_BOXES, START_COINS, START_INVENTORY, INVENTORY_SLOTS, START_FEED_FOR_OLD_SAVES, FEED_ITEM } from './config.js';
+import { START_BOXES, START_COINS, START_INVENTORY, INVENTORY_SLOTS, START_FEED_FOR_OLD_SAVES, FEED_ITEM, LEVELS } from './config.js';
 import { newCoop } from './coop.js';
 import { newDust } from './dust.js';
 import { newOrders, newFriends, syncSeen } from './orders.js';
 import * as inv from './inventory.js';
 
-export const SCHEMA_VERSION = 6;
+export const SCHEMA_VERSION = 7;
 
 const DB_NAME = 'san-thuong-xanh';
 const STORE = 'saves';
@@ -39,6 +39,9 @@ export function defaultSave(now = Date.now()) {
     friends: newFriends(),
     seen: [],
     bagUpgrades: 0,
+    xp: 0,              // điểm kinh nghiệm (bản 0.10)
+    level: 1,           // level cao nhất đã nhận quà
+    decor: [],          // món trang trí đã mở
     tutorialDone: false,
     tutorial: { step: 'intro', box: null },
     settings: { music: 0.6, sfx: 0.8, testMode: false },
@@ -76,7 +79,17 @@ const MIGRATIONS = {
     tutorialDone: true, tutorial: { step: 'done', box: null },
     settings: { music: 0.6, sfx: 0.8, ...(s.settings || {}), testMode: true },
     stats: { days: [], sessions: 0, playMs: 0 }
-  })
+  }),
+  // 6 → 7 (bản 0.10): thêm level. Người chơi cũ được xếp level theo tiến độ đã có, để giữ những
+  // hàng xóm đã quen (trước đây mở theo số đơn đã giao) và việc đã mua thùng. Không nhận lại quà của các level đó.
+  6: s => {
+    const d = (s.orders && s.orders.delivered) || 0;
+    let lv = d >= 20 ? 10 : d >= 15 ? 9 : d >= 10 ? 8 : d >= 6 ? 6 : d >= 3 ? 4 : 1;
+    if (lv < 2 && (s.boxes || []).length > START_BOXES) lv = 2;
+    if (lv < 5 && (s.bagUpgrades || 0) > 0) lv = 5;
+    const coop = s.coop && lv >= 8 ? { ...s.coop, chickens: s.coop.chickens + 1 } : s.coop;
+    return { ...s, schemaVersion: 7, xp: LEVELS[lv - 1].xp, level: lv, decor: lv >= 10 ? ['hoa_giay'] : [], coop };
+  }
 };
 
 // ----- F21 Nhập file lưu (N04) -----

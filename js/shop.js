@@ -4,6 +4,7 @@
 import { CROPS, ITEMS, SHOP_BUY, SHOP_SELL_KINDS, BAG_UPGRADES, BOX_PRICES, MAX_BOXES, START_BOXES } from './config.js';
 import * as inv from './inventory.js';
 import { emptyBox } from './farm.js';
+import { isUnlocked, itemUnlockLevel, levelNow, unlockLevel } from './level.js';
 
 // Giá anh Bảo mua của người chơi (mỗi món)
 export function sellPrice(id) {
@@ -33,10 +34,12 @@ export function sell(state, id, qty) {
   return { ok: true, coins: price * qty };
 }
 
-// Có mua được không, để giao diện làm mờ nút và ghi lý do. reason: 'not_for_sale' | 'coins' | 'bag_full'
+// Có mua được không, để giao diện làm mờ nút và ghi lý do. reason: 'not_for_sale' | 'locked' | 'coins' | 'bag_full'
 export function canBuy(state, id, qty) {
   const price = buyPrice(id);
   if (!price) return { ok: false, reason: 'not_for_sale' };
+  const need = itemUnlockLevel(id);
+  if (levelNow(state) < need) return { ok: false, reason: 'locked', level: need };
   if (state.coins < price * qty) return { ok: false, reason: 'coins', missing: price * qty - state.coins };
   if (!inv.canAdd(state.inventory, id, qty)) return { ok: false, reason: 'bag_full' };
   return { ok: true, cost: price * qty };
@@ -56,10 +59,11 @@ export function nextBagUpgrade(state) {
   return done < BAG_UPGRADES.length ? BAG_UPGRADES[done] : null;
 }
 
-// reason: 'max' | 'coins'
+// reason: 'max' | 'locked' | 'coins'
 export function buyBagUpgrade(state) {
   const up = nextBagUpgrade(state);
   if (!up) return { ok: false, reason: 'max' };
+  if (!isUnlocked(state, 'bag')) return { ok: false, reason: 'locked', level: unlockLevel('bag') };
   if (state.coins < up.price) return { ok: false, reason: 'coins', missing: up.price - state.coins };
   state.coins -= up.price;
   state.inventory.slots += up.slots;
@@ -73,10 +77,11 @@ export function nextBoxPrice(state) {
   return BOX_PRICES[Math.max(0, state.boxes.length - START_BOXES)] || 0;
 }
 
-// reason: 'max' | 'coins'. Trả về index của thùng mới
+// reason: 'max' | 'locked' | 'coins'. Trả về index của thùng mới
 export function buyBox(state) {
   const price = nextBoxPrice(state);
   if (!price) return { ok: false, reason: 'max' };
+  if (!isUnlocked(state, 'boxes')) return { ok: false, reason: 'locked', level: unlockLevel('boxes') };
   if (state.coins < price) return { ok: false, reason: 'coins', missing: price - state.coins };
   state.coins -= price;
   state.boxes.push(emptyBox());

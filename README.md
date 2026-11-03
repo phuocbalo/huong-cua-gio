@@ -26,9 +26,11 @@ Bản chơi thử: https://phuocbalo.github.io/huong-cua-gio/
 | `js/tutorial.js` | Hướng dẫn mở đầu cùng bà Tư: gieo → tưới → thu → bán → cho gà ăn; không bỏ qua được, chỉ bấm được chỗ mũi tên chỉ, mở lại giữa chừng vẫn tiếp tục |
 | `js/audio.js` | Nhạc lo-fi và tiếng động tạo bằng code (không có file âm thanh), đổi nhạc ngày/đêm |
 | `js/ui-settings.js` | Cài đặt: âm lượng, xuất/nhập file lưu, xem lại hướng dẫn, xóa dữ liệu, thống kê |
+| `js/level.js` | Luật level: điểm kinh nghiệm, lên level, mở khóa, quà (dữ liệu 10 level trong `config.js`) |
+| `js/ui-level.js` | Giao diện level: viên level trên thanh trạng thái, con đường level, bảng chúc mừng |
 | `js/daylight.js` | Màu trời, phố, đèn cho từng giờ trong ngày; chuyển dần giữa các khung giờ |
 | `js/scene.js` | Cảnh sân thượng vẽ bằng Phaser (hình tạm) |
-| `tests/` | Kiểm thử luật chơi: `node tests/farm.test.mjs`, `node tests/daylight.test.mjs`, `node tests/coop.test.mjs`, `node tests/dust.test.mjs`, `node tests/economy.test.mjs`, `node tests/settings.test.mjs`, `node tests/tutorial.test.mjs` |
+| `tests/` | Kiểm thử luật chơi: `node tests/farm.test.mjs`, `node tests/daylight.test.mjs`, `node tests/coop.test.mjs`, `node tests/dust.test.mjs`, `node tests/economy.test.mjs`, `node tests/settings.test.mjs`, `node tests/tutorial.test.mjs`, `node tests/level.test.mjs` |
 | `js/ui.js` | Điều khiển giao diện HTML |
 | `js/pwa.js` | Bật chơi offline và theo dõi trạng thái |
 | `manifest.webmanifest` | Khai báo PWA: tên app, biểu tượng, mở toàn màn hình, màn dọc |
@@ -133,6 +135,21 @@ Trong bảng "Bản thử" có "Thêm 10 xu" nếu cần thêm xu để thử mu
 - [ ] **I-25** Người chơi mới (cửa sổ ẩn danh, hoặc Cài đặt → Xóa dữ liệu): trong lúc bà Tư hướng dẫn **không** thấy ô "+ 40 xu" ở chỗ trống bên dưới 4 thùng.
 - [ ] **I-25** Đi hết hướng dẫn: ô "+ 40 xu" hiện ra ngay, chạm vào mở bảng mua thùng.
 - [ ] **I-25** Cài đặt → "Xem lại hướng dẫn": ô "+" ẩn đi; xong hướng dẫn thì hiện lại.
+
+## Kiểm thử bản 0.10.0 – Hệ thống level (10 level đầu)
+
+Dùng nút "+50 KN" trong bảng "Bản thử" để lên level nhanh.
+
+- [ ] **Thanh trên cùng:** có viên ngôi sao ghi số level và thanh điểm nhỏ, nằm cạnh số xu. Vừa màn hình hẹp (360 px), không đẩy số xu ra ngoài.
+- [ ] **Nhận điểm:** thu hoạch (+4 Cơ bản, +7 Hơi khó, +12 Lâu), giao đơn +15, cho gà ăn +3, nhặt trứng +2, quét bụi +1 mỗi vệt. Mỗi lần có chữ "+n KN" nổi dưới viên level, viên nảy nhẹ. Bán ở tiệm không có điểm.
+- [ ] **Lên level:** hiện bảng "Lên level N!" có bà Tư, danh sách mở khóa, quà (xu, hạt). Bấm "Tuyệt quá!" để đóng. Lên nhiều level một lúc: các bảng hiện lần lượt.
+- [ ] Bảng chúc mừng không chen vào lúc đang hướng dẫn hoặc đang mở bảng khác; đóng bảng đó thì mới hiện.
+- [ ] **Con đường level:** chạm viên level → bảng có tiến độ, cách nhận điểm và 10 level (đã qua có dấu ✓, level hiện tại tô vàng, level sau mờ).
+- [ ] **Tiệm khóa theo level:** người chơi mới chỉ mua được hạt rau muống, cải và thức ăn gà. Hạt khác hiện mờ "Mở ở level N". Nâng cấp túi đồ khóa tới level 5.
+- [ ] **Ô mua thùng "+40 xu"** chỉ hiện từ level 2.
+- [ ] **Mở khóa từng level:** 2 húng quế + mua thùng · 3 dưa leo · 4 cô Mai đặt đơn · 5 ớt + nâng cấp túi · 6 anh Tuấn · 7 cà chua · 8 chú Sáu + thêm 1 gà mái trong sân · 9 chị Hoa · 10 ông Ba + chậu hoa giấy bên phải sân. Hàng xóm mới quen gửi đơn ngay.
+- [ ] Hạt đã có trong túi (kể cả hạt chưa mở ở tiệm) vẫn gieo được bình thường.
+- [ ] **Bản lưu cũ:** người chơi thử đã giao nhiều đơn được xếp level tương ứng (3 đơn → level 4, 6 → 6, 10 → 8, 15 → 9, 20 → 10), không mất hàng xóm đã quen; đã mua thùng thì ít nhất level 2.
 
 ## Kiểm thử bản 0.9.5 – Thông báo gọn hơn
 

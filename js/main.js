@@ -22,6 +22,8 @@ import { LAY_DELAY } from './config.js';
 import { AudioEngine } from './audio.js';
 import { SettingsUI } from './ui-settings.js';
 import { TutorialUI, OrdersTipUI, restart as restartTutorial } from './tutorial.js';
+import * as level from './level.js';
+import { LevelUI } from './ui-level.js';
 
 const AWAY_NOTICE_MS = 60000;         // vắng từ 1 phút: lời chào ngắn
 const AWAY_SUMMARY_MS = 5 * 60000;    // vắng từ 5 phút và có thay đổi: bảng "Trong lúc bạn đi vắng"
@@ -31,6 +33,7 @@ async function boot() {
   await store.load();
   const state = () => store.data;   // store.reset() thay cả đối tượng, nên luôn đọc qua hàm này
   let tipRef = null;   // hướng dẫn trả đơn, tạo sau khi giao diện sẵn sàng
+  let gainXp = () => {};   // cộng điểm kinh nghiệm, gắn thật sau khi dựng giao diện level
 
   // Chế độ kiểm thử: bật bằng ?test=1 trên đường dẫn, hoặc chạm 5 lần vào số phiên bản trong Cài đặt.
   // Mọi nơi ngoài GitHub Pages (link test artifact, máy của người phát triển) luôn bật sẵn, vì ở đó
@@ -127,6 +130,7 @@ async function boot() {
       if (scene) scene.feedFx();
       sound('feed');
       ui.toast(fmt(T.coop_fed, { time: duration(LAY_DELAY) }));
+      gainXp(level.xpFor('feed'));
       store.flush();
       tutor.event('feed');
     } else if (r.reason === 'no_feed') {
@@ -146,6 +150,7 @@ async function boot() {
       if (scene) scene.eggsFx(r.qty, tg.x, tg.y);
       sound('egg');
       ui.toast(fmt(T.eggs_collected, { n: r.qty }));
+      gainXp(level.xpFor('eggs'));
       store.flush();
     } else if (r.reason === 'full') {
       sound('deny');
@@ -167,6 +172,7 @@ async function boot() {
     sound('sweep');
     setTimeout(() => { ui.refreshCoins(true); sound('coin'); }, 900);
     ui.toast(fmt(r.clean ? T.dust_clean : T.dust_swept, { n: r.reward }));
+    gainXp(level.xpFor('dust', 1));
     store.flush();
     renderDust();
   }
@@ -207,7 +213,8 @@ async function boot() {
     if (!scene) return;
     const n = state().boxes.length;
     // Trong lúc bà Tư hướng dẫn thì ẩn ô mua thùng, xong hướng dẫn mới hiện (I-25)
-    const show = n < MAX_BOXES && state().tutorialDone;
+    // Mua thêm thùng mở ở level 2 (bản 0.10)
+    const show = n < MAX_BOXES && state().tutorialDone && level.isUnlocked(state(), 'boxes');
     scene.setBuySlot(show ? n : -1, shop.nextBoxPrice(state()));
   }
   function afterTrade() {
@@ -253,6 +260,7 @@ async function boot() {
       sound('coin');
       if (r.met.length) setTimeout(() => { ui.toast(T['met_' + r.met[0]]); sound('chime'); }, 2600);
       ordersTip.delivered();
+      gainXp(level.xpFor('deliver'));
       afterTrade();
     },
     onSkipOrder(id) {
@@ -295,6 +303,7 @@ async function boot() {
       if (scene) scene.harvestFx(i, CROP_COLOR[crop], r.qty, tg.x, tg.y);
       sound('harvest');
       // Số lượng đã hiện bằng chữ "+n" bay về túi đồ, không cần thông báo to
+      gainXp(level.xpFor('harvest', crop));
       store.flush();
       tutor.event('harvest', i);
     } else if (farm.isDry(b, t)) {
@@ -429,6 +438,33 @@ async function boot() {
   const ordersTip = new OrdersTipUI({ store, ui, scene: () => scene, sound });
   ordersTip.init();
   tipRef = ordersTip;
+
+  // ----- Level (bản 0.10) -----
+  const levelUI = new LevelUI({ store, ui, sound, canCelebrate: () => state().tutorialDone && !document.querySelector('.wrap:not([hidden])') && document.getElementById('sheetWrap').hidden });
+  levelUI.init();
+  // Áp dụng một level vừa đạt: quà, hàng xóm mới gửi đơn, thêm gà, trang trí; rồi chúc mừng
+  function applyLevel(lv) {
+    const got = level.claimLevel(state(), lv);
+    if (!got) return;
+    (got.unlock.neighbors || []).forEach(n => orders.welcome(state(), n, now()));
+    if (scene) { scene.setChickens(state().coop.chickens); scene.setDecor(state().decor || []); }
+    ui.refreshCoins(true);
+    renderOrders(); renderBuySlot();
+    levelUI.celebrate(got);
+  }
+  gainXp = n => {
+    const r = level.addXp(state(), n);
+    if (!r.gained) return;
+    levelUI.showGain(r.gained);
+    r.ups.forEach(applyLevel);
+    levelUI.refresh();
+    if (r.ups.length) { eco.refresh(); ui.refreshOpenSheets(); }
+    store.markDirty();
+  };
+  document.getElementById('addXp').addEventListener('click', () => { gainXp(50); store.flush(); });
+  // Level đạt trong lúc chưa được chúc mừng (hướng dẫn, đang mở bảng): chúc mừng khi bảng đóng
+  const wrapObserver = new MutationObserver(() => setTimeout(() => levelUI.showNext(), 250));
+  document.querySelectorAll('.wrap, #tutWrap, #sheetWrap').forEach(el => wrapObserver.observe(el, { attributes: true, attributeFilter: ['hidden'] }));
   // Đóng bảng đơn hàng (nút Đóng, nền tối, Esc) thì quay về bước "chạm dây phơi"
   new MutationObserver(() => ordersTip.update()).observe(document.getElementById('ordersWrap'), { attributes: true, attributeFilter: ['hidden'] });
 
@@ -457,6 +493,7 @@ async function boot() {
     // Xóa dữ liệu trong bản thử: số thùng có thể giảm về 4, nên dựng lại cảnh cho khớp
     if (scene && scene.boxes.length !== state().boxes.length) { location.reload(); return; }
     renderBoxes(); renderCoop(); renderDust(); renderOrders(); renderBuySlot();
+    levelUI.refresh();
   });
 
   game = createGame({
@@ -470,6 +507,8 @@ async function boot() {
       renderDust();
       renderOrders();
       renderBuySlot();
+      scene.setChickens(state().coop.chickens);
+      scene.setDecor(state().decor || []);
       greet(first);
       tutor.start();
     },

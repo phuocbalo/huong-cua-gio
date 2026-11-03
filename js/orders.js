@@ -3,27 +3,38 @@
 // - Không phạt: đơn để quá ORDER_EXPIRE thì người đặt "đã mua ngoài chợ", đơn mới thay vào.
 // - Đơn khó thì đổi đơn khác miễn phí.
 // - Chỉ đặt những món người chơi đã từng có (state.seen), để đơn luôn làm được.
-// - Hàng xóm mở dần theo tổng số đơn đã giao (NEIGHBORS[...].unlock).
+// - Hàng xóm mở dần theo level người chơi (NEIGHBORS[...].level, bản 0.10).
 // Mọi thời điểm là thời gian game (gameTime).
 
 import { CROPS, ITEMS, ORDER_SLOTS, ORDER_BONUS, ORDER_EXPIRE, NEIGHBORS, LIKE_CHANCE } from './config.js';
 import * as inv from './inventory.js';
 import { sellPrice } from './shop.js';
+import { levelNow } from './level.js';
 
 export const newOrders = () => ({ list: [], nextId: 1, delivered: 0 });
 export const newFriends = () => Object.fromEntries(Object.keys(NEIGHBORS).map(n => [n, 0]));
 
-// Những hàng xóm đã quen (đủ số đơn đã giao)
+// Những hàng xóm đã quen (đủ level)
 export function unlocked(state) {
-  const done = state.orders.delivered || 0;
-  return Object.keys(NEIGHBORS).filter(n => NEIGHBORS[n].unlock <= done);
+  const lv = levelNow(state);
+  return Object.keys(NEIGHBORS).filter(n => NEIGHBORS[n].level <= lv);
 }
 
-// Hàng xóm kế tiếp sẽ quen và còn bao nhiêu đơn nữa
+// Hàng xóm kế tiếp sẽ quen và ở level nào
 export function nextNeighbor(state) {
-  const done = state.orders.delivered || 0;
-  const n = Object.keys(NEIGHBORS).filter(k => NEIGHBORS[k].unlock > done).sort((a, b) => NEIGHBORS[a].unlock - NEIGHBORS[b].unlock)[0];
-  return n ? { id: n, left: NEIGHBORS[n].unlock - done } : null;
+  const lv = levelNow(state);
+  const n = Object.keys(NEIGHBORS).filter(k => NEIGHBORS[k].level > lv).sort((a, b) => NEIGHBORS[a].level - NEIGHBORS[b].level)[0];
+  return n ? { id: n, level: NEIGHBORS[n].level } : null;
+}
+
+// Hàng xóm mới quen (vừa lên level): gửi ngay một đơn của họ, thay đơn ghim cuối cùng, để người chơi gặp họ
+export function welcome(state, who, now, rand = Math.random) {
+  if (state.orders.list.some(x => x.from === who)) return false;
+  const o = makeOrder(state, now, rand, who);
+  if (!o) return false;
+  if (state.orders.list.length >= ORDER_SLOTS) state.orders.list.pop();
+  state.orders.list.push(o);
+  return true;
 }
 
 // Ghi nhận món người chơi đã có: nông sản, trứng, và nông sản của hạt giống đang có hoặc đang trồng

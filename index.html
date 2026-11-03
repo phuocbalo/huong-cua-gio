@@ -29,9 +29,15 @@
         <span><span id="clock">--:--</span> <span class="sub" id="period"></span></span>
       </div>
       <button class="tag" id="infoBtn" type="button" aria-haspopup="dialog" data-t-label="info_button_label" hidden></button>
+      <div class="hud-right">
+      <button class="pill lvl" id="levelPill" type="button" aria-haspopup="dialog">
+        <span class="lvl-star"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3l3.9 8 8.6 1.2-6.3 6 1.6 8.6L16 22.6 8.2 26.8l1.6-8.6-6.3-6L12.1 11z" fill="#ffd84a" stroke="#3b2f2a" stroke-width="2.4" stroke-linejoin="round"/></svg><b id="lvlNum">1</b></span>
+        <span class="lvl-bar" aria-hidden="true"><i id="lvlBar"></i></span>
+      </button>
       <div class="pill" data-t-label="coinsLabel">
         <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="12" fill="#f2b544" stroke="#3b2f2a" stroke-width="2.5"/><circle cx="16" cy="16" r="7" fill="none" stroke="#c98a1c" stroke-width="2"/></svg>
         <span id="coins">–</span>
+      </div>
       </div>
     </div>
 
@@ -104,6 +110,9 @@
         <div class="actions">
           <button class="btn" type="button" id="nextDay" data-t="info_next_day"></button>
           <button class="btn" type="button" id="addDust" data-t="info_add_dust"></button>
+        </div>
+        <div class="actions">
+          <button class="btn" type="button" id="addXp" data-t="info_add_xp"></button>
         </div>
         <p class="note" data-t="info_test_note"></p>
 
@@ -233,6 +242,40 @@
         <p class="note" id="statsLine"></p>
         <p class="version" id="versionLine"></p>
         <button class="close" type="button" data-close data-t="close"></button>
+      </div>
+    </div>
+
+    <!-- Level: bảng tiến độ và con đường level (bản 0.10) -->
+    <div id="levelWrap" class="wrap" hidden>
+      <div class="sheet-backdrop" data-close></div>
+      <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="levelTitle">
+        <div class="lvl-head">
+          <span class="lvl-badge" id="levelBadge"></span>
+          <div class="lvl-head-text">
+            <h2 id="levelTitle"></h2>
+            <div class="lvl-bigbar"><i id="levelBigBar"></i></div>
+            <small id="levelLeft"></small>
+          </div>
+        </div>
+        <p class="note" id="levelHow"></p>
+        <div class="label" data-t="level_road"></div>
+        <ol class="lvl-road" id="levelRoad"></ol>
+        <button class="close" type="button" data-close data-t="close"></button>
+      </div>
+    </div>
+
+    <!-- Level: chúc mừng lên level -->
+    <div id="levelUpWrap" class="wrap" hidden>
+      <div class="sheet-backdrop"></div>
+      <div class="sheet lvl-up" role="dialog" aria-modal="true" aria-labelledby="levelUpTitle">
+        <span class="lvl-badge big" id="levelUpBadge"></span>
+        <h2 id="levelUpTitle"></h2>
+        <div class="keeper"><span class="avatar" id="levelUpAvatar"></span><p class="say" id="levelUpSay"></p></div>
+        <div class="label" data-t="level_up_unlocks"></div>
+        <ul class="lvl-list" id="levelUpUnlocks"></ul>
+        <div class="label" id="levelUpGiftsLabel" data-t="level_up_gifts"></div>
+        <ul class="lvl-list" id="levelUpGifts"></ul>
+        <button class="close primary" type="button" id="levelUpOk" data-t="level_up_ok"></button>
       </div>
     </div>
 

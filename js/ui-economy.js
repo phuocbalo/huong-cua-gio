@@ -8,6 +8,7 @@ import * as shop from './shop.js';
 import * as inv from './inventory.js';
 import * as orders from './orders.js';
 import { duration } from './util.js';
+import * as level from './level.js';
 
 const $ = id => document.getElementById(id);
 const pick = arr => arr[Math.floor(Math.random() * arr.length)];
@@ -114,7 +115,13 @@ export class EconomyUI {
     } else {
       // Nâng cấp túi đồ đứng đầu
       const up = shop.nextBagUpgrade(s);
-      if (up) {
+      const bagLock = !level.isUnlocked(s, 'bag') ? level.unlockLevel('bag') : 0;
+      if (up && bagLock) {
+        html += `<li class="shop-row locked">
+          <span class="ico">${BAG_ICON}</span>
+          <span class="meta"><b>${fmt(T.shop_bag_upgrade, { n: up.slots })}</b><small class="why">${fmt(T.shop_locked, { n: bagLock })}</small></span>
+          <span class="acts one"><button class="btn small" type="button" disabled>${fmt(T.shop_locked_btn, { n: bagLock })}</button></span></li>`;
+      } else if (up) {
         const short = s.coins < up.price;
         html += `<li class="shop-row">
           <span class="ico">${BAG_ICON}</span>
@@ -126,8 +133,16 @@ export class EconomyUI {
       SHOP_BUY.forEach(id => {
         const price = shop.buyPrice(id);
         const one = shop.canBuy(s, id, 1), five = shop.canBuy(s, id, 5);
-        const why = one.ok ? '' : one.reason === 'coins' ? fmt(T.shop_missing, { n: one.missing }) : T.shop_bag_full;
+        const locked = one.reason === 'locked';
+        const why = one.ok ? '' : locked ? fmt(T.shop_locked, { n: one.level }) : one.reason === 'coins' ? fmt(T.shop_missing, { n: one.missing }) : T.shop_bag_full;
         const tier = ITEMS[id].kind === 'seed' ? CROPS[ITEMS[id].crop].tier : 0;
+        if (locked) {
+          html += `<li class="shop-row locked${tier ? ' tier-' + tier : ''}">
+            <span class="ico">${itemIcon(id)}</span>
+            <span class="meta"><b>${T['item_' + id]}${tier ? ` <i class="tier-tag">${T['tier_' + tier]}</i>` : ''}</b><small class="why">${why}</small></span>
+            <span class="acts one"><button class="btn small" type="button" disabled>${fmt(T.shop_locked_btn, { n: one.level })}</button></span></li>`;
+          return;
+        }
         html += `<li class="shop-row${tier ? ' tier-' + tier : ''}">
           <span class="ico">${itemIcon(id)}</span>
           <span class="meta"><b>${T['item_' + id]}${tier ? ` <i class="tier-tag">${T['tier_' + tier]}</i>` : ''}</b><small>${fmt(T.shop_price, { price, unit: unitOf(id) })} · ${fmt(T.shop_have, { n: inv.count(s.inventory, id), price, unit: unitOf(id) }).split(' · ')[0]}</small>${why ? `<small class="why">${why}</small>` : ''}</span>
@@ -147,7 +162,7 @@ export class EconomyUI {
     const s = this.state;
     const known = orders.unlocked(s), next = orders.nextNeighbor(s);
     $('friendsLine').innerHTML = `${T.friends_line}: ` + known.map(n => `<span><b>${T['name_' + n]}</b> ${HEART} ${s.friends[n] || 0}</span>`).join('')
-      + (next ? `<span>${fmt(T.friends_next, { name: T['name_' + next.id], n: next.left })}</span>` : '');
+      + (next ? `<span>${fmt(T.friends_next, { name: T['name_' + next.id], n: next.level })}</span>` : '');
     const list = s.orders.list;
     if (!list.length) { $('orderList').innerHTML = `<li class="note">${T.order_none}</li>`; return; }
     $('orderList').innerHTML = list.map(o => {
