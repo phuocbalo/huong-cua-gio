@@ -199,7 +199,9 @@ async function boot() {
   function renderBuySlot() {
     if (!scene) return;
     const n = state().boxes.length;
-    scene.setBuySlot(n < MAX_BOXES ? n : -1, shop.nextBoxPrice(state()));
+    // Trong lúc bà Tư hướng dẫn thì ẩn ô mua thùng, xong hướng dẫn mới hiện (I-25)
+    const show = n < MAX_BOXES && state().tutorialDone;
+    scene.setBuySlot(show ? n : -1, shop.nextBoxPrice(state()));
   }
   function afterTrade() {
     ui.refreshCoins(true);
@@ -408,7 +410,7 @@ async function boot() {
   settings.init();
 
   // F19 Mở đầu cùng bà Tư (bắt đầu khi cảnh đã vẽ xong)
-  const tutor = new TutorialUI({ store, ui, scene: () => scene, now, render: () => renderBoxes(), sound });
+  const tutor = new TutorialUI({ store, ui, scene: () => scene, now, render: () => renderBoxes(), onToggle: () => renderBuySlot(), sound });
   tutor.init();
 
   // Mỗi nhịp đồng hồ: cây lớn theo thời gian game

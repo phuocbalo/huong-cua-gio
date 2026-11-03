@@ -73,7 +73,7 @@ const $ = id => document.getElementById(id);
 const TOOL_FOR = { water: 'toolWater', sell: 'toolShop' };
 
 export class TutorialUI {
-  // h: { store, ui, scene(), now(), render(), sound(name) }
+  // h: { store, ui, scene(), now(), render(), onToggle(), sound(name) }
   constructor(h) { this.h = h; this.growTimer = 0; }
 
   get s() { return this.h.store.data; }
@@ -131,6 +131,7 @@ export class TutorialUI {
       sc.setSpotlight(target == null ? -1 : target);
     }
     if (step === 'grow') this.fastGrow();
+    if (this.h.onToggle) this.h.onToggle();
   }
 
   hide() {
@@ -139,6 +140,7 @@ export class TutorialUI {
     const sc = this.h.scene();
     if (sc) sc.setSpotlight(-1);
     clearInterval(this.growTimer);
+    if (this.h.onToggle) this.h.onToggle();
   }
 
   // Lần đầu bà Tư cho rau lớn nhanh: đi qua đủ 4 hình trong khoảng 3 giây

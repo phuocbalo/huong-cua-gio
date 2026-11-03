@@ -128,6 +128,12 @@ Trong bảng "Bản thử" có "Thêm 10 xu" nếu cần thêm xu để thử mu
 - [ ] **F12** Bấm "Tua tới sáng mai" tới khi đơn quá hạn: sau thông báo tua khoảng 2 giây hiện "… đã mua ngoài chợ" (hoặc "N đơn cũ đã được thay…").
 - [ ] **F12** Sau đó bấm "Giả lập vắng 8 giờ": bảng đi vắng **không** còn dòng "đơn cũ quá hạn" của lần tua trước.
 
+## Kiểm thử bản 0.9.1 – Sửa lỗi trước khi chơi thử
+
+- [ ] **I-25** Người chơi mới (cửa sổ ẩn danh, hoặc Cài đặt → Xóa dữ liệu): trong lúc bà Tư hướng dẫn **không** thấy ô "+ 40 xu" ở chỗ trống bên dưới 4 thùng.
+- [ ] **I-25** Bấm "Bỏ qua hướng dẫn" (hoặc đi hết hướng dẫn): ô "+ 40 xu" hiện ra ngay, chạm vào mở bảng mua thùng.
+- [ ] **I-25** Cài đặt → "Xem lại hướng dẫn": ô "+" ẩn đi; xong hướng dẫn thì hiện lại.
+
 ## Kiểm thử chặng 5 – Hoàn thiện (bản 0.9.0)
 
 Công cụ thử (bảng "Bản thử", tua giờ…) giờ **ẩn với người chơi mới**. Bật lại bằng một trong hai cách:
