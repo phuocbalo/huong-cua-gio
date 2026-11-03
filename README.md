@@ -136,6 +136,19 @@ Trong bảng "Bản thử" có "Thêm 10 xu" nếu cần thêm xu để thử mu
 - [ ] **I-25** Đi hết hướng dẫn: ô "+ 40 xu" hiện ra ngay, chạm vào mở bảng mua thùng.
 - [ ] **I-25** Cài đặt → "Xem lại hướng dẫn": ô "+" ẩn đi; xong hướng dẫn thì hiện lại.
 
+## Kiểm thử bản 0.10.1 – Bắt đầu với 2 thùng, hướng dẫn đủ 7 bước
+
+Thử bằng cửa sổ ẩn danh hoặc sau khi Xóa dữ liệu.
+
+- [ ] Người chơi mới chỉ có **2 thùng xốp** (hàng trên bên trái). Từ level 2 mới hiện ô mua thùng; giá thùng thứ 3 → 8: 25, 30, 40, 70, 110, 160 xu. Người chơi cũ giữ nguyên số thùng, mua thùng tiếp theo đúng giá cũ.
+- [ ] **Thứ tự hướng dẫn:** Gieo hạt → Tưới nước → Thu hoạch → Bán → Mua → Cho gà ăn → Đơn hàng → lời chào cuối.
+- [ ] **Bán:** trong tiệm bấm "Bán hết" → tiệm vẫn mở, sang bước **Mua**: mũi tên chỉ tab "Mua", rồi chỉ "Mua 1" của hạt rau muống. Mua hạt khác, "Mua 5", tab Bán, Đóng: bị chặn. Mua xong tiệm tự đóng.
+- [ ] **Cho gà ăn:** như trước.
+- [ ] **Đơn hàng (bước cuối, luôn có):** mũi tên chỉ dây phơi → mở bảng đơn hàng. Có đơn đủ hàng: mũi tên chỉ "Giao hàng", giao xong bảng tự đóng. Chưa đủ hàng: mũi tên chỉ "Đóng". Rồi bà Tư nói lời cuối → "Bắt đầu chơi".
+- [ ] Khi bảng Tiệm hoặc Đơn hàng đang mở, lời bà Tư hiện trong khung vàng ngay đầu bảng.
+- [ ] Xong hướng dẫn: hướng dẫn trả đơn riêng (của bản 0.9.4) **không** hiện nữa. Người chơi cũ đã xong hướng dẫn từ trước thì vẫn có hướng dẫn trả đơn riêng như cũ.
+- [ ] Đóng game ở bước đọc đơn hàng rồi mở lại: quay về bước chạm dây phơi.
+
 ## Kiểm thử bản 0.10.0 – Hệ thống level (10 level đầu)
 
 Dùng nút "+50 KN" trong bảng "Bản thử" để lên level nhanh.

@@ -49,7 +49,7 @@ t('Tiến độ: level cao nhất thì đầy thanh', () => { const s = fresh();
 t('Nâng cấp bản lưu cũ: xếp level theo số đơn đã giao, giữ hàng xóm đã quen', () => {
   const v6 = fresh(); v6.schemaVersion = 6; delete v6.xp; delete v6.level; delete v6.decor; v6.orders.delivered = 7;
   const m = migrate(v6); assert.equal(m.schemaVersion, 7); assert.equal(L.levelNow(m), 6); assert.equal(m.level, 6);
-  const v6b = fresh(); v6b.schemaVersion = 6; delete v6b.xp; v6b.orders.delivered = 0; v6b.boxes.push({ crop: null });
+  const v6b = fresh(); v6b.schemaVersion = 6; delete v6b.xp; v6b.orders.delivered = 0; v6b.boxes = Array.from({ length: 5 }, () => ({ crop: null }));
   assert.equal(L.levelNow(migrate(v6b)), 2, 'đã mua thùng thì ít nhất level 2');
   const v6c = fresh(); v6c.schemaVersion = 6; delete v6c.xp; v6c.orders.delivered = 25; const mc = migrate(v6c);
   assert.equal(L.levelNow(mc), 10); assert.equal(mc.coop.chickens, v6c.coop.chickens + 1); assert.deepEqual(mc.decor, ['hoa_giay']);

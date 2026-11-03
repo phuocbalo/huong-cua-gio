@@ -237,6 +237,7 @@ async function boot() {
       tutor.event('sell');
     },
     onBuy(id, qty) {
+      if (!tutor.allows('buy', id)) return;
       const r = shop.buy(state(), id, qty);
       if (!r.ok) return;
       ui.toast(fmt(T.bought, { coins: r.cost, qty, unit: unitOf(id), noun: nounOf(id) }));
@@ -244,6 +245,7 @@ async function boot() {
       sound('buy');
       if (syncOrders()) renderOrders();
       afterTrade();
+      tutor.event('buy');
     },
     onBagUpgrade() {
       const r = shop.buyBagUpgrade(state());
@@ -253,6 +255,7 @@ async function boot() {
       afterTrade();
     },
     onDeliver(id) {
+      if (!tutor.allows('deliver', id)) return;
       const r = orders.deliver(state(), id, now());
       if (!r.ok) return;
       const o = r.order;
@@ -260,6 +263,7 @@ async function boot() {
       sound('coin');
       if (r.met.length) setTimeout(() => { ui.toast(T['met_' + r.met[0]]); sound('chime'); }, 2600);
       ordersTip.delivered();
+      tutor.event('deliver');
       gainXp(level.xpFor('deliver'));
       afterTrade();
     },
@@ -410,7 +414,7 @@ async function boot() {
   const baseOpenShop = eco.openShop.bind(eco);
   eco.openShop = gate('shop', () => {
     sound('open');
-    // Trong lúc hướng dẫn bán rau: luôn mở ở tab "Bán"
+    // Trong lúc hướng dẫn: bước bán mở tab "Bán"; bước mua mở tab "Bán" để người chơi tự chọn tab "Mua" theo mũi tên
     if (!state().tutorialDone) eco.setTab('sell');
     baseOpenShop();
   });
@@ -466,7 +470,10 @@ async function boot() {
   const wrapObserver = new MutationObserver(() => setTimeout(() => levelUI.showNext(), 250));
   document.querySelectorAll('.wrap, #tutWrap, #sheetWrap').forEach(el => wrapObserver.observe(el, { attributes: true, attributeFilter: ['hidden'] }));
   // Đóng bảng đơn hàng (nút Đóng, nền tối, Esc) thì quay về bước "chạm dây phơi"
-  new MutationObserver(() => ordersTip.update()).observe(document.getElementById('ordersWrap'), { attributes: true, attributeFilter: ['hidden'] });
+  new MutationObserver(() => {
+    ordersTip.update();
+    if (document.getElementById('ordersWrap').hidden) tutor.event('closeOrders');   // bước cuối hướng dẫn: đóng bảng đơn hàng
+  }).observe(document.getElementById('ordersWrap'), { attributes: true, attributeFilter: ['hidden'] });
 
   // Mỗi nhịp đồng hồ: cây lớn theo thời gian game
   clock.on((type, r) => {
@@ -516,7 +523,7 @@ async function boot() {
     onTapCoop: gate('coop', onTapCoop),
     onTapTrough: gate('feed', onTapTrough),
     onTapDust: gate('dust', onTapDust),
-    onTapOrders: gate('orders', () => { sound('open'); eco.openOrders(); ordersTip.update(); }),
+    onTapOrders: gate('orders', () => { sound('open'); eco.openOrders(); ordersTip.update(); tutor.event('openOrders'); }),
     onTapBuyBox: gate('buyBox', () => { sound('open'); eco.openBuyBox(); })
   });
 

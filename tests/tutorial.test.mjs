@@ -12,16 +12,20 @@ const { defaultSave } = await import(R + '/js/save.js');
 let ok = 0; const t = (name, fn) => { fn(); ok++; console.log('✓', name); };
 const fresh = () => defaultSave(0);
 
-t('Đi trọn các bước: chào → gieo → tưới → lớn → thu → bán → cho gà ăn → xong', () => {
+t('Đi trọn các bước: chào → gieo → tưới → lớn → thu → bán → mua → cho gà ăn → đơn hàng → xong', () => {
   const s = fresh();
   assert.equal(Tu.advance(s, 'next'), 'plant');
   assert.equal(Tu.advance(s, 'plant', 2), 'water'); assert.equal(s.tutorial.box, 2);
   assert.equal(Tu.advance(s, 'water', 2), 'grow');
   assert.equal(Tu.advance(s, 'ripe'), 'harvest');
   assert.equal(Tu.advance(s, 'harvest', 2), 'sell');
-  assert.equal(Tu.advance(s, 'sell'), 'feed');
-  assert.equal(Tu.advance(s, 'feed'), 'done'); assert.equal(s.tutorialDone, false, 'còn lời chào cuối');
-  Tu.advance(s, 'next'); assert.equal(s.tutorialDone, true);
+  assert.equal(Tu.advance(s, 'sell'), 'buy');
+  assert.equal(Tu.advance(s, 'feed'), 'buy', 'chưa mua thì chưa sang cho gà ăn');
+  assert.equal(Tu.advance(s, 'buy'), 'feed');
+  assert.equal(Tu.advance(s, 'feed'), 'orders');
+  assert.equal(Tu.advance(s, 'openOrders'), 'ordersRead');
+  assert.equal(Tu.advance(s, 'closeOrders'), 'done'); assert.equal(s.tutorialDone, false, 'còn lời chào cuối');
+  Tu.advance(s, 'next'); assert.equal(s.tutorialDone, true); assert.equal(s.tips.orders, 'done', 'không hiện hướng dẫn trả đơn riêng nữa');
 });
 t('Bấm "Bình tưới" (tưới tất cả) cũng tính là tưới', () => { const s = fresh(); Tu.advance(s, 'next'); Tu.advance(s, 'plant', 0); assert.equal(Tu.advance(s, 'water', 'all'), 'grow'); });
 t('Sự kiện không đúng bước thì không nhảy bước', () => {
@@ -29,7 +33,7 @@ t('Sự kiện không đúng bước thì không nhảy bước', () => {
   Tu.advance(s, 'plant', 1); assert.equal(Tu.advance(s, 'water', 3), 'water', 'tưới thùng khác không tính');
 });
 t('Không còn bỏ qua được: sự kiện "skip" không làm gì', () => {
-  for (const step of ['intro', 'plant', 'water', 'harvest', 'sell', 'feed']) { const s = fresh(); s.tutorial.step = step; assert.equal(Tu.advance(s, 'skip'), step); assert.equal(s.tutorialDone, false); }
+  for (const step of ['intro', 'plant', 'water', 'harvest', 'sell', 'buy', 'feed', 'orders', 'ordersRead']) { const s = fresh(); s.tutorial.step = step; assert.equal(Tu.advance(s, 'skip'), step); assert.equal(s.tutorialDone, false); }
 });
 t('Đang hướng dẫn chỉ cho chạm đúng chỗ; túi đồ, cài đặt cũng khóa', () => {
   const s = fresh(); Tu.advance(s, 'next');
@@ -41,12 +45,21 @@ t('Đang hướng dẫn chỉ cho chạm đúng chỗ; túi đồ, cài đặt c
   s.tutorial.step = 'sell'; s.inventory.items.rau_muong = 3; s.inventory.items.trung_ga = 2;
   assert.equal(Tu.allows(s, 'shop'), true); assert.equal(Tu.allows(s, 'tapBox', 0), false);
   assert.equal(Tu.allows(s, 'sell', 'rau_muong'), true); assert.equal(Tu.allows(s, 'sell', 'trung_ga'), false, 'chỉ bán món mũi tên chỉ');
-  s.tutorial.step = 'feed'; assert.equal(Tu.allows(s, 'feed'), true); assert.equal(Tu.allows(s, 'coop'), false); assert.equal(Tu.allows(s, 'shop'), false);
+  s.tutorial.step = 'buy'; assert.equal(Tu.allows(s, 'buy', 'hat_rau_muong'), true); assert.equal(Tu.allows(s, 'buy', 'hat_cai'), false); assert.equal(Tu.allows(s, 'sell', 'rau_muong'), false);
+  s.tutorial.step = 'feed'; assert.equal(Tu.allows(s, 'feed'), true); assert.equal(Tu.allows(s, 'coop'), false); assert.equal(Tu.allows(s, 'shop'), false); assert.equal(Tu.allows(s, 'orders'), false);
+  s.tutorial.step = 'orders'; assert.equal(Tu.allows(s, 'orders'), true); assert.equal(Tu.allows(s, 'feed'), false);
   Tu.finish(s); assert.equal(Tu.allows(s, 'coop'), true); assert.equal(Tu.allows(s, 'bag'), true);
 });
 t('Túi đầy không thu được: sang bước bán để không kẹt', () => { const s = fresh(); s.tutorial = { step: 'harvest', box: 0 }; assert.equal(Tu.advance(s, 'harvestFull'), 'sell'); });
-t('Bước bán mà không còn gì để bán: sang bước cho gà ăn', () => { const s = fresh(); s.tutorial = { step: 'sell', box: 0 }; assert.equal(Tu.normalize(s, 0), 'feed'); });
-t('Bước cho gà ăn mà gà đã ăn hôm nay: xong hướng dẫn', () => { const s = fresh(); s.tutorial = { step: 'feed', box: 0 }; C.feed(s, 1000); assert.equal(Tu.normalize(s, 2000), 'done'); });
+t('Bước bán mà không còn gì để bán: sang bước mua', () => { const s = fresh(); s.tutorial = { step: 'sell', box: 0 }; assert.equal(Tu.normalize(s, 0), 'buy'); });
+t('Bước cho gà ăn mà gà đã ăn hôm nay: sang bước đơn hàng', () => { const s = fresh(); s.tutorial = { step: 'feed', box: 0 }; C.feed(s, 1000); assert.equal(Tu.normalize(s, 2000), 'orders'); });
+t('Bước đơn hàng: có đơn đủ hàng thì phải bấm Giao hàng; giao xong là xong', () => {
+  const s = fresh(); s.tutorial = { step: 'ordersRead', box: 0 }; s.orders.list = [{ id: 7, from: 'ba_tu', item: 'rau_muong', qty: 2, coins: 10, hearts: 1, createdAt: 0 }];
+  assert.equal(Tu.allows(s, 'deliver', 7), false, 'chưa đủ hàng'); s.inventory.items.rau_muong = 2;
+  assert.equal(Tu.readyOrder(s), 7); assert.equal(Tu.allows(s, 'deliver', 7), true); assert.equal(Tu.advance(s, 'deliver'), 'done');
+});
+t('Mở lại game ở bước đọc đơn hàng: quay về bước chạm dây phơi', () => { const s = fresh(); s.tutorial = { step: 'ordersRead', box: 0 }; assert.equal(Tu.resume(s, 0), 'orders'); });
+t('Đang chơi ở bước đọc đơn hàng: normalize không kéo lùi bước', () => { const s = fresh(); s.tutorial = { step: 'ordersRead', box: 0 }; assert.equal(Tu.normalize(s, 0), 'ordersRead'); });
 t('Món mũi tên chỉ trong tiệm: ưu tiên rau muống', () => { const s = fresh(); s.inventory.items.trung_ga = 1; assert.equal(Tu.sellTarget(s), 'trung_ga'); s.inventory.items.rau_muong = 3; assert.equal(Tu.sellTarget(s), 'rau_muong'); });
 t('Đóng game lúc đang chờ gieo nhưng thực ra đã gieo: mở lại sang bước tưới', () => { const s = fresh(); s.tutorial.step = 'plant'; F.plant(s, 1, 'hat_rau_muong', 0); assert.equal(Tu.normalize(s, 0), 'water'); assert.equal(s.tutorial.box, 1); });
 t('Đóng game lúc đang chờ tưới nhưng đã tưới: mở lại sang bước lớn nhanh', () => { const s = fresh(); F.plant(s, 0, 'hat_rau_muong', 0); s.tutorial = { step: 'water', box: 0 }; F.water(s.boxes[0], 0); assert.equal(Tu.normalize(s, 1000), 'grow'); });
@@ -57,11 +70,13 @@ t('Xem lại hướng dẫn từ cài đặt: bắt đầu lại từ lời chà
 
 // ----- Hướng dẫn trả đơn cho hàng xóm -----
 const O = await import(R + '/js/orders.js');
-const ready = () => { const s = fresh(); Tu.finish(s); s.orders.list = [{ id: 1, from: 'ba_tu', item: 'rau_muong', qty: 2, coins: 10, hearts: 1, at: 0 }]; return s; };
+// Người chơi cũ đã xong hướng dẫn trước bản 0.10.1 (chưa học bước đơn hàng)
+const ready = () => { const s = fresh(); s.tutorialDone = true; s.tutorial.step = 'done'; s.orders.list = [{ id: 1, from: 'ba_tu', item: 'rau_muong', qty: 2, coins: 10, hearts: 1, at: 0 }]; return s; };
 t('Trả đơn: chưa xong hướng dẫn chính thì chưa hiện', () => { const s = ready(); s.tutorialDone = false; s.inventory.items.rau_muong = 5; assert.equal(Tu.ordersTipStep(s, false), null); });
 t('Trả đơn: chưa đủ hàng thì chưa hiện', () => { const s = ready(); assert.equal(Tu.ordersTipStep(s, false), null); });
 t('Trả đơn: lần đầu đủ hàng → chạm dây phơi; mở bảng → bấm Giao hàng', () => { const s = ready(); s.inventory.items.rau_muong = 2; assert.equal(Tu.ordersTipStep(s, false), 'notes'); assert.equal(Tu.ordersTipStep(s, true), 'deliver'); });
 t('Trả đơn: bảng làm mới ngay sau khi giao (đã giao 1 đơn) vẫn không tắt hướng dẫn đang chạy', () => { const s = ready(); s.inventory.items.rau_muong = 2; Tu.ordersTipStep(s, true); s.orders.delivered = 1; s.inventory.items.rau_muong = 0; Tu.ordersTipStep(s, true); assert.equal(s.tips.orders, 'active'); Tu.ordersTipDelivered(s, true); assert.equal(Tu.ordersTipStep(s, false), 'thanks'); });
 t('Trả đơn: giao xong khi đang hướng dẫn → lời cuối → xong, không hiện lại', () => { const s = ready(); s.inventory.items.rau_muong = 2; Tu.ordersTipDelivered(s, true); assert.equal(Tu.ordersTipStep(s, false), 'thanks'); Tu.ordersTipFinish(s); s.inventory.items.rau_muong = 9; assert.equal(Tu.ordersTipStep(s, false), null); });
 t('Trả đơn: người chơi đã tự giao đơn trước đó → không hiện', () => { const s = ready(); s.orders.delivered = 1; s.inventory.items.rau_muong = 2; assert.equal(Tu.ordersTipStep(s, false), null); assert.equal(s.tips.orders, 'done'); });
+t('Trả đơn: người chơi mới đã học đơn hàng trong hướng dẫn chính thì không hiện lại', () => { const s = ready(); Tu.finish(s); s.inventory.items.rau_muong = 2; assert.equal(Tu.ordersTipStep(s, false), null); });
 console.log(`\n${ok} ca đạt`);

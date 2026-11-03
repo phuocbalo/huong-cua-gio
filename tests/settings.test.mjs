@@ -12,7 +12,7 @@ t('Xuất rồi nhập lại: ra đúng bản lưu (xu, thùng, cây, túi)', ()
   const s = defaultSave(0); s.coins = 345; s.boxes[1] = { crop: 'cai', progress: 0.5, lastT: 0, wateredUntil: 0, harvestsLeft: 1, regrowing: false }; s.inventory.items.trung_ga = 7;
   const r = validateImport(exportText(s, 123));
   assert.equal(r.ok, true); assert.equal(r.data.coins, 345); assert.equal(r.data.boxes[1].crop, 'cai'); assert.equal(r.data.inventory.items.trung_ga, 7);
-  assert.equal(r.summary.coins, 345); assert.equal(r.summary.boxes, 4);
+  assert.equal(r.summary.coins, 345); assert.equal(r.summary.boxes, s.boxes.length);
 });
 t('Nhập file không phải JSON: báo lỗi, không đổi gì', () => { assert.equal(validateImport('xin chào').reason, 'not_json'); });
 t('Nhập file JSON lạ (không phải bản lưu của game): báo lỗi', () => {

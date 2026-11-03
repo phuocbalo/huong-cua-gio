@@ -388,3 +388,11 @@
   .lvl-list li { display: grid; grid-template-columns: 9cqw 1fr; gap: 2.4cqw; align-items: center; font-size: 3.4cqw; line-height: 1.35; padding: 1.4cqw 2cqw; border-radius: 3.4cqw; background: #fffdf7; border: 0.5cqw solid var(--paper-2); }
   .lvl-list .ico svg, .lvl-list .avatar svg { width: 100%; height: auto; display: block; }
   .shop-row.locked { opacity: 0.6; }
+
+  /* Lời bà Tư hiện ngay trong bảng đang mở trong lúc hướng dẫn (bảng che hộp thoại ở trên cùng) */
+  .tut-inline {
+    display: grid; grid-template-columns: 9cqw 1fr; gap: 2.4cqw; align-items: center;
+    padding: 1.8cqw 2.4cqw; border-radius: 3.6cqw; background: #fff4d6; border: 0.6cqw solid #f2b544;
+  }
+  .tut-inline .avatar svg { width: 100%; height: auto; display: block; }
+  .tut-inline p { margin: 0; font-size: 3.1cqw; line-height: 1.4; }

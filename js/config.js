@@ -1,7 +1,7 @@
 // Bảng dữ liệu của game. Muốn cân bằng lại game thì sửa số ở đây, không cần đụng vào code khác.
 // Đơn vị thời gian là mili giây; dùng các hằng PHUT, GIO cho dễ đọc.
 
-export const APP_VERSION = '0.10.0';
+export const APP_VERSION = '0.10.1';
 
 const PHUT = 60 * 1000;
 const GIO = 60 * PHUT;
@@ -123,8 +123,10 @@ export const NEIGHBORS = {
 export const LIKE_CHANCE = 0.7;
 
 // ---------- Mua thêm thùng xốp (F14) ----------
-// Giá thùng thứ 5, 6, 7, 8. Tối đa 8 thùng cho vừa sân (vị trí trong scene.js)
-export const BOX_PRICES = [40, 70, 110, 160];
+// Giá thùng thứ 3, 4, 5, 6, 7, 8 (bản 0.10.1 bắt đầu với 2 thùng). Giá tính theo số thùng đang có,
+// nên người chơi cũ đang có 4 thùng mua thùng thứ 5 vẫn đúng giá cũ (40 xu). Tối đa 8 thùng (vị trí trong scene.js)
+export const BOX_PRICES = [25, 30, 40, 70, 110, 160];
+export const BOX_PRICE_FROM = 2;   // BOX_PRICES[0] là giá khi đang có 2 thùng
 export const MAX_BOXES = 8;
 
 export const INVENTORY_SLOTS = 12;   // số ô kho lúc đầu
@@ -147,7 +149,7 @@ export const DUST_SPOT_COUNT = 8;     // số chỗ có thể bám bụi trên s
 export const DUST_REWARD = 5;         // xu cho mỗi vệt bụi
 
 // ---------- Khởi đầu ----------
-export const START_BOXES = 4;
+export const START_BOXES = 2;   // bản 0.10.1: bắt đầu với 2 thùng, mua thêm từ level 2
 export const START_COINS = 120;
 export const START_INVENTORY = { hat_rau_muong: 3, hat_cai: 2, thuc_an_ga: 5 };
 export const START_FEED_FOR_OLD_SAVES = 5;   // tặng người chơi bản cũ khi chuồng gà mở

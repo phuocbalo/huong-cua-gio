@@ -36,10 +36,11 @@ t('Nâng cấp túi đồ: +4 ô, giá tăng dần, tối đa 3 lần', () => {
 // ----- F14 Mua thùng -----
 t('Mua thùng: trừ xu, thêm thùng trống gieo được ngay; giá tăng; tối đa 8', () => {
   const s = fresh(); s.xp = 9999; s.coins = 1000;
-  C.BOX_PRICES.forEach((p, k) => { assert.equal(S.nextBoxPrice(s), p); const r = S.buyBox(s); assert.equal(r.ok, true); assert.equal(r.index, 4 + k); assert.equal(s.boxes[r.index].crop, null); });
+  assert.equal(s.boxes.length, C.START_BOXES);
+  C.BOX_PRICES.forEach((p, k) => { assert.equal(S.nextBoxPrice(s), p); const r = S.buyBox(s); assert.equal(r.ok, true); assert.equal(r.index, C.START_BOXES + k); assert.equal(s.boxes[r.index].crop, null); });
   assert.equal(s.boxes.length, C.MAX_BOXES); assert.equal(S.nextBoxPrice(s), 0); assert.equal(S.buyBox(s).reason, 'max');
 });
-t('Mua thùng khi thiếu xu: không có thùng mới', () => { const s = fresh(); s.xp = 9999; s.coins = 10; assert.equal(S.buyBox(s).reason, 'coins'); assert.equal(s.boxes.length, 4); });
+t('Mua thùng khi thiếu xu: không có thùng mới', () => { const s = fresh(); s.xp = 9999; s.coins = 10; assert.equal(S.buyBox(s).reason, 'coins'); assert.equal(s.boxes.length, C.START_BOXES); });
 
 // ----- F12 Đơn hàng -----
 t('Người chơi mới: 3 đơn, chỉ đặt món đã có (rau muống, cải, trứng)', () => {

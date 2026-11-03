@@ -1,4 +1,5 @@
-// F19 Mở đầu cùng bà Tư: dẫn người chơi mới qua gieo – tưới – thu – bán – cho gà ăn lần đầu.
+// F19 Mở đầu cùng bà Tư: dẫn người chơi mới qua gieo – tưới – thu – bán – mua – cho gà ăn – đơn hàng hàng xóm.
+// Bản 0.10.1: đơn hàng là bước cuối của hướng dẫn chính (luôn có, kể cả khi đã đủ hàng giao).
 // Từ bản 0.9.2 không bỏ qua được; trong lúc hướng dẫn chỉ bấm được đúng chỗ mũi tên đang chỉ.
 //
 // Phần luật (thuần, kiểm thử được): các bước, sự kiện nào đưa sang bước nào, bước nào cho chạm gì,
@@ -15,14 +16,15 @@ import * as shop from './shop.js';
 import * as coop from './coop.js';
 import * as orders from './orders.js';
 
-export const STEPS = ['intro', 'plant', 'water', 'grow', 'harvest', 'sell', 'feed', 'done'];
+export const STEPS = ['intro', 'plant', 'water', 'grow', 'harvest', 'sell', 'buy', 'feed', 'orders', 'ordersRead', 'done'];
 export const TUTORIAL_SEED = 'hat_rau_muong';
 
 export const isActive = s => !s.tutorialDone;
 const tut = s => s.tutorial || (s.tutorial = { step: 'intro', box: null });
 const go = (s, step) => { tut(s).step = step; return step; };
 
-export function finish(s) { s.tutorialDone = true; go(s, 'done'); }
+// Xong hướng dẫn chính thì không cần hướng dẫn trả đơn riêng nữa (đã học trong bước đơn hàng)
+export function finish(s) { s.tutorialDone = true; go(s, 'done'); (s.tips || (s.tips = {})).orders = 'done'; }
 
 export function restart(s) { s.tutorialDone = false; s.tutorial = { step: 'intro', box: null }; }
 
@@ -33,6 +35,18 @@ export function sellTarget(s) {
   const box = tut(s).box;
   const crop = box != null && s.boxes[box] ? s.boxes[box].crop : null;
   return list.includes('rau_muong') ? 'rau_muong' : (crop && list.includes(crop) ? crop : list[0]);
+}
+
+// Đơn đủ hàng đầu tiên (để mũi tên chỉ nút "Giao hàng"), hoặc null
+export function readyOrder(s) {
+  const o = s.orders.list.find(x => orders.canDeliver(s, x));
+  return o ? o.id : null;
+}
+
+// Mở lại game giữa chừng: bảng đơn hàng đã đóng, nên quay về bước chạm dây phơi
+export function resume(s, now) {
+  if (!s.tutorialDone && tut(s).step === 'ordersRead') tut(s).step = 'orders';
+  return normalize(s, now);
 }
 
 // Sửa bước cho khớp với sân hiện tại (mở lại game giữa chừng, hoặc người chơi đã tự làm trước).
@@ -50,13 +64,14 @@ export function normalize(s, now) {
     else if (farm.isRipe(box)) t.step = 'harvest';
     else if (t.step === 'water' && box.wateredUntil > now) t.step = 'grow';
   }
-  if (t.step === 'sell' && !shop.sellable(s).length) t.step = 'feed';
-  if (t.step === 'feed' && s.coop && coop.status(s, now).key !== 'hungry') t.step = 'done';
+  if (t.step === 'sell' && !shop.sellable(s).length) t.step = 'buy';
+  if (t.step === 'feed' && s.coop && coop.status(s, now).key !== 'hungry') t.step = 'orders';
   return t.step;
 }
 
 // Sự kiện từ game. Trả về bước mới (hoặc bước cũ nếu sự kiện không liên quan).
-//   plant (index) · water (index | 'all') · ripe · harvest (index) · harvestFull · sell · feed · next
+//   plant (index) · water (index | 'all') · ripe · harvest (index) · harvestFull · sell · buy · feed
+//   openOrders · deliver · closeOrders · next
 export function advance(s, event, data) {
   if (s.tutorialDone) return null;
   const t = tut(s);
@@ -70,8 +85,13 @@ export function advance(s, event, data) {
       // Túi đầy không thu được: đi bán bớt trước để không bị kẹt
       if (event === 'harvestFull') return go(s, 'sell');
       break;
-    case 'sell': if (event === 'sell') return go(s, 'feed'); break;
-    case 'feed': if (event === 'feed') return go(s, 'done'); break;
+    case 'sell': if (event === 'sell') return go(s, 'buy'); break;
+    case 'buy': if (event === 'buy') return go(s, 'feed'); break;
+    case 'feed': if (event === 'feed') return go(s, 'orders'); break;
+    case 'orders': if (event === 'openOrders') return go(s, 'ordersRead'); break;
+    case 'ordersRead':
+      if (event === 'deliver' || event === 'closeOrders') return go(s, 'done');
+      break;
     case 'done': if (event === 'next') { finish(s); return 'done'; } break;
   }
   return t.step;
@@ -88,7 +108,10 @@ export function allows(s, action, data) {
     case 'water': return (action === 'tapBox' && data === t.box) || action === 'waterAll';
     case 'harvest': return action === 'tapBox' && data === t.box;
     case 'sell': return action === 'shop' || (action === 'sell' && data === sellTarget(s));
+    case 'buy': return action === 'shop' || (action === 'buy' && data === TUTORIAL_SEED);
     case 'feed': return action === 'feed';
+    case 'orders': return action === 'orders';
+    case 'ordersRead': return action === 'deliver' && readyOrder(s) != null;
     default: return false;
   }
 }
@@ -126,7 +149,7 @@ export class TutorialUI {
   start() {
     if (!isActive(this.s)) { this.hide(); return; }
     this.ensureSupplies();
-    normalize(this.s, this.h.now());
+    resume(this.s, this.h.now());
     this.show();
   }
 
@@ -135,6 +158,9 @@ export class TutorialUI {
     const items = this.s.inventory.items, step = tut(this.s).step;
     if (['intro', 'plant'].includes(step) && !items[TUTORIAL_SEED]) items[TUTORIAL_SEED] = 1;
     if (step === 'feed' && !items[FEED_ITEM]) items[FEED_ITEM] = 1;
+    // Bước mua: bảo đảm đủ xu mua 1 gói hạt rau muống
+    const price = shop.buyPrice(TUTORIAL_SEED);
+    if (step === 'buy' && this.s.coins < price) this.s.coins = price;
   }
 
   event(name, data) {
@@ -147,8 +173,10 @@ export class TutorialUI {
       this.h.store.flush();
       if (this.s.tutorialDone) { this.hide(); this.h.sound('chime'); return; }
       this.h.sound('open');
-      // Bán xong: đóng tiệm giúp người chơi để thấy máng ăn của gà
-      if (before === 'sell' && isOpen('shopWrap')) setTimeout(() => { if (isOpen('shopWrap')) this.h.ui.closeWrap($('shopWrap')); }, 900);
+      // Mua xong: đóng tiệm giúp người chơi để thấy máng ăn của gà
+      if (before === 'buy' && isOpen('shopWrap')) setTimeout(() => { if (isOpen('shopWrap')) this.h.ui.closeWrap($('shopWrap')); }, 900);
+      // Giao đơn xong: đóng bảng đơn hàng để thấy lời cuối của bà Tư
+      if (before === 'ordersRead' && isOpen('ordersWrap')) setTimeout(() => { if (isOpen('ordersWrap')) this.h.ui.closeWrap($('ordersWrap')); }, 900);
       this.show();
     }
   }
@@ -170,7 +198,8 @@ export class TutorialUI {
   show() {
     const step = tut(this.s).step;
     $('tutWrap').hidden = false;
-    $('tutText').textContent = fmt(T['tut_' + step], { time: duration(LAY_DELAY), grow: duration(CROPS.rau_muong.growTime) });
+    const key = step === 'ordersRead' ? (readyOrder(this.s) != null ? 'tut_ordersRead_ready' : 'tut_ordersRead_wait') : 'tut_' + step;
+    $('tutText').textContent = fmt(T[key], { time: duration(LAY_DELAY), grow: duration(CROPS.rau_muong.growTime) });
     const talkOnly = step === 'intro' || step === 'done';
     $('tutNext').hidden = !talkOnly;
     $('tutNext').textContent = step === 'done' ? T.tut_start : T.tut_next;
@@ -184,6 +213,7 @@ export class TutorialUI {
     $('tutWrap').hidden = true;
     cancelAnimationFrame(this.raf); this.raf = 0;
     this.setTarget(null);
+    this.removeInline();
     this.arrow.hidden = true;
     $('frame').classList.remove('tut-toolbar');
     const sc = this.h.scene();
@@ -207,6 +237,18 @@ export class TutorialUI {
       }
       return anySheetOpen() ? null : $('toolShop');
     }
+    if (step === 'buy') {
+      if (isOpen('shopWrap')) {
+        const buyTab = document.querySelector('#shopTabs .chip[data-tab="buy"]');
+        if (buyTab && buyTab.getAttribute('aria-pressed') !== 'true') return buyTab;
+        return document.querySelector(`#shopList button[data-act="buy"][data-id="${TUTORIAL_SEED}"][data-qty="1"]`);
+      }
+      return anySheetOpen() ? null : $('toolShop');
+    }
+    if (step === 'ordersRead' && isOpen('ordersWrap')) {
+      const id = readyOrder(this.s);
+      return id != null ? document.querySelector(`#orderList button[data-act="deliver"][data-id="${id}"]`) : document.querySelector('#ordersWrap .close');
+    }
     return null;
   }
 
@@ -218,7 +260,8 @@ export class TutorialUI {
     const closer = el.closest('[data-close]');
     if (closer) {
       const step = tut(this.s).step, wrap = closer.closest('.wrap');
-      const locked = (step === 'plant' && wrap && wrap.id === 'seedWrap') || (step === 'sell' && wrap && wrap.id === 'shopWrap');
+      const id = wrap && wrap.id;
+      const locked = (step === 'plant' && id === 'seedWrap') || ((step === 'sell' || step === 'buy') && id === 'shopWrap') || (step === 'ordersRead' && id === 'ordersWrap');
       if (!locked) return true;
     }
     const target = this.domTarget();
@@ -246,8 +289,30 @@ export class TutorialUI {
     if (step === 'grow') return box != null ? { kind: 'box', index: box, arrow: false } : null;
     if (step === 'harvest') return box != null ? { kind: 'box', index: box, arrow: true } : null;
     if (step === 'feed') return { kind: 'trough', arrow: true };
+    if (step === 'orders') return { kind: 'notes', arrow: true };
     return null;
   }
+
+  // Bảng đang mở che hộp thoại bà Tư ở trên cùng: chép lời bà Tư vào một dòng gọn ngay đầu bảng
+  syncInline() {
+    const wrap = document.querySelector('.wrap:not([hidden])');
+    const sheet = wrap && !['awayWrap', 'levelUpWrap'].includes(wrap.id) ? wrap.querySelector('.sheet') : null;
+    const text = $('tutText').textContent;
+    let box = document.querySelector('.tut-inline');
+    if (!sheet) { if (box) box.remove(); return; }
+    if (!box || box.parentElement !== sheet) {
+      if (box) box.remove();
+      box = document.createElement('div');
+      box.className = 'tut-inline';
+      box.innerHTML = `<span class="avatar">${AVATARS.ba_tu}</span><p></p>`;
+      const head = sheet.querySelector('.keeper, .sheet-head, h2');
+      if (head) head.after(box); else sheet.prepend(box);
+    }
+    const p = box.querySelector('p');
+    if (p.textContent !== text) p.textContent = text;
+  }
+
+  removeInline() { const box = document.querySelector('.tut-inline'); if (box) box.remove(); }
 
   setTarget(el) {
     if (this.targetEl === el) return;
@@ -263,6 +328,7 @@ export class TutorialUI {
       if (!isActive(this.s) || $('tutWrap').hidden) { this.raf = 0; return; }
       const el = this.domTarget();
       this.setTarget(el);
+      this.syncInline();
       const r = el ? el.getBoundingClientRect() : null;
       // Mũi tên chỉ vào thanh công cụ: đẩy thông báo lên cao để không che mũi tên
       $('frame').classList.toggle('tut-toolbar', !!(el && el.classList.contains('tool')));

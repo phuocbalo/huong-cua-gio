@@ -85,7 +85,7 @@ const MIGRATIONS = {
   6: s => {
     const d = (s.orders && s.orders.delivered) || 0;
     let lv = d >= 20 ? 10 : d >= 15 ? 9 : d >= 10 ? 8 : d >= 6 ? 6 : d >= 3 ? 4 : 1;
-    if (lv < 2 && (s.boxes || []).length > START_BOXES) lv = 2;
+    if (lv < 2 && (s.boxes || []).length > 4) lv = 2;   // bản cũ bắt đầu với 4 thùng
     if (lv < 5 && (s.bagUpgrades || 0) > 0) lv = 5;
     const coop = s.coop && lv >= 8 ? { ...s.coop, chickens: s.coop.chickens + 1 } : s.coop;
     return { ...s, schemaVersion: 7, xp: LEVELS[lv - 1].xp, level: lv, decor: lv >= 10 ? ['hoa_giay'] : [], coop };

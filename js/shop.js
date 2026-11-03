@@ -1,7 +1,7 @@
 // F11 Tiệm tạp hóa anh Bảo, F14 mua thêm thùng xốp, và nâng cấp túi đồ (F10).
 // Mọi hàm trả về { ok, ... } hoặc { ok: false, reason } để giao diện báo lý do cho người chơi.
 
-import { CROPS, ITEMS, SHOP_BUY, SHOP_SELL_KINDS, BAG_UPGRADES, BOX_PRICES, MAX_BOXES, START_BOXES } from './config.js';
+import { CROPS, ITEMS, SHOP_BUY, SHOP_SELL_KINDS, BAG_UPGRADES, BOX_PRICES, BOX_PRICE_FROM, MAX_BOXES } from './config.js';
 import * as inv from './inventory.js';
 import { emptyBox } from './farm.js';
 import { isUnlocked, itemUnlockLevel, levelNow, unlockLevel } from './level.js';
@@ -74,7 +74,7 @@ export function buyBagUpgrade(state) {
 // ----- F14 Mua thêm thùng xốp -----
 export function nextBoxPrice(state) {
   if (state.boxes.length >= MAX_BOXES) return 0;
-  return BOX_PRICES[Math.max(0, state.boxes.length - START_BOXES)] || 0;
+  return BOX_PRICES[Math.max(0, state.boxes.length - BOX_PRICE_FROM)] || 0;
 }
 
 // reason: 'max' | 'locked' | 'coins'. Trả về index của thùng mới
