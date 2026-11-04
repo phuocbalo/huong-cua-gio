@@ -13,9 +13,18 @@ const BOX_SCALE = 0.68;
 // Chuồng gà vẽ to hơn 18%, phóng quanh góc trước bên phải của sân gà
 const COOP_SCALE = 1.18;
 const COOP_ANCHOR = { x: 386, y: 436 };
+// Chỗ đặt đồ trang trí (bản 0.14.3). Mỗi món có chỗ riêng, đã kiểm tra không che chuồng, hàng tim của gà,
+// thùng xốp hay nhau. Toạ độ là chân món đồ. Các chỗ đánh dấu "dành sẵn" để cho hệ thống trang trí sau này.
+export const DECOR_SLOTS = {
+  hoa_giay: [372, 522],   // mép phải, dưới hàng tim của gà, giữa hai hàng thùng
+  slot_b:   [318, 500],   // dành sẵn: chỗ trống cạnh hàng thùng trên (món thấp, ví dụ ghế đá)
+  slot_c:   [18, 540],    // dành sẵn: mép trái, dưới hồ cá (món cao mảnh, ví dụ đèn lồng)
+  slot_d:   [18, 626],    // dành sẵn: mép trái, giữa hai hàng thùng dưới
+  slot_e:   [372, 610]    // dành sẵn: mép phải, giữa hai hàng thùng dưới
+};
 // Các chỗ trên sân có thể bám bụi (F23): khe giữa các thùng và mép sân, không nằm dưới thùng hay chuồng gà
 // Bản 0.14: hai chỗ sau sân nhường cho chậu cá và chuồng thỏ (F06), dời xuống khe giữa các thùng
-export const DUST_POS = [[24, 470], [256, 470], [144, 534], [260, 534], [30, 614], [144, 614], [260, 614], [372, 614]];
+export const DUST_POS = [[24, 470], [256, 470], [144, 470], [144, 534], [260, 534], [86, 534], [144, 614], [260, 614]];   // không trùng chỗ trang trí
 // Cây vẽ to so với thùng (1,5 × 0,68 ≈ cỡ gốc) cho dễ nhìn trên điện thoại
 const PLANT_SCALE = 1.5;
 // Màu quả chín đỏ của cà chua và ớt (đồng bộ với biểu tượng trong icons.js)
@@ -933,7 +942,7 @@ class Rooftop extends Phaser.Scene {
 
   // ----- Trang trí sân (level 10: chậu hoa giấy) -----
   setDecor(list) {
-    if (list.includes('hoa_giay') && !this.hoaGiay) this.hoaGiay = this.makeHoaGiay(368, 492);
+    if (list.includes('hoa_giay') && !this.hoaGiay) { const [x, y] = DECOR_SLOTS.hoa_giay; this.hoaGiay = this.makeHoaGiay(x, y); }
   }
 
   makeHoaGiay(x, y) {
@@ -958,7 +967,8 @@ class Rooftop extends Phaser.Scene {
     });
     c.add(g);
     this.children.moveBelow(c, this.frontWall);
-    if (!reduceMotion) { c.setScale(0.3); this.tweens.add({ targets: c, scale: 1, duration: 500, ease: 'Back.easeOut' }); }
+    c.setScale(0.88);
+    if (!reduceMotion) { c.setScale(0.3); this.tweens.add({ targets: c, scale: 0.88, duration: 500, ease: 'Back.easeOut' }); }
     return c;
   }
 

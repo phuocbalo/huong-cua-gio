@@ -96,6 +96,12 @@ Dùng "Tua +1 giờ", "Tua tới sáng mai" và "Giả lập vắng 8 giờ" tro
 - [ ] **F05** Túi đầy ("Lấp đầy túi") rồi nhặt trứng: hiện "Túi đồ đã đầy", trứng vẫn nằm trong chuồng.
 - [ ] **F20** Cho gà ăn, đóng game hơn 5 phút rồi mở lại (hoặc "Giả lập vắng 8 giờ"): bảng đi vắng có dòng "Gà đã đẻ 2 quả trứng…". Sang ngày mới thì có dòng "Gà đang đói…".
 
+## Kiểm thử bản 0.14.3 – Chậu hoa không che hàng tim
+
+- [ ] Level 10 trở lên: chậu hoa giấy nằm ở mép phải, **dưới** hàng 5 tim của chuồng gà, giữa hai hàng thùng; không che tim, không che thùng.
+- [ ] Đủ 8 thùng, cà chua chín: chậu hoa vẫn thấy rõ.
+- [ ] Bụi bám (Bản thử → "Cho bụi bám"): vệt bụi không nằm dưới chậu hoa.
+
 ## Kiểm thử bản 0.14.2 – Hồ cá, sân thỏ, bồ câu trắng, giãn thùng
 
 - [ ] **Chuồng thỏ có sân quây lưới B40** giống chuồng gà: cọc gỗ hai bên và giữa, rơm lót, bát cỏ khô trong sân. Thỏ trắng chạy, gặm cỏ trong sân (lưới phía trước che chân thỏ).
