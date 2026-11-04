@@ -25,6 +25,8 @@ import { TutorialUI, OrdersTipUI, restart as restartTutorial } from './tutorial.
 import * as level from './level.js';
 import { LevelUI } from './ui-level.js';
 import * as weather from './weather.js';
+import * as pens from './pens.js';
+import { PENS } from './config.js';
 import { FORECAST_AHEAD } from './config.js';
 
 const AWAY_NOTICE_MS = 60000;         // vắng từ 1 phút: lời chào ngắn
@@ -88,6 +90,7 @@ async function boot() {
     boxes.eggs = state().coop.eggs;
     boxes.hungry = coop.status(state(), t).key === 'hungry';
     boxes.dust = state().dust.spots.length;
+    boxes.pens = Object.fromEntries(pens.KINDS.map(k => [k, (state().pens && state().pens[k] && state().pens[k].items) || 0]));
     return boxes;
   }
   function awaySummary(before, away) {
@@ -95,6 +98,8 @@ async function boot() {
     s.eggs = Math.max(0, state().coop.eggs - (before.eggs || 0));
     s.hungry = coop.status(state(), t).key === 'hungry' && !before.hungry;
     s.dust = state().dust.spots.length > 0 && !before.dust;
+    // F06: sản phẩm mới của thỏ, bồ câu, cá trong lúc vắng
+    s.pens = pens.KINDS.map(k => ({ k, n: ((state().pens && state().pens[k] && state().pens[k].items) || 0) - ((before.pens && before.pens[k]) || 0) })).filter(x => x.n > 0);
     s.expired = expiredSince; expiredSince = 0;
     // F09: mưa trong lúc vắng (chỉ kể khi có cây đang trồng)
     const rain = weather.total(weather.rainIntervals(weather.current(), t - away, t));
@@ -116,7 +121,7 @@ async function boot() {
     if (r.away < AWAY_NOTICE_MS) return;
     const s = awaySummary(lastSnapshot, r.away);
     lastSnapshot = snapshot();
-    if (r.away >= AWAY_SUMMARY_MS && (s.ripe.length || s.grew.length || s.dry.length || s.eggs || s.hungry || s.dust || s.expired || s.rain)) ui.showAway(s);
+    if (r.away >= AWAY_SUMMARY_MS && (s.ripe.length || s.grew.length || s.dry.length || s.eggs || s.hungry || s.dust || s.expired || s.rain || s.pens.length)) ui.showAway(s);
     else ui.toast(fmt(T.welcome_back, { time: duration(r.away) }));
   }
 
@@ -168,6 +173,45 @@ async function boot() {
       ui.toast(coopStatusText('coop_empty_'));
     }
     renderCoop();
+    ui.refreshOpenSheets();
+  }
+
+  // ----- F06 Vật nuôi khác -----
+  function renderPens() {
+    if (!scene) return;
+    const v = {};
+    pens.KINDS.forEach(k => {
+      const on = pens.unlocked(state(), k);
+      // Khung chờ "Lv N" chỉ hiện khi còn cách 2 level trở xuống, để sân người chơi mới không rối
+      v[k] = { unlocked: on, hint: level.levelNow(state()) >= pens.level(k) - 2, level: pens.level(k), items: on ? pens.pen(state(), k).items : 0, hungry: on && pens.status(state(), k, now()).key === 'hungry' };
+    });
+    scene.setPens(v);
+  }
+  function onTapPen(k) {
+    const s = state(), def = PENS[k], r = pens.tap(s, k, now());
+    const animal = T['animal_' + k], noun = nounOf(def.product);
+    if (r.action === 'locked') {
+      if (level.levelNow(s) < pens.level(k) - 2) return;   // chưa hiện khung chờ: chạm vào chỗ trống, không báo gì
+      sound('deny'); ui.toast(fmt(T.pen_locked, { title: T['pen_title_' + k], n: r.level })); return;
+    }
+    if (r.action === 'collect') {
+      if (!r.ok) { sound('deny'); ui.toast(T.pen_full); return; }
+      const p = scene.penPoint(k), tg = ui.bagTarget();
+      scene.flyToBag(p.x, p.y - 10, k === 'ca' ? 0xf28a3a : k === 'tho' ? 0xffffff : 0xfbf6ee, r.qty, tg.x, tg.y);
+      sound('egg');
+      ui.toast(fmt(T.pen_collected, { n: r.qty, unit: unitOf(def.product), noun }));
+      gainXp(level.xpFor('penCollect'));
+    } else if (r.action === 'feed') {
+      if (!r.ok) { sound('deny'); ui.toast(fmt(T.pen_no_feed, { feed: T['item_' + def.feed].toLowerCase() })); return; }
+      scene.penFeedFx(k); scene.penFloat(k, T.float_pen_fed);
+      sound('feed');
+      ui.toast(fmt(T.pen_fed, { animal, time: duration(def.delay), noun }));
+      gainXp(level.xpFor('penFeed'));
+    } else {
+      ui.toast(r.key === 'digesting' ? fmt(T.pen_digesting, { animal, time: duration(r.left), noun }) : fmt(T.pen_done, { noun, animal_l: animal.toLowerCase() }));
+    }
+    store.flush();
+    renderPens();
     ui.refreshOpenSheets();
   }
 
@@ -571,6 +615,7 @@ async function boot() {
     if (!got) return;
     (got.unlock.neighbors || []).forEach(n => orders.welcome(state(), n, now()));
     if (scene) { scene.setChickens(state().coop.chickens); scene.setDecor(state().decor || []); }
+    renderPens();
     ui.refreshCoins(true);
     renderOrders(); renderBuySlot();
     levelUI.celebrate(got);
@@ -600,6 +645,7 @@ async function boot() {
     farm.updateAll(state(), now());
     if (coop.update(state(), now())) store.markDirty();
     if (dust.update(state(), now())) store.markDirty();
+    if (Object.keys(pens.updateAll(state(), now())).length) store.markDirty();
     if (syncOrders(r ? r.delta : 0)) store.markDirty();
     // Báo mưa/tạnh khi đang chơi; vắng mặt hay tua thì bảng đi vắng kể
     syncWeather(!!r && r.delta < AWAY_NOTICE_MS);
@@ -608,6 +654,7 @@ async function boot() {
     renderBoxes();
     renderCoop();
     renderDust();
+    renderPens();
     renderOrders();
     ordersTip.update();
   });
@@ -635,6 +682,7 @@ async function boot() {
       renderDust();
       renderOrders();
       renderBuySlot();
+      renderPens();
       scene.setChickens(state().coop.chickens);
       scene.setDecor(state().decor || []);
       shownWeather = null; syncWeather(false);
@@ -647,6 +695,7 @@ async function boot() {
     onTapChicken: gate('pet', onTapChicken),
     onTapWaterer: gate('waterer', onTapWaterer),
     onTapLove,
+    onTapPen: gate('pen', onTapPen),
     onTapDust: gate('dust', onTapDust),
     onTapOrders: gate('orders', () => { sound('open'); eco.openOrders(); ordersTip.update(); tutor.event('openOrders'); }),
     onTapBuyBox: gate('buyBox', () => { sound('open'); eco.openBuyBox(); })
@@ -656,7 +705,7 @@ async function boot() {
   pwa.register(firstInstall => { if (firstInstall) ui.toast(T.offline_ready); });
 
   // Cửa sổ kiểm thử cho người phát triển (gõ trong console): __game.store.data
-  window.__game = { store, clock, ui, pwa, farm, weather, coop, dust, shop, orders, eco, audio, tutor, settings, get scene() { return scene; } };
+  window.__game = { store, clock, ui, pwa, farm, weather, pens, coop, dust, shop, orders, eco, audio, tutor, settings, get scene() { return scene; } };
 }
 
 boot();

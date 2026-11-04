@@ -1,7 +1,7 @@
 // Bảng dữ liệu của game. Muốn cân bằng lại game thì sửa số ở đây, không cần đụng vào code khác.
 // Đơn vị thời gian là mili giây; dùng các hằng PHUT, GIO cho dễ đọc.
 
-export const APP_VERSION = '0.13.0';
+export const APP_VERSION = '0.14.0';
 
 const PHUT = 60 * 1000;
 const GIO = 60 * PHUT;
@@ -99,6 +99,13 @@ export const ITEMS = {
   // F07: gà thân thiết đẻ trứng ngon, bán giá cao hơn; hàng xóm không đặt món này
   trung_ga_ngon: { kind: 'animal', unit: 'qua', sellPrice: 14, noOrder: true },
   thuc_an_ga:    { kind: 'supply', unit: 'bao', price: 4 },
+  // F06 Vật nuôi khác (bản 0.14): thức ăn mua ở tiệm và sản phẩm, xem PENS bên dưới
+  co_kho:        { kind: 'supply', unit: 'bo', price: 3 },
+  hat_ke:        { kind: 'supply', unit: 'goi', price: 4 },
+  cam_ca:        { kind: 'supply', unit: 'goi', price: 3 },
+  long_tho:      { kind: 'animal', unit: 'tum', sellPrice: 15 },
+  trung_bo_cau:  { kind: 'animal', unit: 'qua', sellPrice: 10 },
+  ca_con:        { kind: 'animal', unit: 'con', sellPrice: 16 },
   // F04 Phân bón (bản 0.12): mỗi lứa cây bón một gói, xem FERTILIZERS bên dưới
   phan_lon_nhanh: { kind: 'supply', unit: 'goi', price: 5 },
   phan_sai_qua:   { kind: 'supply', unit: 'goi', price: 8 }
@@ -115,7 +122,7 @@ export const FERTILIZERS = {
 };
 
 // ---------- Tiệm tạp hóa anh Bảo (F11) ----------
-export const SHOP_BUY = ['hat_rau_muong', 'hat_cai', 'hat_hung_que', 'hat_dua_leo', 'hat_ot', 'hat_ca_chua', 'thuc_an_ga', 'phan_lon_nhanh', 'phan_sai_qua'];
+export const SHOP_BUY = ['hat_rau_muong', 'hat_cai', 'hat_hung_que', 'hat_dua_leo', 'hat_ot', 'hat_ca_chua', 'thuc_an_ga', 'phan_lon_nhanh', 'phan_sai_qua', 'co_kho', 'hat_ke', 'cam_ca'];
 export const SHOP_SELL_KINDS = ['produce', 'animal'];
 // Mỗi lần nâng cấp túi đồ thêm 4 ô; giá tăng dần
 export const BAG_UPGRADES = [{ slots: 4, price: 60 }, { slots: 4, price: 120 }, { slots: 4, price: 200 }];
@@ -128,12 +135,12 @@ export const ORDER_EXPIRE = 3 * NGAY;  // đơn để quá 3 ngày: người đ�
 // likes = món hay đặt (7 phần 10 số đơn chọn trong đây nếu người chơi đã có món đó); bulk = hệ số số lượng
 export const NEIGHBORS = {
   ba_tu:    { level: 1,  likes: ['rau_muong', 'cai', 'ca_chua'] },
-  be_na:    { level: 1,  likes: ['trung_ga', 'dua_leo', 'ca_chua'] },
-  co_mai:   { level: 4,  likes: ['hung_que', 'cai'] },
+  be_na:    { level: 1,  likes: ['trung_ga', 'dua_leo', 'ca_chua', 'ca_con'] },
+  co_mai:   { level: 4,  likes: ['hung_que', 'cai', 'long_tho'] },
   anh_tuan: { level: 6,  likes: ['rau_muong', 'trung_ga'], bulk: 0.8 },
   chu_sau:  { level: 8,  likes: ['trung_ga'] },
   chi_hoa:  { level: 9,  likes: ['dua_leo', 'hung_que', 'ot'], bulk: 1.5 },
-  ong_ba:   { level: 10, likes: ['ca_chua', 'ot'] }
+  ong_ba:   { level: 10, likes: ['ca_chua', 'ot', 'trung_bo_cau'] }
 };
 export const LIKE_CHANCE = 0.7;
 
@@ -166,6 +173,16 @@ export const LOVE_PER_HEART = 20;
 export const LOVE_GAIN = { feed: 4, water: 4, pet: 3 };   // pet: mỗi con gà
 export const LOVE_DECAY = 3;                              // mỗi ngày bỏ không chăm
 export const LOVE_GOOD_SHARE = [0, 0.15, 0.3, 0.45, 0.6, 0.75];
+
+// ---------- Vật nuôi khác (F06, bản 0.14) ----------
+// Dùng chung khung của gà: mỗi ngày (ngày ảo) cho ăn một lần, sau `delay` thì có `yield` sản phẩm chờ nhặt.
+// Không cho ăn thì không có sản phẩm, không bệnh, không chết; sản phẩm chưa nhặt không mất.
+// Chạm chuồng: có sản phẩm thì nhặt, chưa ăn thì cho ăn. Mở theo level (LEVELS: unlock.pen).
+export const PENS = {
+  tho:    { feed: 'co_kho', product: 'long_tho',     yield: 2, delay: 3 * GIO },
+  bo_cau: { feed: 'hat_ke', product: 'trung_bo_cau', yield: 3, delay: 2 * GIO },
+  ca:     { feed: 'cam_ca', product: 'ca_con',       yield: 2, delay: 4 * GIO }
+};
 
 // ---------- Quét bụi sân thượng (F23) ----------
 // Cứ 3–4 ngày (thời gian game) sân lại bám vài vệt bụi; chạm từng vệt để quét, mỗi vệt được thưởng xu.
@@ -203,13 +220,16 @@ export const XP = {
   eggs: 2,                          // mỗi lần nhặt trứng
   dust: 1,                          // mỗi vệt bụi quét
   pet: 1,                           // vuốt ve một con gà (F07)
+  penFeed: 3,                       // cho thỏ, bồ câu, cá ăn (F06)
+  penCollect: 3,                    // nhặt sản phẩm của thỏ, bồ câu, cá (F06)
   water: 2                          // đổ nước cho gà (F07)
 };
 
 // 10 level đầu. xp: tổng điểm KN cần để đạt level đó (lên nhanh lúc đầu, chậm dần).
 // unlock: mở khóa · reward: quà khi lên level (xu và vật phẩm; túi đầy thì đổi vật phẩm ra xu)
 //   seeds: hạt bán ở tiệm · neighbor: hàng xóm bắt đầu đặt đơn · boxes: mua thêm thùng xốp
-//   bag: nâng cấp túi đồ · chickens: thêm gà · decor: món trang trí sân · items: món khác bán ở tiệm (phân bón)
+//   bag: nâng cấp túi đồ · chickens: thêm gà · decor: món trang trí sân · items: món khác bán ở tiệm (phân bón, thức ăn)
+//   pen: chuồng vật nuôi mới (F06)
 export const LEVELS = [
   { xp: 0,   unlock: { seeds: ['hat_rau_muong', 'hat_cai'], neighbors: ['ba_tu', 'be_na'] } },
   { xp: 20,  unlock: { seeds: ['hat_hung_que'], boxes: true },              reward: { coins: 20, items: { hat_hung_que: 2 } } },
@@ -220,6 +240,10 @@ export const LEVELS = [
   { xp: 270, unlock: { seeds: ['hat_ca_chua'] },                            reward: { coins: 45, items: { hat_ca_chua: 2 } } },
   { xp: 350, unlock: { neighbors: ['chu_sau'], chickens: 1 },               reward: { coins: 50 } },
   { xp: 440, unlock: { neighbors: ['chi_hoa'] },                            reward: { coins: 55 } },
-  { xp: 540, unlock: { neighbors: ['ong_ba'], decor: 'hoa_giay' },          reward: { coins: 60 } }
+  { xp: 540, unlock: { neighbors: ['ong_ba'], decor: 'hoa_giay' },          reward: { coins: 60 } },
+  // Bản 0.14: thêm level 11–13 cho vật nuôi mới (F06)
+  { xp: 650, unlock: { pen: 'tho', items: ['co_kho'] },                     reward: { coins: 65, items: { co_kho: 5 } } },
+  { xp: 770, unlock: { pen: 'bo_cau', items: ['hat_ke'] },                  reward: { coins: 70, items: { hat_ke: 5 } } },
+  { xp: 900, unlock: { pen: 'ca', items: ['cam_ca'] },                      reward: { coins: 80, items: { cam_ca: 5 } } }
 ];
 export const MAX_LEVEL = LEVELS.length;

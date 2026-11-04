@@ -3,7 +3,7 @@ import { W, H, ZOOM, INK } from './config.js';
 import { skyAt, mixColor, withWeather } from './daylight.js';
 import { rng, reduceMotion } from './util.js';
 
-let hooks = { onReady() {}, onTapBox() {}, onTapCoop() {}, onTapTrough() {}, onTapDust() {}, onTapOrders() {}, onTapBuyBox() {}, onTapChicken() {}, onTapWaterer() {}, onTapLove() {} };
+let hooks = { onReady() {}, onTapBox() {}, onTapCoop() {}, onTapTrough() {}, onTapDust() {}, onTapOrders() {}, onTapBuyBox() {}, onTapChicken() {}, onTapWaterer() {}, onTapLove() {}, onTapPen() {} };
 
 // Thùng xốp nhỏ để sân chứa được nhiều thùng. Lưới có chỗ cho tối đa 8 thùng (mua thêm ở F14):
 // hàng 1 hai thùng bên trái (bên phải là sân gà), hàng 2 và 3 mỗi hàng ba thùng. 4 thùng đầu là khối 2×2 bên trái.
@@ -13,7 +13,8 @@ const BOX_SCALE = 0.68;
 const COOP_SCALE = 1.18;
 const COOP_ANCHOR = { x: 386, y: 436 };
 // Các chỗ trên sân có thể bám bụi (F23): khe giữa các thùng và mép sân, không nằm dưới thùng hay chuồng gà
-export const DUST_POS = [[36, 398], [146, 402], [248, 410], [30, 508], [144, 506], [260, 506], [144, 598], [260, 598]];
+// Bản 0.14: hai chỗ sau sân nhường cho chậu cá và chuồng thỏ (F06), dời xuống khe giữa các thùng
+export const DUST_POS = [[372, 598], [30, 598], [248, 410], [30, 508], [144, 506], [260, 506], [144, 598], [260, 598]];
 // Cây vẽ to so với thùng (1,5 × 0,68 ≈ cỡ gốc) cho dễ nhìn trên điện thoại
 const PLANT_SCALE = 1.5;
 
@@ -36,6 +37,7 @@ class Rooftop extends Phaser.Scene {
     this.drawTank(62, 318);
     this.drawClothesline();
     this.drawCoop();
+    this.buildPens();   // F06: chậu cá, chuồng thỏ, chuồng bồ câu trên bồn nước
     const n = Math.min(BOX_SLOTS.length, hooks.boxCount ? hooks.boxCount() : 4);
     this.boxes = BOX_SLOTS.slice(0, n).map(([bx, by]) => this.makeBox(bx, by, BOX_SCALE));
     this.drawFrontWall();
@@ -557,6 +559,233 @@ class Rooftop extends Phaser.Scene {
       if (!reduceMotion) { c.setAlpha(0); this.tweens.add({ targets: c, alpha: 1, duration: 500 }); }
     }
   }
+
+  // ----- F06 Vật nuôi khác: chậu cá sành, chuồng thỏ, chuồng bồ câu trên nóc bồn nước -----
+  // Mỗi chuồng: hình chuồng và con vật (hiện khi đã mở), khung chờ "Lv N" (khi chưa mở), bong bóng nhắc,
+  // vùng chạm. Đặt ở dải sau sân, chỗ không trùng vùng chạm của thùng xốp.
+  buildPens() {
+    const DEF = {
+      ca:     { x: 30,  y: 404, w: 58, h: 40, bubble: [44, 368], make: () => this.makeFishBasin() },
+      tho:    { x: 144, y: 398, w: 60, h: 54, bubble: [160, 352], make: () => this.makeHutch() },
+      bo_cau: { x: 62,  y: 228, w: 64, h: 48, bubble: [96, 200], make: () => this.makeDovecote() }
+    };
+    this.pens = {};
+    Object.entries(DEF).forEach(([k, d]) => {
+      const lock = this.add.graphics();
+      lock.fillStyle(0xfff8ec, 0.22); lock.fillRoundedRect(d.x - d.w / 2, d.y - d.h / 2, d.w, d.h, 8);
+      lock.lineStyle(1.8, 0xfff8ec, 0.75);
+      const x0 = d.x - d.w / 2, y0 = d.y - d.h / 2;
+      for (let t = 0; t < d.w; t += 8) { lock.lineBetween(x0 + t, y0, x0 + Math.min(d.w, t + 4), y0); lock.lineBetween(x0 + t, y0 + d.h, x0 + Math.min(d.w, t + 4), y0 + d.h); }
+      for (let t = 0; t < d.h; t += 8) { lock.lineBetween(x0, y0 + t, x0, y0 + Math.min(d.h, t + 4)); lock.lineBetween(x0 + d.w, y0 + t, x0 + d.w, y0 + Math.min(d.h, t + 4)); }
+      const lockText = this.add.text(d.x, d.y, '', { fontFamily: '"Baloo 2", system-ui, sans-serif', fontSize: '12px', fontStyle: '700', color: '#fff8ec', stroke: '#3b2f2a', strokeThickness: 4 }).setOrigin(0.5);
+      const art = d.make().setVisible(false);
+      const food = this.makeFeedBubble().setPosition(d.bubble[0], d.bubble[1]).setVisible(false);
+      const prod = this.makeProductBubble(k).setPosition(d.bubble[0], d.bubble[1]).setVisible(false);
+      const count = this.add.text(d.bubble[0] + 15, d.bubble[1] + 4, '', { fontFamily: '"Baloo 2", system-ui, sans-serif', fontSize: '13px', fontStyle: '700', color: '#fff8ec', stroke: '#3b2f2a', strokeThickness: 4 }).setOrigin(0, 0.5);
+      const z = this.add.zone(d.x, d.y, d.w + 6, d.h + 6).setInteractive({ useHandCursor: true });
+      z.on('pointerup', pointer => {
+        if (!this.isCanvasTap(pointer) || this.boxAt(pointer.worldX, pointer.worldY) >= 0 || (this.dustAt && this.dustAt(pointer.worldX, pointer.worldY) >= 0)) return;
+        this.bounce(art); hooks.onTapPen(k);
+      });
+      this.pens[k] = { d, lock, lockText, art, food, prod, count, view: '' };
+    });
+  }
+
+  // v: { k: { unlocked, level, items, hungry } }
+  setPens(v) {
+    Object.entries(this.pens || {}).forEach(([k, p]) => {
+      const s = v[k] || {};
+      const key = [s.unlocked, s.hint, s.level, s.items, s.hungry].join('|');
+      if (key === p.view) return;
+      p.view = key;
+      p.lock.setVisible(!s.unlocked && !!s.hint); p.lockText.setVisible(!s.unlocked && !!s.hint).setText('Lv ' + (s.level || ''));
+      if (s.unlocked && !p.art.visible) {
+        p.art.setVisible(true);
+        // vừa mở trong lúc chơi (lên level): hiện dần
+        if (!reduceMotion && p.shown === false) { p.art.setAlpha(0); this.tweens.add({ targets: p.art, alpha: 1, duration: 600 }); }
+        if (!p.animated) { p.animated = true; this.animatePen(k, p.art); }
+      }
+      p.shown = !!s.unlocked;
+      p.prod.setVisible(!!s.unlocked && s.items > 0);
+      p.food.setVisible(!!s.unlocked && !(s.items > 0) && !!s.hungry);
+      p.count.setText(s.unlocked && s.items > 1 ? '×' + s.items : '');
+    });
+  }
+
+  makeProductBubble(k) {
+    const b = this.add.container(0, 0);
+    const g = this.add.graphics();
+    g.fillStyle(0xfff8ec, 1); g.lineStyle(2.5, INK, 1);
+    g.fillCircle(0, 0, 12); g.strokeCircle(0, 0, 12);
+    g.fillTriangle(-4, 9, 2, 10, -1, 18); g.lineBetween(-4, 10, -1, 18); g.lineBetween(2, 10, -1, 18);
+    g.lineStyle(1.8, INK, 1);
+    if (k === 'tho') {          // túm lông thỏ trắng
+      g.fillStyle(0xffffff, 1); [[-4, 2], [3, 2], [0, -3], [-1, 3]].forEach(([x, y]) => { g.fillCircle(x, y, 4.2); });
+      g.strokeCircle(-4, 2, 4.2); g.strokeCircle(3, 2, 4.2); g.strokeCircle(0, -3, 4.2);
+      g.fillStyle(0xffffff, 1); g.fillCircle(-0.5, 1, 4);
+    } else if (k === 'bo_cau') { // hai trứng bồ câu nhỏ
+      g.fillStyle(0xfbf6ee, 1); g.fillEllipse(-3, 1, 7, 9); g.strokeEllipse(-3, 1, 7, 9); g.fillEllipse(4, 2, 6, 8); g.strokeEllipse(4, 2, 6, 8);
+    } else {                     // cá con màu cam
+      g.fillStyle(0xf28a3a, 1); g.fillEllipse(-1, 0, 13, 7); g.strokeEllipse(-1, 0, 13, 7);
+      g.fillTriangle(5, 0, 10, -4, 10, 4); g.strokeTriangle(5, 0, 10, -4, 10, 4);
+      g.fillStyle(INK, 1); g.fillCircle(-5, -1, 1);
+    }
+    b.add(g);
+    if (!reduceMotion) this.tweens.add({ targets: g, y: -4, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    return b;
+  }
+
+  // Chậu sành nuôi cá: miệng loe, nước xanh, lá súng, ba con cá cam bơi vòng
+  makeFishBasin() {
+    const c = this.add.container(30, 404);
+    const g = this.add.graphics();
+    g.fillStyle(0x000000, 0.18); g.fillEllipse(0, 18, 60, 12);
+    g.lineStyle(2.6, INK, 1);
+    g.fillStyle(0x8a4f2e, 1); g.fillEllipse(0, 6, 50, 30); g.strokeEllipse(0, 6, 50, 30);
+    g.fillStyle(0xb0683e, 1); g.fillEllipse(0, -2, 56, 20); g.strokeEllipse(0, -2, 56, 20);
+    g.fillStyle(0x4f97b8, 1); g.fillEllipse(0, -2, 46, 13);
+    g.fillStyle(0xffffff, 0.25); g.fillEllipse(-9, -5, 14, 3);
+    c.add(g);
+    c.fish = [];
+    [[-8, -2, 1], [6, -1, -1], [0, -4, 1]].forEach(([fx, fy, dir]) => {
+      const f = this.add.graphics({ x: fx, y: fy });
+      f.fillStyle(0xf28a3a, 1); f.lineStyle(1, INK, 1);
+      f.fillEllipse(0, 0, 7, 3.6); f.strokeEllipse(0, 0, 7, 3.6);
+      f.fillTriangle(-3, 0, -6, -2, -6, 2);
+      f.setScale(dir, 1);
+      c.add(f); c.fish.push(f);
+    });
+    const pad = this.add.graphics();
+    pad.fillStyle(0x6fae4a, 1); pad.lineStyle(1.4, INK, 1);
+    pad.slice(13, -4, 5.5, Phaser.Math.DegToRad(30), Phaser.Math.DegToRad(330), false); pad.fillPath(); pad.strokePath();
+    pad.fillStyle(0xf3a6c4, 1); pad.fillCircle(16, -6, 2.2);
+    c.add(pad);
+    c.food = this.add.graphics(); c.add(c.food);
+    return c;
+  }
+
+  // Chuồng thỏ bằng gỗ, cửa lưới; một con thỏ trắng ngồi ngoài, một con nâu ló đầu trong chuồng
+  makeHutch() {
+    const c = this.add.container(144, 398);
+    const g = this.add.graphics();
+    g.fillStyle(0x000000, 0.18); g.fillEllipse(0, 26, 62, 10);
+    g.lineStyle(2.4, INK, 1); g.fillStyle(0x7a5236, 1);
+    [[-22, 10], [18, 10]].forEach(([lx, ly]) => { g.fillRect(lx, ly, 4, 14); g.strokeRect(lx, ly, 4, 14); });
+    g.fillStyle(0xc89a6a, 1); g.fillRect(-26, -12, 52, 24); g.strokeRect(-26, -12, 52, 24);
+    g.fillStyle(0x9c6b45, 1); g.fillPoints([{ x: -30, y: -12 }, { x: 30, y: -12 }, { x: 24, y: -24 }, { x: -24, y: -24 }], true);
+    g.strokePoints([{ x: -30, y: -12 }, { x: 30, y: -12 }, { x: 24, y: -24 }, { x: -24, y: -24 }], true);
+    // cửa lưới bên phải, khoang tối bên trái có thỏ nâu
+    g.fillStyle(0x4a3326, 1); g.fillRect(-21, -8, 20, 16);
+    g.lineStyle(1.2, 0xdad2c4, 1); for (let x = 3; x < 22; x += 4) g.lineBetween(x, -8, x, 8); for (let y = -8; y <= 8; y += 4) g.lineBetween(2, y, 22, y);
+    g.lineStyle(2, INK, 1); g.strokeRect(2, -8, 20, 16); g.strokeRect(-21, -8, 20, 16);
+    c.add(g);
+    // thỏ nâu ló đầu trong chuồng
+    const inside = this.add.graphics({ x: -11, y: 6 });
+    inside.fillStyle(0xa8794f, 1); inside.lineStyle(1.6, INK, 1);
+    inside.fillEllipse(-3, -12, 4, 10); inside.strokeEllipse(-3, -12, 4, 10); inside.fillEllipse(3, -12, 4, 10); inside.strokeEllipse(3, -12, 4, 10);
+    inside.fillCircle(0, -3, 6); inside.strokeCircle(0, -3, 6);
+    inside.fillStyle(INK, 1); inside.fillCircle(-2, -4, 1); inside.fillCircle(2, -4, 1); inside.fillStyle(0xf3a6b4, 1); inside.fillCircle(0, -1.5, 1.2);
+    c.add(inside); c.inside = inside;
+    // thỏ trắng ngồi ngoài
+    const r = this.add.container(24, 22);
+    const rg = this.add.graphics();
+    rg.fillStyle(0x000000, 0.15); rg.fillEllipse(0, 1, 18, 4);
+    rg.fillStyle(0xffffff, 1); rg.lineStyle(1.8, INK, 1);
+    rg.fillEllipse(0, -6, 16, 12); rg.strokeEllipse(0, -6, 16, 12);
+    rg.fillCircle(-7, -6, 2.6); rg.strokeCircle(-7, -6, 2.6);
+    rg.fillEllipse(5, -17, 4, 11); rg.strokeEllipse(5, -17, 4, 11); rg.fillEllipse(9, -16, 4, 11); rg.strokeEllipse(9, -16, 4, 11);
+    rg.fillStyle(0xf3a6b4, 1); rg.fillEllipse(5, -17, 1.6, 7); rg.fillEllipse(9, -16, 1.6, 7);
+    rg.fillStyle(0xffffff, 1); rg.lineStyle(1.8, INK, 1); rg.fillCircle(6, -9, 5.5); rg.strokeCircle(6, -9, 5.5);
+    rg.fillStyle(INK, 1); rg.fillCircle(8, -10, 1.1); rg.fillStyle(0xf3a6b4, 1); rg.fillCircle(11, -8, 1.1);
+    r.add(rg); c.add(r); c.rabbit = r;
+    return c;
+  }
+
+  // Chuồng bồ câu nhỏ đặt trên nóc bồn nước, ba con bồ câu xám đậu quanh
+  makeDovecote() {
+    const c = this.add.container(62, 228);
+    const g = this.add.graphics();
+    g.lineStyle(2.4, INK, 1);
+    g.fillStyle(0x7a5236, 1); g.fillRect(-2, 8, 4, 16); g.strokeRect(-2, 8, 4, 16);
+    g.fillStyle(0xf1e3c8, 1); g.fillRect(-18, -14, 36, 24); g.strokeRect(-18, -14, 36, 24);
+    g.fillStyle(0xd8352a, 1); g.fillTriangle(-23, -14, 23, -14, 0, -30); g.strokeTriangle(-23, -14, 23, -14, 0, -30);
+    g.fillStyle(0x3b2a20, 1); g.fillCircle(-8, -3, 4); g.fillCircle(8, -3, 4);
+    g.fillStyle(0x9c6b45, 1); g.fillRect(-22, 9, 44, 4); g.strokeRect(-22, 9, 44, 4);
+    c.add(g);
+    c.birds = [];
+    [[-14, 9, 1], [14, 9, -1], [-26, 24, 1]].forEach(([bx, by, dir], i) => {
+      const b = this.makePigeon(i).setPosition(bx, by).setScale(dir, 1);
+      b.home = { x: bx, y: by, dir };
+      c.add(b); c.birds.push(b);
+    });
+    return c;
+  }
+
+  makePigeon(i) {
+    const b = this.add.container(0, 0);
+    const g = this.add.graphics();
+    g.lineStyle(1.6, INK, 1);
+    g.fillStyle(0x8f98a8, 1); g.fillTriangle(-8, -5, -13, -2, -8, -1); g.strokeTriangle(-8, -5, -13, -2, -8, -1);
+    g.fillStyle(i === 1 ? 0xb9bfcb : 0xa4acba, 1); g.fillEllipse(-1, -5, 15, 9); g.strokeEllipse(-1, -5, 15, 9);
+    g.fillStyle(0x7b8496, 1); g.fillEllipse(-2, -6, 8, 4);
+    g.lineStyle(1.4, 0xe58a5a, 1); g.lineBetween(-2, -1, -2, 1); g.lineBetween(1, -1, 1, 1);
+    b.add(g);
+    const head = this.add.graphics({ x: 5, y: -10 });
+    head.fillStyle(0x6f8f7c, 1); head.lineStyle(1.4, INK, 1); head.fillEllipse(-1, 3, 5, 5);
+    head.fillStyle(0x8f98a8, 1); head.fillCircle(0, 0, 3.4); head.strokeCircle(0, 0, 3.4);
+    head.fillStyle(0xd9a032, 1); head.fillTriangle(3, -0.5, 5.5, 0.5, 3, 1.2);
+    head.fillStyle(INK, 1); head.fillCircle(1, -0.8, 0.8);
+    b.add(head); b.head = head;
+    return b;
+  }
+
+  animatePen(k, c) {
+    if (reduceMotion) return;
+    if (k === 'ca') {
+      c.fish.forEach((f, i) => {
+        const swim = () => {
+          const nx = -14 + Math.random() * 28, ny = -6 + Math.random() * 7;
+          f.setScale(nx >= f.x ? 1 : -1, 1);
+          this.tweens.add({ targets: f, x: nx, y: ny, duration: 1400 + Math.random() * 1600, ease: 'Sine.easeInOut', onComplete: () => this.time.delayedCall(200 + Math.random() * 900, swim) });
+        };
+        this.time.delayedCall(i * 400, swim);
+      });
+    } else if (k === 'tho') {
+      const hop = () => {
+        const r = c.rabbit, nx = Phaser.Math.Clamp(r.x + (Math.random() * 16 - 8), 12, 30);
+        this.tweens.add({ targets: r, y: 16, duration: 140, yoyo: true, ease: 'Quad.easeOut' });
+        this.tweens.add({ targets: r, x: nx, duration: 280, onComplete: () => this.time.delayedCall(1200 + Math.random() * 2600, hop) });
+      };
+      this.time.delayedCall(800, hop);
+      this.tweens.add({ targets: c.inside, y: 8, duration: 1600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    } else {
+      c.birds.forEach((b, i) => {
+        const bob = () => {
+          if (i === 2 && Math.random() < 0.3) {
+            // bay sang dây phơi rồi về
+            const lx = 110 + Math.random() * 60;
+            this.tweens.add({ targets: b, x: lx, y: 44, duration: 900, ease: 'Sine.easeInOut', yoyo: true, hold: 2200, onComplete: () => this.time.delayedCall(1500, bob) });
+            return;
+          }
+          this.tweens.add({ targets: b.head, x: 6.5, y: -9, duration: 140, yoyo: true, repeat: 1 + Math.floor(Math.random() * 2), onComplete: () => this.time.delayedCall(800 + Math.random() * 2400, bob) });
+        };
+        this.time.delayedCall(i * 500, bob);
+      });
+    }
+  }
+
+  // Thức ăn rơi xuống chuồng vừa cho ăn
+  penFeedFx(k) {
+    const p = this.pens && this.pens[k];
+    if (!p || reduceMotion) return;
+    const { x, y } = p.d, col = k === 'ca' ? 0xc9853f : k === 'tho' ? 0x9cc25a : 0xe8b84a;
+    for (let i = 0; i < 9; i++) {
+      const d = this.add.ellipse(x - 14 + i * 3.5, y - 34 - (i % 3) * 6, 3.5, 2.6, col).setStrokeStyle(1, INK);
+      this.tweens.add({ targets: d, y: y - 2, alpha: 0.3, delay: i * 35, duration: 360, ease: 'Quad.easeIn', onComplete: () => d.destroy() });
+    }
+  }
+  penFloat(k, msg) { const p = this.pens && this.pens[k]; if (p) this.floatAt(p, p.d.x, p.d.y - p.d.h / 2 - 10, msg); }
+  penPoint(k) { const p = this.pens[k]; return { x: p.d.x, y: p.d.y }; }
 
   // ----- Trang trí sân (level 10: chậu hoa giấy) -----
   setDecor(list) {

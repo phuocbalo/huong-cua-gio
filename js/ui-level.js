@@ -1,7 +1,7 @@
 // Giao diện level (bản 0.10): viên level trên thanh trạng thái, bảng con đường level, bảng chúc mừng lên level,
 // chữ "+n KN" nổi lên mỗi khi được điểm. Luật nằm trong level.js.
 
-import { LEVELS, XP, ITEMS } from './config.js';
+import { LEVELS, XP, ITEMS, PENS, FERTILIZERS } from './config.js';
 import { T, fmt } from './text.vi.js';
 import { itemIcon } from './icons.js';
 import { AVATARS, unitOf, nounOf } from './ui-economy.js';
@@ -24,8 +24,9 @@ const ICON = {
 export function unlockLines(u) {
   const out = [];
   (u.seeds || []).forEach(id => out.push({ ico: itemIcon(id), text: fmt(T.unlock_seed, { item: T['item_' + id] }) }));
-  (u.items || []).forEach(id => out.push({ ico: itemIcon(id), text: fmt(T.unlock_item, { item: T['item_' + id] }) }));
+  (u.items || []).forEach(id => out.push({ ico: itemIcon(id), text: fmt(FERTILIZERS[id] ? T.unlock_item : T.unlock_seed, { item: T['item_' + id] }) }));
   (u.neighbors || []).forEach(n => out.push({ ico: ICON.neighbor(n), text: fmt(T.unlock_neighbor, { name: T['name_' + n] }) }));
+  if (u.pen) out.push({ ico: itemIcon(PENS[u.pen].product), text: T['unlock_pen_' + u.pen] });
   if (u.boxes) out.push({ ico: ICON.boxes, text: T.unlock_boxes });
   if (u.bag) out.push({ ico: ICON.bag, text: T.unlock_bag });
   if (u.chickens) out.push({ ico: ICON.chickens, text: fmt(T.unlock_chickens, { n: u.chickens }) });

@@ -28,10 +28,11 @@ Bản chơi thử: https://phuocbalo.github.io/huong-cua-gio/
 | `js/ui-settings.js` | Cài đặt: âm lượng, xuất/nhập file lưu, xem lại hướng dẫn, xóa dữ liệu, thống kê |
 | `js/level.js` | Luật level: điểm kinh nghiệm, lên level, mở khóa, quà (dữ liệu 10 level trong `config.js`) |
 | `js/ui-level.js` | Giao diện level: viên level trên thanh trạng thái, con đường level, bảng chúc mừng |
+| `js/pens.js` | Luật vật nuôi khác (F06): thỏ, bồ câu, bể cá — cho ăn mỗi ngày, sản phẩm chờ nhặt, mở ở level 11–13 |
 | `js/weather.js` | Luật thời tiết (F09): lịch nắng, mây, gió, mưa theo khối 6 giờ, tính từ một con số lưu trong bản lưu; mưa tưới cây kể cả lúc tắt game |
 | `js/daylight.js` | Màu trời, phố, đèn cho từng giờ trong ngày; chuyển dần giữa các khung giờ |
 | `js/scene.js` | Cảnh sân thượng vẽ bằng Phaser (hình tạm) |
-| `tests/` | Kiểm thử luật chơi: `node tests/farm.test.mjs`, `node tests/daylight.test.mjs`, `node tests/coop.test.mjs`, `node tests/dust.test.mjs`, `node tests/economy.test.mjs`, `node tests/settings.test.mjs`, `node tests/tutorial.test.mjs`, `node tests/level.test.mjs`, `node tests/weather.test.mjs`, `node tests/fertilizer.test.mjs`, `node tests/love.test.mjs` |
+| `tests/` | Kiểm thử luật chơi: `node tests/farm.test.mjs`, `node tests/daylight.test.mjs`, `node tests/coop.test.mjs`, `node tests/dust.test.mjs`, `node tests/economy.test.mjs`, `node tests/settings.test.mjs`, `node tests/tutorial.test.mjs`, `node tests/level.test.mjs`, `node tests/weather.test.mjs`, `node tests/fertilizer.test.mjs`, `node tests/love.test.mjs`, `node tests/pens.test.mjs` |
 | `js/ui.js` | Điều khiển giao diện HTML |
 | `js/pwa.js` | Bật chơi offline và theo dõi trạng thái |
 | `manifest.webmanifest` | Khai báo PWA: tên app, biểu tượng, mở toàn màn hình, màn dọc |
@@ -136,6 +137,22 @@ Trong bảng "Bản thử" có "Thêm 10 xu" nếu cần thêm xu để thử mu
 - [ ] **I-25** Người chơi mới (cửa sổ ẩn danh, hoặc Cài đặt → Xóa dữ liệu): trong lúc bà Tư hướng dẫn **không** thấy ô "+ 40 xu" ở chỗ trống bên dưới 4 thùng.
 - [ ] **I-25** Đi hết hướng dẫn: ô "+ 40 xu" hiện ra ngay, chạm vào mở bảng mua thùng.
 - [ ] **I-25** Cài đặt → "Xem lại hướng dẫn": ô "+" ẩn đi; xong hướng dẫn thì hiện lại.
+
+## Kiểm thử bản 0.14.0 – Vật nuôi khác (F06)
+
+Game có thêm level 11–13. Dùng nút "+50 KN" trong bảng "Bản thử" để lên level nhanh, "Tua 1 giờ" để chờ sản phẩm.
+
+- [ ] **Người chơi mới:** sân không có gì mới (khung chờ chỉ hiện khi còn cách 2 level). Từ level 9: thấy khung nét đứt "Lv 11" (sau sân, giữa hai thùng hàng đầu), "Lv 12" (trên nóc bồn nước), "Lv 13" (trước bồn nước). Chạm khung: "Chuồng thỏ mở ở level 11."
+- [ ] **Lên level 11 / 12 / 13:** bảng chúc mừng ghi thức ăn mới ở tiệm và con vật mới; được tặng 5 gói thức ăn. Chuồng hiện dần ra: chuồng thỏ gỗ (thỏ trắng nhảy ngoài, thỏ nâu ló đầu trong chuồng), chuồng bồ câu mái đỏ trên nóc bồn nước (bồ câu gật gù, thỉnh thoảng bay sang dây phơi), chậu cá sành (cá cam bơi, lá súng).
+- [ ] **Cho ăn:** chuồng chưa ăn có bong bóng hạt thức ăn. Chạm chuồng: thức ăn rơi xuống, nhãn "Đã cho ăn", thông báo "Thỏ đã ăn. Khoảng 3 giờ nữa có lông thỏ."; túi giảm 1 thức ăn. Bồ câu 2 giờ, cá 4 giờ.
+- [ ] Chạm lại trong ngày: báo còn bao lâu; đã có sản phẩm hôm nay thì "Mai cho … ăn tiếp nhé." Hết thức ăn: "Hết cỏ khô. Ghé tiệm anh Bảo mua thêm nhé."
+- [ ] **Sản phẩm đúng loại:** thỏ cho 2 túm **lông thỏ** (15 xu), bồ câu 3 quả **trứng bồ câu** (10 xu), cá 2 con **cá giống** (16 xu). Có sản phẩm thì bong bóng đổi thành hình sản phẩm, kèm "×n". Chạm chuồng: sản phẩm bay về túi đồ.
+- [ ] **Không chết:** không cho ăn nhiều ngày ("Tua tới sáng mai" vài lần): con vật vẫn còn, chỉ không có sản phẩm. Sản phẩm chưa nhặt không mất, cộng dồn.
+- [ ] **Đi vắng:** bảng "Trong lúc bạn vắng…" có dòng "Thỏ có 2 túm lông thỏ mới, đang chờ bạn nhặt."
+- [ ] **Tiệm:** cỏ khô 3 xu, hạt kê 4 xu, cám cá 3 xu, mở cùng level với con vật. Sản phẩm bán được; thức ăn không bán được.
+- [ ] **Đơn hàng:** sau khi đã có sản phẩm, hàng xóm có thể đặt (cô Mai thích lông thỏ, bé Na thích cá giống, ông Ba thích trứng bồ câu).
+- [ ] **Bụi (F23):** hai chỗ bám bụi phía sau sân đã dời xuống khe giữa các thùng; bụi không nằm đè lên chuồng mới.
+- [ ] Trong lúc hướng dẫn: chạm chuồng bị chặn như các chỗ khác.
 
 ## Kiểm thử bản 0.13.0 – Thân thiết với gà (F07)
 

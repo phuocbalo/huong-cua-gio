@@ -9,9 +9,9 @@ const { defaultSave, migrate } = await import(R + '/js/save.js');
 let ok = 0; const t = (name, fn) => { fn(); ok++; console.log('✓', name); };
 const fresh = () => defaultSave(0);
 
-t('Có đúng 10 level, điểm cần tăng dần', () => { assert.equal(C.LEVELS.length, 10); C.LEVELS.forEach((x, i) => { if (i) assert.ok(x.xp > C.LEVELS[i - 1].xp); }); });
+t('Có đúng 13 level (10 level đầu + 3 level vật nuôi bản 0.14), điểm cần tăng dần', () => { assert.equal(C.LEVELS.length, 13); C.LEVELS.forEach((x, i) => { if (i) assert.ok(x.xp > C.LEVELS[i - 1].xp); }); });
 t('Người chơi mới ở level 1, 0 điểm', () => { const s = fresh(); assert.equal(L.levelNow(s), 1); assert.equal(s.xp, 0); });
-t('levelOf: đúng mốc', () => { assert.equal(L.levelOf(19), 1); assert.equal(L.levelOf(20), 2); assert.equal(L.levelOf(539), 9); assert.equal(L.levelOf(99999), 10); });
+t('levelOf: đúng mốc', () => { assert.equal(L.levelOf(19), 1); assert.equal(L.levelOf(20), 2); assert.equal(L.levelOf(539), 9); assert.equal(L.levelOf(649), 10); assert.equal(L.levelOf(99999), 13); });
 t('Điểm theo việc: thu hoạch theo nhóm cây, giao đơn, gà, bụi', () => {
   assert.equal(L.xpFor('harvest', 'rau_muong'), C.XP.harvest[1]); assert.equal(L.xpFor('harvest', 'dua_leo'), C.XP.harvest[2]); assert.equal(L.xpFor('harvest', 'ca_chua'), C.XP.harvest[3]);
   assert.equal(L.xpFor('deliver'), C.XP.deliver); assert.equal(L.xpFor('dust', 3), 3 * C.XP.dust);

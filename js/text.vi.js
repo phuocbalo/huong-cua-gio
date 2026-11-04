@@ -100,6 +100,25 @@ export const T = {
   eggs_collected: '+{n} trứng gà vào túi đồ.',
   eggs_collected_good: '+{n} trứng vào túi đồ, có {good} trứng ngon!',
 
+  // F06 Vật nuôi khác
+  animal_tho: 'Thỏ', animal_bo_cau: 'Bồ câu', animal_ca: 'Cá',
+  pen_title_tho: 'Chuồng thỏ', pen_title_bo_cau: 'Chuồng bồ câu', pen_title_ca: 'Chậu cá',
+  pen_locked: '{title} mở ở level {n}.',
+  pen_fed: '{animal} đã ăn. Khoảng {time} nữa có {noun}.',
+  pen_digesting: '{animal} đã ăn hôm nay. Khoảng {time} nữa có {noun}.',
+  pen_done: 'Hôm nay đã có {noun} rồi. Mai cho {animal_l} ăn tiếp nhé.',
+  pen_no_feed: 'Hết {feed}. Ghé tiệm anh Bảo mua thêm nhé.',
+  pen_collected: '+{n} {unit} {noun} vào túi đồ.',
+  pen_full: 'Túi đồ đã đầy. Sản phẩm vẫn nằm trong chuồng chờ bạn.',
+  float_pen_fed: 'Đã cho ăn',
+  away_pen: '{animal} có {n} {unit} {noun} mới, đang chờ bạn nhặt.',
+  unlock_pen_tho: 'Nuôi thỏ: chuồng gỗ sau sân. Cho ăn cỏ khô, nhặt lông thỏ',
+  unlock_pen_bo_cau: 'Nuôi bồ câu: chuồng trên nóc bồn nước. Cho ăn hạt kê, nhặt trứng bồ câu',
+  unlock_pen_ca: 'Chậu cá sành: cho ăn cám, vớt cá giống',
+  shop_desc_co_kho: 'Thức ăn cho thỏ',
+  shop_desc_hat_ke: 'Thức ăn cho bồ câu',
+  shop_desc_cam_ca: 'Thức ăn cho cá',
+
   // F07 Thân thiết với gà
   float_pet_done: 'Hôm nay vuốt rồi',
   float_water_done: 'Bình còn đầy nước',
@@ -114,7 +133,7 @@ export const T = {
   coop_empty_done: 'Hôm nay gà đã đẻ rồi. Mai cho ăn để có trứng mới.',
 
   // ----- Đơn vị đếm và tên gọi trong câu -----
-  unit_bo: 'bó', unit_trai: 'trái', unit_qua: 'quả', unit_goi: 'gói', unit_bao: 'bao',
+  unit_bo: 'bó', unit_trai: 'trái', unit_qua: 'quả', unit_goi: 'gói', unit_bao: 'bao', unit_tum: 'túm', unit_con: 'con',
   noun_rau_muong: 'rau muống', noun_cai: 'cải', noun_hung_que: 'húng quế', noun_dua_leo: 'dưa leo',
   noun_ot: 'ớt', noun_ca_chua: 'cà chua', noun_trung_ga: 'trứng gà', noun_trung_ga_ngon: 'trứng gà ngon',
 
@@ -377,6 +396,12 @@ export const T = {
   item_ca_chua: 'Trái cà chua',
   item_trung_ga: 'Trứng gà',
   item_trung_ga_ngon: 'Trứng gà ngon',
+  item_co_kho: 'Cỏ khô',
+  item_hat_ke: 'Hạt kê',
+  item_cam_ca: 'Cám cá',
+  item_long_tho: 'Lông thỏ',
+  item_trung_bo_cau: 'Trứng bồ câu',
+  item_ca_con: 'Cá giống',
   item_thuc_an_ga: 'Thức ăn gà',
   item_phan_lon_nhanh: 'Phân lớn nhanh',
   item_phan_sai_qua: 'Phân sai quả'
