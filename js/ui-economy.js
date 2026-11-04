@@ -35,6 +35,10 @@ export const AVATARS = {
 const HEART = '<svg class="heart" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 17s-7-4.4-7-9.2A3.8 3.8 0 0 1 10 5.6a3.8 3.8 0 0 1 7 2.2C17 12.6 10 17 10 17z" fill="#e5533c" stroke="#3b2f2a" stroke-width="1.8" stroke-linejoin="round"/></svg>';
 const BAG_ICON = '<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M10 15h20l-2 18H12z" fill="#d9a46b" stroke="#3b2f2a" stroke-width="2.5" stroke-linejoin="round"/><path d="M15 15c0-4 2-7 5-7s5 3 5 7" fill="none" stroke="#3b2f2a" stroke-width="2.5" stroke-linecap="round"/><path d="M20 20v8M16 24h8" stroke="#3b2f2a" stroke-width="2.5" stroke-linecap="round"/></svg>';
 
+// Nhóm của một món trong mục Mua của tiệm
+const FERT = ['phan_lon_nhanh', 'phan_sai_qua'];
+export const shopCat = id => ITEMS[id].kind === 'seed' ? 'seed' : FERT.includes(id) ? 'fert' : 'other';
+
 // "4 bó rau muống"
 export const unitOf = id => T['unit_' + ITEMS[id].unit];
 export const nounOf = id => {
@@ -48,11 +52,17 @@ export class EconomyUI {
   constructor(ui, store, h, now) {
     this.ui = ui; this.store = store; this.h = h; this.now = now;
     this.tab = 'sell';
+    this.cat = 'seed';   // nhóm trong mục Mua: seed (hạt giống) | fert (phân bón) | other (thức ăn vật nuôi, nâng cấp túi)
   }
 
   init() {
     $('shopAvatar').innerHTML = AVATARS.bao;
     $('toolShop').addEventListener('click', () => this.openShop());
+    document.querySelectorAll('#shopCats .chip').forEach(c => c.addEventListener('click', () => {
+      this.setCat(c.dataset.cat);
+      this.renderShop();
+      document.querySelector('#shopWrap .sheet').scrollTop = 0;
+    }));
     document.querySelectorAll('#shopTabs .chip').forEach(c => c.addEventListener('click', () => {
       this.tab = c.dataset.tab;
       document.querySelectorAll('#shopTabs .chip').forEach(x => x.setAttribute('aria-pressed', String(x === c)));
@@ -82,7 +92,13 @@ export class EconomyUI {
 
   get state() { return this.store.data; }
 
+  setCat(cat) {
+    this.cat = cat;
+    document.querySelectorAll('#shopCats .chip').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.cat === cat)));
+  }
+
   setTab(tab) {
+    if (tab === 'buy' || tab === 'sell') this.setCat('seed');
     this.tab = tab;
     document.querySelectorAll('#shopTabs .chip').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.tab === tab)));
   }
@@ -99,6 +115,7 @@ export class EconomyUI {
   renderShop() {
     const s = this.state;
     let html = '';
+    $('shopCats').hidden = this.tab !== 'buy';
     if (this.tab === 'sell') {
       const ids = shop.sellable(s).sort((a, b) => Object.keys(ITEMS).indexOf(a) - Object.keys(ITEMS).indexOf(b));
       if (!ids.length) html = `<li class="note">${T.shop_nothing_to_sell}</li>`;
@@ -113,8 +130,9 @@ export class EconomyUI {
           </span></li>`;
       });
     } else {
-      // Nâng cấp túi đồ đứng đầu
-      const up = shop.nextBagUpgrade(s);
+      // Nhóm "Thức ăn & túi đồ": nâng cấp túi đồ đứng đầu
+      const up = this.cat === 'other' ? shop.nextBagUpgrade(s) : null;
+      if (this.cat === 'other' && !up) html += `<li class="shop-row"><span class="ico">${BAG_ICON}</span><span class="meta"><b>${fmt(T.shop_bag_upgrade_max, { slots: s.inventory.slots })}</b></span></li>`;
       const bagLock = !level.isUnlocked(s, 'bag') ? level.unlockLevel('bag') : 0;
       if (up && bagLock) {
         html += `<li class="shop-row locked">
@@ -127,10 +145,8 @@ export class EconomyUI {
           <span class="ico">${BAG_ICON}</span>
           <span class="meta"><b>${fmt(T.shop_bag_upgrade, { n: up.slots })}</b><small>${fmt(T.shop_bag_upgrade_info, { slots: s.inventory.slots, price: up.price })}</small>${short ? `<small class="why">${fmt(T.shop_missing, { n: up.price - s.coins })}</small>` : ''}</span>
           <span class="acts one"><button class="btn small${short ? '' : ' primary'}" type="button" data-act="bag"${short ? ' disabled' : ''}>${fmt(T.shop_buy_bag, { price: up.price })}</button></span></li>`;
-      } else {
-        html += `<li class="shop-row"><span class="ico">${BAG_ICON}</span><span class="meta"><b>${fmt(T.shop_bag_upgrade_max, { slots: s.inventory.slots })}</b></span></li>`;
       }
-      SHOP_BUY.forEach(id => {
+      SHOP_BUY.filter(id => shopCat(id) === this.cat).forEach(id => {
         const price = shop.buyPrice(id);
         const one = shop.canBuy(s, id, 1), five = shop.canBuy(s, id, 5);
         const locked = one.reason === 'locked';

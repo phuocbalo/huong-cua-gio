@@ -17,6 +17,8 @@ const COOP_ANCHOR = { x: 386, y: 436 };
 export const DUST_POS = [[372, 598], [30, 598], [248, 410], [30, 508], [144, 506], [260, 506], [144, 598], [260, 598]];
 // Cây vẽ to so với thùng (1,5 × 0,68 ≈ cỡ gốc) cho dễ nhìn trên điện thoại
 const PLANT_SCALE = 1.5;
+// Màu quả chín đỏ của cà chua và ớt (đồng bộ với biểu tượng trong icons.js)
+const RED = 0xd8302a;
 
 class Rooftop extends Phaser.Scene {
   constructor() { super('rooftop'); }
@@ -34,10 +36,9 @@ class Rooftop extends Phaser.Scene {
     this.buildCity();
 
     this.drawRooftop();
-    this.drawTank(62, 318);
     this.drawClothesline();
     this.drawCoop();
-    this.buildPens();   // F06: chậu cá, chuồng thỏ, chuồng bồ câu trên bồn nước
+    this.buildPens();   // F06: chậu cá, chuồng thỏ, chuồng bồ câu (đứng trên cột, chỗ bồn nước cũ)
     const n = Math.min(BOX_SLOTS.length, hooks.boxCount ? hooks.boxCount() : 4);
     this.boxes = BOX_SLOTS.slice(0, n).map(([bx, by]) => this.makeBox(bx, by, BOX_SCALE));
     this.drawFrontWall();
@@ -46,8 +47,9 @@ class Rooftop extends Phaser.Scene {
     this.broom = this.makeBroomBubble().setVisible(false);
 
     this.shade = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0).setBlendMode(Phaser.BlendModes.MULTIPLY);
-    this.glow = this.add.graphics(); // đèn dây sáng ban đêm, vẽ sau lớp tối
-    this.drawLights();
+    // Bản 0.14.1: bỏ dãy đèn dây giăng ngang sân (đè lên gà và thỏ)
+    this.glow = this.add.graphics();
+    this.bulbs = [];
     this.makeWeather();   // F09: mưa rơi và lá bay, nằm trên cùng
 
     // Chạm và rê chuột trên sân: thùng xốp (và sau này vệt bụi) được chọn bằng hàm boxAt/dustAt
@@ -406,21 +408,6 @@ class Rooftop extends Phaser.Scene {
     g.lineStyle(3, INK, 1); g.lineBetween(0, 344, W, 344);
   }
 
-  drawTank(x, y) {
-    // Bồn nước inox đứng trên chân sắt
-    const g = this.add.graphics({ x, y });
-    g.fillStyle(0x000000, 0.18); g.fillEllipse(0, 44, 70, 14);
-    g.lineStyle(3, INK, 1);
-    g.fillStyle(0x6b5a52, 1);
-    [[-24, 10], [20, 10]].forEach(([lx]) => { g.fillRect(lx, 10, 5, 34); g.strokeRect(lx, 10, 5, 34); });
-    g.fillStyle(0xdfe5ea, 1);
-    g.fillRoundedRect(-30, -64, 60, 78, 12); g.strokeRoundedRect(-30, -64, 60, 78, 12);
-    g.fillStyle(0xffffff, 0.75); g.fillRoundedRect(-20, -56, 7, 60, 3);
-    g.lineStyle(2, 0xa9b4bd, 1); g.lineBetween(-29, -36, 29, -36); g.lineBetween(-29, -8, 29, -8);
-    g.lineStyle(3, INK, 1);
-    g.fillStyle(0xc9d1d8, 1); g.fillEllipse(0, -66, 30, 9); g.strokeEllipse(0, -66, 30, 9);
-  }
-
   // ----- Chuồng gà (F05): chuồng sàn chân cao, sân quây lưới B40, máng tre, bình nước -----
   drawCoop() {
     const firstChild = this.children.list.length;
@@ -566,8 +553,8 @@ class Rooftop extends Phaser.Scene {
   buildPens() {
     const DEF = {
       ca:     { x: 30,  y: 404, w: 58, h: 40, bubble: [44, 368], make: () => this.makeFishBasin() },
-      tho:    { x: 144, y: 398, w: 60, h: 54, bubble: [160, 352], make: () => this.makeHutch() },
-      bo_cau: { x: 62,  y: 228, w: 64, h: 48, bubble: [96, 200], make: () => this.makeDovecote() }
+      tho:    { x: 146, y: 386, w: 80, h: 80, bubble: [176, 330], make: () => this.makeHutch() },
+      bo_cau: { x: 62,  y: 296, w: 72, h: 128, bubble: [104, 236], make: () => this.makeDovecote() }
     };
     this.pens = {};
     Object.entries(DEF).forEach(([k, d]) => {
@@ -619,7 +606,7 @@ class Rooftop extends Phaser.Scene {
     g.fillCircle(0, 0, 12); g.strokeCircle(0, 0, 12);
     g.fillTriangle(-4, 9, 2, 10, -1, 18); g.lineBetween(-4, 10, -1, 18); g.lineBetween(2, 10, -1, 18);
     g.lineStyle(1.8, INK, 1);
-    if (k === 'tho') {          // túm lông thỏ trắng
+    if (k === 'tho') {          // túm lông thỏ trắng (sản phẩm)
       g.fillStyle(0xffffff, 1); [[-4, 2], [3, 2], [0, -3], [-1, 3]].forEach(([x, y]) => { g.fillCircle(x, y, 4.2); });
       g.strokeCircle(-4, 2, 4.2); g.strokeCircle(3, 2, 4.2); g.strokeCircle(0, -3, 4.2);
       g.fillStyle(0xffffff, 1); g.fillCircle(-0.5, 1, 4);
@@ -664,56 +651,139 @@ class Rooftop extends Phaser.Scene {
     return c;
   }
 
-  // Chuồng thỏ bằng gỗ, cửa lưới; một con thỏ trắng ngồi ngoài, một con nâu ló đầu trong chuồng
+  // Chuồng thỏ (bản 0.14.1): to hơn, gỗ ván có mái tôn, cửa lưới, khoang ngủ, cầu thang nhỏ.
+  // Thỏ trắng ngồi ngoài, thỏ nâu ló đầu ở khoang ngủ. Toạ độ tính quanh tâm chuồng (146, 386).
   makeHutch() {
-    const c = this.add.container(144, 398);
+    const c = this.add.container(146, 386);
+    const WOOD = 0xc89a6a, WOOD_D = 0x9c6b45, POST = 0x7a5236;
     const g = this.add.graphics();
-    g.fillStyle(0x000000, 0.18); g.fillEllipse(0, 26, 62, 10);
-    g.lineStyle(2.4, INK, 1); g.fillStyle(0x7a5236, 1);
-    [[-22, 10], [18, 10]].forEach(([lx, ly]) => { g.fillRect(lx, ly, 4, 14); g.strokeRect(lx, ly, 4, 14); });
-    g.fillStyle(0xc89a6a, 1); g.fillRect(-26, -12, 52, 24); g.strokeRect(-26, -12, 52, 24);
-    g.fillStyle(0x9c6b45, 1); g.fillPoints([{ x: -30, y: -12 }, { x: 30, y: -12 }, { x: 24, y: -24 }, { x: -24, y: -24 }], true);
-    g.strokePoints([{ x: -30, y: -12 }, { x: 30, y: -12 }, { x: 24, y: -24 }, { x: -24, y: -24 }], true);
-    // cửa lưới bên phải, khoang tối bên trái có thỏ nâu
-    g.fillStyle(0x4a3326, 1); g.fillRect(-21, -8, 20, 16);
-    g.lineStyle(1.2, 0xdad2c4, 1); for (let x = 3; x < 22; x += 4) g.lineBetween(x, -8, x, 8); for (let y = -8; y <= 8; y += 4) g.lineBetween(2, y, 22, y);
-    g.lineStyle(2, INK, 1); g.strokeRect(2, -8, 20, 16); g.strokeRect(-21, -8, 20, 16);
+    g.fillStyle(0x000000, 0.18); g.fillEllipse(0, 38, 88, 12);
+    // chân
+    g.lineStyle(2.5, INK, 1); g.fillStyle(POST, 1);
+    [[-34, 14], [30, 14]].forEach(([lx, ly]) => { g.fillRect(lx, ly, 5, 24); g.strokeRect(lx, ly, 5, 24); });
+    // sàn và thân
+    g.fillStyle(WOOD_D, 1); g.fillRect(-40, 10, 80, 7); g.strokeRect(-40, 10, 80, 7);
+    g.fillStyle(WOOD, 1); g.fillRect(-37, -24, 74, 34); g.strokeRect(-37, -24, 74, 34);
+    g.lineStyle(1.3, 0xa97c4f, 1); for (let yy = -16; yy < 10; yy += 8) g.lineBetween(-36, yy, 36, yy);
+    // mái tôn lượn sóng
+    const roof = [{ x: -45, y: -22 }, { x: 45, y: -22 }, { x: 36, y: -40 }, { x: -36, y: -40 }];
+    g.fillStyle(0x8fa6b2, 1); g.fillPoints(roof, true);
+    g.lineStyle(1.3, 0x6d8593, 1); for (let k = 1; k < 9; k++) { const t = k / 9; g.lineBetween(-36 + 72 * t, -39, -45 + 90 * t, -23); }
+    g.lineStyle(2.5, INK, 1); g.strokePoints(roof, true);
+    // khoang ngủ bên trái (tối, cửa vòm) và cửa lưới bên phải
+    g.fillStyle(0x3b2a20, 1); g.fillRoundedRect(-31, -17, 26, 25, { tl: 12, tr: 12, bl: 0, br: 0 });
+    g.lineStyle(2.2, INK, 1); g.strokeRoundedRect(-31, -17, 26, 25, { tl: 12, tr: 12, bl: 0, br: 0 });
+    g.fillStyle(0x6b4a33, 1); g.fillRect(1, -18, 31, 26);
+    g.lineStyle(1.3, 0xe2dccf, 1); for (let x = 5; x < 32; x += 5) g.lineBetween(x, -18, x, 8); for (let y = -14; y <= 8; y += 5) g.lineBetween(1, y, 32, y);
+    g.lineStyle(2.4, INK, 1); g.strokeRect(1, -18, 31, 26);
+    g.fillStyle(0xd9a032, 1); g.fillCircle(28, -5, 1.8); g.strokeCircle(28, -5, 1.8);   // then cửa
+    // rơm lót và cầu thang
+    g.fillStyle(0xe6c27e, 1); g.fillRect(-30, 4, 24, 4);
+    const ramp = [{ x: 8, y: 17 }, { x: 20, y: 17 }, { x: 26, y: 38 }, { x: 4, y: 38 }];
+    g.fillStyle(0xb98856, 1); g.lineStyle(2.2, INK, 1); g.fillPoints(ramp, true); g.strokePoints(ramp, true);
+    g.lineStyle(1.8, POST, 1); for (let ry = 23; ry < 38; ry += 6) g.lineBetween(7 - (ry - 17) * 0.12, ry, 21 + (ry - 17) * 0.24, ry);
+    // bát cỏ khô trước chuồng
+    g.fillStyle(0xc9a54a, 1); g.lineStyle(1.6, INK, 1);
+    g.fillEllipse(-22, 33, 18, 6); g.strokeEllipse(-22, 33, 18, 6);
+    g.lineStyle(1.4, 0x9cc25a, 1); [[-28, 31], [-24, 29], [-19, 30], [-15, 31]].forEach(([hx, hy]) => g.lineBetween(hx, hy, hx + 2, hy - 4));
     c.add(g);
-    // thỏ nâu ló đầu trong chuồng
-    const inside = this.add.graphics({ x: -11, y: 6 });
-    inside.fillStyle(0xa8794f, 1); inside.lineStyle(1.6, INK, 1);
-    inside.fillEllipse(-3, -12, 4, 10); inside.strokeEllipse(-3, -12, 4, 10); inside.fillEllipse(3, -12, 4, 10); inside.strokeEllipse(3, -12, 4, 10);
-    inside.fillCircle(0, -3, 6); inside.strokeCircle(0, -3, 6);
-    inside.fillStyle(INK, 1); inside.fillCircle(-2, -4, 1); inside.fillCircle(2, -4, 1); inside.fillStyle(0xf3a6b4, 1); inside.fillCircle(0, -1.5, 1.2);
+    // thỏ nâu ló đầu ở khoang ngủ
+    const inside = this.makeRabbit('brown', true).setPosition(-18, 8).setScale(0.9);
     c.add(inside); c.inside = inside;
-    // thỏ trắng ngồi ngoài
-    const r = this.add.container(24, 22);
-    const rg = this.add.graphics();
-    rg.fillStyle(0x000000, 0.15); rg.fillEllipse(0, 1, 18, 4);
-    rg.fillStyle(0xffffff, 1); rg.lineStyle(1.8, INK, 1);
-    rg.fillEllipse(0, -6, 16, 12); rg.strokeEllipse(0, -6, 16, 12);
-    rg.fillCircle(-7, -6, 2.6); rg.strokeCircle(-7, -6, 2.6);
-    rg.fillEllipse(5, -17, 4, 11); rg.strokeEllipse(5, -17, 4, 11); rg.fillEllipse(9, -16, 4, 11); rg.strokeEllipse(9, -16, 4, 11);
-    rg.fillStyle(0xf3a6b4, 1); rg.fillEllipse(5, -17, 1.6, 7); rg.fillEllipse(9, -16, 1.6, 7);
-    rg.fillStyle(0xffffff, 1); rg.lineStyle(1.8, INK, 1); rg.fillCircle(6, -9, 5.5); rg.strokeCircle(6, -9, 5.5);
-    rg.fillStyle(INK, 1); rg.fillCircle(8, -10, 1.1); rg.fillStyle(0xf3a6b4, 1); rg.fillCircle(11, -8, 1.1);
-    r.add(rg); c.add(r); c.rabbit = r;
+    // thỏ trắng ngồi ngoài, trước chuồng
+    // (đứng giữa hai thùng xốp để cây cao không che)
+    const r = this.makeRabbit('white').setPosition(2, 46).setScale(1.12);
+    c.add(r); c.rabbit = r;
     return c;
   }
 
-  // Chuồng bồ câu nhỏ đặt trên nóc bồn nước, ba con bồ câu xám đậu quanh
-  makeDovecote() {
-    const c = this.add.container(62, 228);
+  // Thỏ vẽ cùng kiểu với gà: đường cong mềm, viền nâu, mảng màu bóng, đầu tách riêng để gặm cỏ.
+  // kind: 'white' | 'brown' · peek: chỉ vẽ đầu (ló ra khỏi khoang ngủ)
+  makeRabbit(kind, peek = false) {
+    const white = kind === 'white';
+    const FUR = white ? 0xfbf8f2 : 0xb07a4e;
+    const FUR_D = white ? 0xe4dcd0 : 0x8a5b38;
+    const BELLY = white ? 0xffffff : 0xe8cfae;
+    const PINK = 0xf2a3b3;
+    const c = this.add.container(0, 0);
     const g = this.add.graphics();
-    g.lineStyle(2.4, INK, 1);
-    g.fillStyle(0x7a5236, 1); g.fillRect(-2, 8, 4, 16); g.strokeRect(-2, 8, 4, 16);
-    g.fillStyle(0xf1e3c8, 1); g.fillRect(-18, -14, 36, 24); g.strokeRect(-18, -14, 36, 24);
-    g.fillStyle(0xd8352a, 1); g.fillTriangle(-23, -14, 23, -14, 0, -30); g.strokeTriangle(-23, -14, 23, -14, 0, -30);
-    g.fillStyle(0x3b2a20, 1); g.fillCircle(-8, -3, 4); g.fillCircle(8, -3, 4);
-    g.fillStyle(0x9c6b45, 1); g.fillRect(-22, 9, 44, 4); g.strokeRect(-22, 9, 44, 4);
+    if (!peek) {
+      g.fillStyle(0x000000, 0.16); g.fillEllipse(1, 0, 30, 6);
+      // đuôi bông
+      g.fillStyle(0xffffff, 1); g.lineStyle(1.8, INK, 1); g.fillCircle(-12, -9, 4.2); g.strokeCircle(-12, -9, 4.2);
+      // thân tròn ngồi, lưng cong
+      this.shape(g, [
+        this.bez([-9, -1], [-15, -2], [-15, -14], [-8, -19]),
+        this.bez([-8, -19], [-2, -23], [8, -21], [10, -14]),
+        this.bez([10, -14], [12, -8], [11, -2], [6, -1])
+      ], FUR, 2);
+      // bụng sáng màu
+      this.shape(g, [this.bez([2, -2], [8, -3], [9, -10], [6, -13]), this.bez([6, -13], [2, -10], [0, -5], [2, -2])], BELLY, 0);
+      // đùi sau và bàn chân
+      this.shape(g, [this.bez([-9, -2], [-11, -9], [-4, -13], [0, -8]), this.bez([0, -8], [2, -4], [0, -1], [-9, -2])], FUR_D, 1.6);
+      g.fillStyle(FUR, 1); g.lineStyle(1.6, INK, 1);
+      g.fillEllipse(-4, -0.5, 10, 3.6); g.strokeEllipse(-4, -0.5, 10, 3.6);
+      g.fillEllipse(8, -0.5, 6, 3.2); g.strokeEllipse(8, -0.5, 6, 3.2);
+    }
+    c.add(g);
+    // Đầu: hai tai dài có lòng hồng, má hồng, mắt có ánh sáng, mũi hồng, râu
+    const head = this.add.container(peek ? 0 : 8, peek ? -6 : -22);
+    const hg = this.add.graphics();
+    const ear = (ex, tilt, back) => {
+      const col = back ? FUR_D : FUR;
+      this.shape(hg, [
+        this.bez([ex - 2.5, -4], [ex - 5 + tilt, -14], [ex - 2 + tilt * 1.6, -21], [ex + tilt * 1.8, -21]),
+        this.bez([ex + tilt * 1.8, -21], [ex + 3 + tilt * 1.6, -20], [ex + 4 + tilt, -12], [ex + 2.5, -4])
+      ], col, 1.8);
+      if (!back) this.shape(hg, [this.bez([ex - 0.8, -6], [ex - 2 + tilt, -13], [ex + tilt * 1.4, -18], [ex + tilt * 1.6, -18]), this.bez([ex + tilt * 1.6, -18], [ex + 1.8 + tilt, -14], [ex + 1.6, -9], [ex + 0.8, -6])], PINK, 0);
+    };
+    ear(-3, -1.2, true);
+    ear(2, 1.4, false);
+    hg.fillStyle(FUR, 1); hg.lineStyle(2, INK, 1);
+    hg.fillEllipse(0, 0, 15, 12.5); hg.strokeEllipse(0, 0, 15, 12.5);
+    hg.fillStyle(PINK, 0.7); hg.fillEllipse(3.5, 2.6, 4, 2.4);                      // má hồng
+    hg.fillStyle(INK, 1); hg.fillCircle(2.2, -1.4, 1.5);                             // mắt
+    hg.fillStyle(0xffffff, 1); hg.fillCircle(2.7, -1.9, 0.55);
+    hg.fillStyle(PINK, 1); hg.lineStyle(1.2, INK, 1);
+    hg.fillTriangle(6.2, 0.2, 7.8, 0.2, 7, 1.6); hg.strokeTriangle(6.2, 0.2, 7.8, 0.2, 7, 1.6);   // mũi
+    hg.lineStyle(1, INK, 0.75); hg.lineBetween(7.5, 1.2, 11, 0); hg.lineBetween(7.5, 1.6, 11, 2.6);  // râu
+    head.add(hg);
+    c.add(head);
+    c.head = head;
+    return c;
+  }
+
+  // Chuồng bồ câu (bản 0.14.1): đứng trên cột gỗ cao ở góc trái sân, chỗ bồn nước cũ.
+  // Nhà hai tầng, bốn ô cửa, mái đỏ, bậu cho chim đậu. Toạ độ quanh tâm (62, 296).
+  makeDovecote() {
+    const c = this.add.container(62, 296);
+    const g = this.add.graphics();
+    g.fillStyle(0x000000, 0.18); g.fillEllipse(0, 64, 44, 9);
+    // cột và chân đế chữ thập
+    g.lineStyle(2.5, INK, 1); g.fillStyle(0x7a5236, 1);
+    g.fillRect(-3.5, -4, 7, 66); g.strokeRect(-3.5, -4, 7, 66);
+    g.fillRect(-17, 57, 34, 6); g.strokeRect(-17, 57, 34, 6);
+    g.lineStyle(2.2, INK, 1); g.lineBetween(-11, 57, 0, 40); g.lineBetween(11, 57, 0, 40);
+    // nhà hai tầng
+    g.lineStyle(2.5, INK, 1); g.fillStyle(0xf1e3c8, 1);
+    g.fillRect(-26, -52, 52, 46); g.strokeRect(-26, -52, 52, 46);
+    g.lineStyle(1.3, 0xd9c6a3, 1); g.lineBetween(-25, -44, 25, -44); g.lineBetween(-25, -16, 25, -16);
+    g.lineStyle(2.5, INK, 1); g.fillStyle(0x9c6b45, 1);
+    g.fillRect(-31, -29, 62, 5); g.strokeRect(-31, -29, 62, 5);   // bậu giữa
+    g.fillRect(-31, -7, 62, 5); g.strokeRect(-31, -7, 62, 5);     // bậu dưới
+    // bốn ô cửa vòm
+    g.fillStyle(0x3b2a20, 1);
+    [[-12, -40], [12, -40], [-12, -18], [12, -18]].forEach(([hx, hy]) => { g.fillRoundedRect(hx - 6, hy - 6, 12, 12, { tl: 6, tr: 6, bl: 0, br: 0 }); });
+    // mái đỏ
+    g.fillStyle(0xd8352a, 1); g.lineStyle(2.5, INK, 1);
+    g.fillTriangle(-33, -52, 33, -52, 0, -74); g.strokeTriangle(-33, -52, 33, -52, 0, -74);
+    g.fillStyle(0xb62a20, 1); g.fillTriangle(-28, -54, 28, -54, 0, -70);
+    g.lineStyle(2.5, INK, 1); g.strokeTriangle(-33, -52, 33, -52, 0, -74);
+    g.fillStyle(0xf2b544, 1); g.fillCircle(0, -76, 3); g.strokeCircle(0, -76, 3);
     c.add(g);
     c.birds = [];
-    [[-14, 9, 1], [14, 9, -1], [-26, 24, 1]].forEach(([bx, by, dir], i) => {
+    // ba con đậu trên bậu, một con đậu đỉnh mái
+    [[-18, -29, 1], [20, -7, -1], [-20, -7, 1]].forEach(([bx, by, dir], i) => {
       const b = this.makePigeon(i).setPosition(bx, by).setScale(dir, 1);
       b.home = { x: bx, y: by, dir };
       c.add(b); c.birds.push(b);
@@ -751,20 +821,31 @@ class Rooftop extends Phaser.Scene {
         this.time.delayedCall(i * 400, swim);
       });
     } else if (k === 'tho') {
+      // Thỏ trắng: lúc gặm cỏ (cúi đầu), lúc nhảy vài bước trước chuồng
+      const r = c.rabbit;
       const hop = () => {
-        const r = c.rabbit, nx = Phaser.Math.Clamp(r.x + (Math.random() * 16 - 8), 12, 30);
-        this.tweens.add({ targets: r, y: 16, duration: 140, yoyo: true, ease: 'Quad.easeOut' });
-        this.tweens.add({ targets: r, x: nx, duration: 280, onComplete: () => this.time.delayedCall(1200 + Math.random() * 2600, hop) });
+        const next = () => this.time.delayedCall(1100 + Math.random() * 2400, hop);
+        if (Math.random() < 0.5) {
+          this.tweens.add({ targets: r.head, y: r.head.y + 4, angle: 18, duration: 160, yoyo: true, repeat: 1 + Math.floor(Math.random() * 3), ease: 'Quad.easeOut', onComplete: next });
+          return;
+        }
+        const nx = Phaser.Math.Clamp(r.x + (Math.random() * 20 - 10), -10, 14);
+        r.setScale(nx >= r.x ? 1.12 : -1.12, 1.12);
+        this.tweens.add({ targets: r, y: 39, duration: 150, yoyo: true, ease: 'Quad.easeOut' });
+        this.tweens.add({ targets: r, x: nx, duration: 300, onComplete: next });
       };
       this.time.delayedCall(800, hop);
-      this.tweens.add({ targets: c.inside, y: 8, duration: 1600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+      // Thỏ nâu ló ra ló vào khoang ngủ, tai vểnh
+      this.tweens.add({ targets: c.inside, y: 11, duration: 1600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+      this.tweens.add({ targets: c.inside.head, angle: 6, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     } else {
       c.birds.forEach((b, i) => {
         const bob = () => {
           if (i === 2 && Math.random() < 0.3) {
             // bay sang dây phơi rồi về
+            // bay sang dây phơi (toạ độ dây phơi tính theo tâm chuồng bồ câu)
             const lx = 110 + Math.random() * 60;
-            this.tweens.add({ targets: b, x: lx, y: 44, duration: 900, ease: 'Sine.easeInOut', yoyo: true, hold: 2200, onComplete: () => this.time.delayedCall(1500, bob) });
+            this.tweens.add({ targets: b, x: lx, y: this.lineY(62 + lx) - 296 + 4, duration: 900, ease: 'Sine.easeInOut', yoyo: true, hold: 2200, onComplete: () => this.time.delayedCall(1500, bob) });
             return;
           }
           this.tweens.add({ targets: b.head, x: 6.5, y: -9, duration: 140, yoyo: true, repeat: 1 + Math.floor(Math.random() * 2), onComplete: () => this.time.delayedCall(800 + Math.random() * 2400, bob) });
@@ -1366,9 +1447,11 @@ class Rooftop extends Phaser.Scene {
             g.fillRoundedRect(fx - 4 * sz, fy, 8 * sz, 22 * sz, 4 * sz); g.strokeRoundedRect(fx - 4 * sz, fy, 8 * sz, 22 * sz, 4 * sz);
           });
         } else {
-          const col = ripe ? 0xe5533c : 0x9acb6b, r = ripe ? 6.5 : 4;
+          // Bản 0.14.1: chín thì quả đỏ tươi, to, có ánh bóng; chưa chín quả xanh nhỏ
+          const col = ripe ? RED : 0x9acb6b, r = ripe ? 7.5 : 4;
           [[10, -18], [-11, -28], [10, -40], [-9, -50]].slice(0, ripe ? 4 : 3).forEach(([fx, fy]) => {
             g.fillStyle(col, 1); g.lineStyle(2, INK, 1); g.fillCircle(fx, fy, r); g.strokeCircle(fx, fy, r);
+            if (ripe) { g.fillStyle(0xffffff, 0.55); g.fillEllipse(fx - r * 0.35, fy - r * 0.35, r * 0.6, r * 0.4); }
             g.fillStyle(0x4f9a3a, 1); g.fillTriangle(fx - 3, fy - r + 1, fx + 3, fy - r + 1, fx, fy - r - 3);
           });
         }
@@ -1378,10 +1461,13 @@ class Rooftop extends Phaser.Scene {
         g.lineStyle(2.5, INK, 1); g.lineBetween(0, 0, 0, -30 * k);
         [[-50, -8], [50, -10], [-40, -20], [40, -22], [-25, -30], [25, -31], [0, -32]].forEach(([a, ly], i) =>
           this.leaf(g, 0, ly * k, 17 * k, 9, D(a), i % 2 ? 0x5c9e44 : 0x4f9a3a));
-        const col = ripe ? 0xe0452f : 0x8cc46a;
+        // Bản 0.14.1: chín thì trái ớt đỏ tươi, to hơn, có ánh bóng và cuống xanh
+        const col = ripe ? RED : 0x8cc46a, sz = ripe ? 1.35 : 1;
         [[-16, -16], [14, -18], [-9, -30], [10, -32], [0, -22]].slice(0, ripe ? 5 : 3).forEach(([fx, fy]) => {
-          const p = [{ x: fx - 2.5, y: fy }, { x: fx + 2.5, y: fy }, { x: fx + 1.5, y: fy + 10 }, { x: fx - 1, y: fy + 13 }];
+          const p = [{ x: fx - 2.8 * sz, y: fy }, { x: fx + 2.8 * sz, y: fy }, { x: fx + 1.6 * sz, y: fy + 10 * sz }, { x: fx - 1, y: fy + 13 * sz }];
           g.fillStyle(col, 1); g.lineStyle(1.8, INK, 1); g.fillPoints(p, true); g.strokePoints(p, true);
+          if (ripe) { g.lineStyle(1.4, 0xffffff, 0.6); g.lineBetween(fx - 1, fy + 2, fx - 1, fy + 7); }
+          g.fillStyle(0x4f9a3a, 1); g.lineStyle(1.4, INK, 1); g.fillRect(fx - 2.2, fy - 2.5, 4.4, 3); g.strokeRect(fx - 2.2, fy - 2.5, 4.4, 3);
         });
         break;
       }
@@ -1466,21 +1552,6 @@ class Rooftop extends Phaser.Scene {
       g.strokePoints([{ x: px - 14, y: 676 }, { x: px + 14, y: 676 }, { x: px + 10, y: 694 }, { x: px - 10, y: 694 }], true);
     };
     pot(36); pot(354);
-  }
-
-  drawLights() {
-    // Bóng đèn dây giăng phía trên sân; ban đêm phát sáng
-    const g = this.glow;
-    this.bulbs = [];
-    for (let i = 0; i < 9; i++) {
-      const t = i / 8, bx = 20 + t * 350, by = 360 + Math.sin(Math.PI * t) * 14;
-      this.bulbs.push({ x: bx, y: by });
-    }
-    this.wire = this.add.graphics();
-    this.wire.setDepth(this.glow.depth - 1);
-    const pts = this.bulbs.map(b => new Phaser.Math.Vector2(b.x, b.y - 4));
-    this.wire.lineStyle(1.5, INK, 0.85); this.wire.strokePoints(pts);
-    this.children.bringToTop(this.wire); this.children.bringToTop(this.glow);
   }
 
   paintLights(p) {

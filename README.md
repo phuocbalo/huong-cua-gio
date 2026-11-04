@@ -96,6 +96,18 @@ Dùng "Tua +1 giờ", "Tua tới sáng mai" và "Giả lập vắng 8 giờ" tro
 - [ ] **F05** Túi đầy ("Lấp đầy túi") rồi nhặt trứng: hiện "Túi đồ đã đầy", trứng vẫn nằm trong chuồng.
 - [ ] **F20** Cho gà ăn, đóng game hơn 5 phút rồi mở lại (hoặc "Giả lập vắng 8 giờ"): bảng đi vắng có dòng "Gà đã đẻ 2 quả trứng…". Sang ngày mới thì có dòng "Gà đang đói…".
 
+## Kiểm thử bản 0.14.1 – Tinh chỉnh cảnh sân và tiệm
+
+Dùng "+50 KN" trong bảng "Bản thử" để lên level 13 và mở đủ chuồng.
+
+- [ ] **Chuồng thỏ** to hơn: mái tôn, khoang ngủ bên trái (thỏ nâu ló đầu), cửa lưới bên phải, cầu thang nhỏ, bát cỏ khô. Chạm vào chuồng để cho ăn / nhặt lông như trước.
+- [ ] **Con thỏ** vẽ lại cùng kiểu với gà: viền nâu, thân tròn, tai có lòng hồng, má hồng, mắt có ánh sáng, đuôi bông. Thỏ trắng đứng trước chuồng, giữa hai thùng xốp (cây cao không che); lúc cúi gặm cỏ, lúc nhảy vài bước.
+- [ ] **Không còn dãy đèn dây** giăng ngang sân (cả ngày lẫn đêm).
+- [ ] **Cà chua, ớt chín** có quả đỏ tươi, to hơn, có ánh bóng; lúc chưa chín vẫn xanh. Biểu tượng trong túi đồ, tiệm cũng đỏ.
+- [ ] **Bỏ bồn nước:** góc trái sân là chuồng bồ câu hai tầng (4 ô cửa, mái đỏ) đứng trên cột gỗ cao. Bồ câu đậu trên bậu, thỉnh thoảng một con bay sang dây phơi rồi về. Chạm vào chuồng bồ câu vẫn cho ăn / nhặt trứng được. Chưa mở (dưới level 12): khung nét đứt "Lv 12" ở đúng chỗ đó.
+- [ ] **Tiệm → Mua** chia 3 nhóm: Hạt giống · Phân bón · Thức ăn & túi đồ (thức ăn gà, cỏ khô, hạt kê, cám cá, nâng cấp túi đồ). Mở tab Mua mặc định ở "Hạt giống". Tab Bán không có hàng nhóm này.
+- [ ] Hướng dẫn bước Mua vẫn chạy: mũi tên chỉ "Mua 1" hạt rau muống trong nhóm Hạt giống; bấm nhóm khác bị chặn.
+
 ## Kiểm thử bản 0.7 – Tinh chỉnh và quét bụi (F23)
 
 - [ ] **Chuồng gà to hơn:** chuồng, sân gà và gà to hơn bản 0.6; chạm chuồng (nhặt trứng) và chạm máng (cho ăn) vẫn trúng.

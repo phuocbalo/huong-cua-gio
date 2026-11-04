@@ -11,8 +11,8 @@ export const CROP_COLOR = {
   cai: '#8cc46a',
   hung_que: '#3f8a4a',
   dua_leo: '#4f9a3a',
-  ot: '#e0452f',
-  ca_chua: '#e5533c'
+  ot: '#d8302a',
+  ca_chua: '#d8302a'
 };
 
 const leafBunch = (col, tie) =>
@@ -26,8 +26,8 @@ const PRODUCE = {
   cai: `<path d="M20 35 C8 33 6 20 12 12 C15 18 17 22 20 35z" fill="#8cc46a" ${SW}/><path d="M20 35 C32 33 34 20 28 12 C25 18 23 22 20 35z" fill="#8cc46a" ${SW}/><path d="M20 35 C13 26 14 12 20 6 C26 12 27 26 20 35z" fill="#a9d68a" ${SW}/><path d="M20 35V14" ${SW}/>`,
   hung_que: leafBunch('#3f8a4a', '#8a6cc0') + `<circle cx="20" cy="6" r="2.4" fill="#a98ad8" ${SW}/>`,
   dua_leo: `<path d="M9 30 C6 26 22 8 30 8 C35 9 33 14 30 17 C24 24 14 33 9 30z" fill="#4f9a3a" ${SW}/><path d="M14 26 l1 1 M19 21 l1 1 M24 16 l1 1" ${SW}/><path d="M30 8 l3 -3" ${SW}/>`,
-  ot: `<path d="M24 9 C30 14 26 30 12 34 C20 26 20 16 18 11z" fill="#e0452f" ${SW}/><path d="M18 11 C20 7 24 6 26 7 L24 9z" fill="#4f9a3a" ${SW}/><path d="M25 7 l2 -4" ${SW}/>`,
-  ca_chua: `<circle cx="20" cy="22" r="12" fill="#e5533c" ${SW}/><path d="M20 10 l-5 -2 l3 4 l-5 2 l6 0 l1 4 l1 -4 l6 0 l-5 -2 l3 -4z" fill="#4f9a3a" ${SW}/><path d="M14 18 c1 -2 3 -3 4 -3" stroke="#fff" stroke-opacity=".6" stroke-width="2" fill="none" stroke-linecap="round"/>`
+  ot: `<path d="M24 9 C30 14 26 30 12 34 C20 26 20 16 18 11z" fill="#d8302a" ${SW}/><path d="M18 11 C20 7 24 6 26 7 L24 9z" fill="#4f9a3a" ${SW}/><path d="M25 7 l2 -4" ${SW}/>`,
+  ca_chua: `<circle cx="20" cy="22" r="12" fill="#d8302a" ${SW}/><path d="M20 10 l-5 -2 l3 4 l-5 2 l6 0 l1 4 l1 -4 l6 0 l-5 -2 l3 -4z" fill="#4f9a3a" ${SW}/><path d="M14 18 c1 -2 3 -3 4 -3" stroke="#fff" stroke-opacity=".6" stroke-width="2" fill="none" stroke-linecap="round"/>`
 };
 
 const seedPacket = crop =>

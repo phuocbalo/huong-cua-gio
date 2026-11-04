@@ -397,3 +397,8 @@
   }
   .tut-inline .avatar svg { width: 100%; height: auto; display: block; }
   .tut-inline p { margin: 0; font-size: 3.1cqw; line-height: 1.4; }
+
+  /* Nhóm trong mục Mua của tiệm (bản 0.14.1): hàng chip nhỏ hơn, nằm dưới Bán/Mua */
+  .chips.sub { gap: 1.6cqw; margin-top: -1cqw; }
+  .chips.sub .chip { padding: 1.2cqw 2.8cqw; font-size: 3cqw; min-height: 28px; border-width: 0.5cqw; }
+  .chips.sub .chip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--paper); }
