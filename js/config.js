@@ -1,7 +1,7 @@
 // Bảng dữ liệu của game. Muốn cân bằng lại game thì sửa số ở đây, không cần đụng vào code khác.
 // Đơn vị thời gian là mili giây; dùng các hằng PHUT, GIO cho dễ đọc.
 
-export const APP_VERSION = '0.10.1';
+export const APP_VERSION = '0.11.0';
 
 const PHUT = 60 * 1000;
 const GIO = 60 * PHUT;
@@ -147,6 +147,18 @@ export const DUST_INTERVAL_MAX = 4 * NGAY;
 export const DUST_SPOTS_MIN = 3, DUST_SPOTS_MAX = 4;
 export const DUST_SPOT_COUNT = 8;     // số chỗ có thể bám bụi trên sân (toạ độ nằm trong scene.js)
 export const DUST_REWARD = 5;         // xu cho mỗi vệt bụi
+
+// ---------- Thời tiết (F09, bản 0.11) ----------
+// Mỗi ngày chia 4 khối 6 giờ (theo thời gian game); mỗi khối bốc thăm một kiểu trời theo tỉ lệ dưới đây.
+// Khối "mưa" có 2–3 trận mưa rào ngắn, giữa các trận trời nhiều mây. Mưa tưới mọi cây như bình tưới,
+// tạnh rồi đất còn ẩm thêm RAIN_WET_AFTER. Gió và mây chỉ để ngắm, không đổi luật chơi.
+// Thời tiết bắt đầu sau khi xong hướng dẫn của bà Tư.
+export const WEATHER_BLOCK = 6 * GIO;
+export const WEATHER_CHANCE = { sun: 0.35, cloud: 0.2, wind: 0.2, rain: 0.25 };
+export const RAIN_SHOWERS = [2, 3];                 // số trận mưa trong một khối mưa (ít nhất, nhiều nhất)
+export const RAIN_LEN = [15 * PHUT, 40 * PHUT];     // mỗi trận mưa dài bao lâu
+export const RAIN_WET_AFTER = WATER_DURATION;       // mưa tạnh rồi đất còn ẩm thêm bao lâu
+export const FORECAST_AHEAD = 3 * GIO;              // chạm đồng hồ: báo trước mưa trong khoảng này
 
 // ---------- Khởi đầu ----------
 export const START_BOXES = 2;   // bản 0.10.1: bắt đầu với 2 thùng, mua thêm từ level 2

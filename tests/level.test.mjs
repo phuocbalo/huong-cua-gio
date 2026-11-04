@@ -48,7 +48,7 @@ t('Level 8 thêm 1 con gà, level 10 mở chậu hoa giấy', () => {
 t('Tiến độ: level cao nhất thì đầy thanh', () => { const s = fresh(); s.xp = 30; const p = L.progress(s); assert.equal(p.level, 2); assert.equal(p.have, 10); assert.equal(p.need, 30); s.xp = 9999; assert.equal(L.progress(s).max, true); });
 t('Nâng cấp bản lưu cũ: xếp level theo số đơn đã giao, giữ hàng xóm đã quen', () => {
   const v6 = fresh(); v6.schemaVersion = 6; delete v6.xp; delete v6.level; delete v6.decor; v6.orders.delivered = 7;
-  const m = migrate(v6); assert.equal(m.schemaVersion, 7); assert.equal(L.levelNow(m), 6); assert.equal(m.level, 6);
+  const m = migrate(v6); assert.ok(m.schemaVersion >= 7); assert.equal(L.levelNow(m), 6); assert.equal(m.level, 6);
   const v6b = fresh(); v6b.schemaVersion = 6; delete v6b.xp; v6b.orders.delivered = 0; v6b.boxes = Array.from({ length: 5 }, () => ({ crop: null }));
   assert.equal(L.levelNow(migrate(v6b)), 2, 'đã mua thùng thì ít nhất level 2');
   const v6c = fresh(); v6c.schemaVersion = 6; delete v6c.xp; v6c.orders.delivered = 25; const mc = migrate(v6c);

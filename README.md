@@ -28,9 +28,10 @@ Bản chơi thử: https://phuocbalo.github.io/huong-cua-gio/
 | `js/ui-settings.js` | Cài đặt: âm lượng, xuất/nhập file lưu, xem lại hướng dẫn, xóa dữ liệu, thống kê |
 | `js/level.js` | Luật level: điểm kinh nghiệm, lên level, mở khóa, quà (dữ liệu 10 level trong `config.js`) |
 | `js/ui-level.js` | Giao diện level: viên level trên thanh trạng thái, con đường level, bảng chúc mừng |
+| `js/weather.js` | Luật thời tiết (F09): lịch nắng, mây, gió, mưa theo khối 6 giờ, tính từ một con số lưu trong bản lưu; mưa tưới cây kể cả lúc tắt game |
 | `js/daylight.js` | Màu trời, phố, đèn cho từng giờ trong ngày; chuyển dần giữa các khung giờ |
 | `js/scene.js` | Cảnh sân thượng vẽ bằng Phaser (hình tạm) |
-| `tests/` | Kiểm thử luật chơi: `node tests/farm.test.mjs`, `node tests/daylight.test.mjs`, `node tests/coop.test.mjs`, `node tests/dust.test.mjs`, `node tests/economy.test.mjs`, `node tests/settings.test.mjs`, `node tests/tutorial.test.mjs`, `node tests/level.test.mjs` |
+| `tests/` | Kiểm thử luật chơi: `node tests/farm.test.mjs`, `node tests/daylight.test.mjs`, `node tests/coop.test.mjs`, `node tests/dust.test.mjs`, `node tests/economy.test.mjs`, `node tests/settings.test.mjs`, `node tests/tutorial.test.mjs`, `node tests/level.test.mjs`, `node tests/weather.test.mjs` |
 | `js/ui.js` | Điều khiển giao diện HTML |
 | `js/pwa.js` | Bật chơi offline và theo dõi trạng thái |
 | `manifest.webmanifest` | Khai báo PWA: tên app, biểu tượng, mở toàn màn hình, màn dọc |
@@ -135,6 +136,23 @@ Trong bảng "Bản thử" có "Thêm 10 xu" nếu cần thêm xu để thử mu
 - [ ] **I-25** Người chơi mới (cửa sổ ẩn danh, hoặc Cài đặt → Xóa dữ liệu): trong lúc bà Tư hướng dẫn **không** thấy ô "+ 40 xu" ở chỗ trống bên dưới 4 thùng.
 - [ ] **I-25** Đi hết hướng dẫn: ô "+ 40 xu" hiện ra ngay, chạm vào mở bảng mua thùng.
 - [ ] **I-25** Cài đặt → "Xem lại hướng dẫn": ô "+" ẩn đi; xong hướng dẫn thì hiện lại.
+
+## Kiểm thử bản 0.11.0 – Thời tiết (F09)
+
+Thời tiết chỉ bắt đầu **sau khi xong hướng dẫn** của bà Tư. Trong bảng "Bản thử" có hàng nút **"Đặt thời tiết (30 phút)"**: Theo lịch · Nắng · Mây · Gió · Mưa.
+
+- [ ] **Trong lúc hướng dẫn:** trời luôn nắng. Chạm ô đồng hồ: bà Tư nhắc để ý trời sau khi xong việc.
+- [ ] **Ô đồng hồ:** trời nắng hiện khung giờ như cũ (Sáng/Chiều/Tối/Đêm). Trời mây, gió, mưa: biểu tượng và chữ đổi thành "Mây", "Có gió", "Mưa". Vừa một dòng trên màn hình hẹp.
+- [ ] **Dự báo:** chạm ô đồng hồ → thông báo trời bây giờ và "Khoảng … nữa có mưa rào" (trong 3 giờ tới) hoặc "Vài giờ tới chưa thấy mưa". Đang mưa: "Tạnh sau khoảng …".
+- [ ] **Mưa:** bấm "Mưa": trời tối dần trong vài giây, mây xám kéo tới, mưa rơi xiên, giọt nước bắn trên sàn, nghe tiếng mưa rào và tiếng giọt nước lách tách. Chim và dế im.
+- [ ] **Mưa tưới cây:** cây khô hết bong bóng giọt nước, đất sẫm màu. Chạm cây không tưới, bấm "Bình tưới" hiện "Trời đang mưa, cây được tưới rồi."
+- [ ] **Mưa tạnh** (bấm "Theo lịch" hoặc "Nắng"): báo "Mưa tạnh rồi…". Đất còn ẩm thêm 10 phút rồi mới khô (dùng "Tua 10 phút" để thử).
+- [ ] **Mây:** mây xám, trời hơi tối, mặt trời mờ. **Gió:** lá khô bay ngang sân, nghe tiếng gió vù vù lên xuống.
+- [ ] **Ban đêm + mưa** (nút "Đêm" trong "Xem thử khung giờ"): mưa vẫn thấy rõ, không chói.
+- [ ] **Mưa lúc vắng:** gieo cây, bấm "Mưa", rồi "Giả lập vắng 8 giờ": bảng đi vắng có dòng "Trời mưa khoảng … phút, cây được tưới tự động".
+- [ ] **Đóng mở game:** trời mở lại đúng như lúc trước (cùng lịch); đang mưa thì mở lên vẫn mưa ngay, không chuyển dần.
+- [ ] **Theo lịch:** mỗi ngày khoảng 1 giờ mưa, chia 2–3 trận rào 15–40 phút; còn lại nắng, mây hoặc gió.
+- [ ] **Bản lưu cũ:** người chơi đã xong hướng dẫn có thời tiết ngay từ lúc cập nhật, không bị tính mưa ngược về trước.
 
 ## Kiểm thử bản 0.10.1 – Bắt đầu với 2 thùng, hướng dẫn đủ 7 bước
 

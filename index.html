@@ -24,7 +24,7 @@
     <div id="boot" data-t="booting">Đang dọn sân thượng…</div>
 
     <div class="hud">
-      <div class="pill" id="clockPill" aria-live="polite">
+      <div class="pill" id="clockPill" role="button" tabindex="0" data-t-label="clock_label">
         <svg id="periodIcon" viewBox="0 0 32 32" aria-hidden="true"></svg>
         <span><span id="clock">--:--</span> <span class="sub" id="period"></span></span>
       </div>
@@ -127,6 +127,15 @@
           <dt data-t="info_dpr"></dt><dd id="iDpr">–</dd>
           <dt data-t="info_orient"></dt><dd id="iOrient">–</dd>
         </dl>
+
+        <div class="label" data-t="info_section_weather"></div>
+        <div class="chips" id="weatherChips">
+          <button class="chip" type="button" data-w="auto" aria-pressed="true" data-t="weather_auto"></button>
+          <button class="chip" type="button" data-w="sun" aria-pressed="false" data-t="weather_sun"></button>
+          <button class="chip" type="button" data-w="cloud" aria-pressed="false" data-t="weather_cloud"></button>
+          <button class="chip" type="button" data-w="wind" aria-pressed="false" data-t="weather_wind"></button>
+          <button class="chip" type="button" data-w="rain" aria-pressed="false" data-t="weather_rain"></button>
+        </div>
 
         <div class="label" data-t="info_section_period"></div>
         <div class="chips" id="periodChips">

@@ -13,6 +13,7 @@
 
 import { CROPS, ITEMS, STAGES, UNWATERED_SPEED, WATER_DURATION } from './config.js';
 import * as inv from './inventory.js';
+import * as weather from './weather.js';
 
 // Cây thu nhiều lần quay về giai đoạn "lớn" sau mỗi lần thu
 export const REGROW_FROM = STAGES.find(s => s.key === 'grown').from;
@@ -25,14 +26,17 @@ export function cycleTime(box) {
   return box.regrowing ? c.regrowTime / (1 - REGROW_FROM) : c.growTime;
 }
 
-// Tính tiến độ từ lần trước tới `now`. Phần có tưới lớn đủ tốc độ, phần không tưới lớn bằng UNWATERED_SPEED.
+// Tính tiến độ từ lần trước tới `now`. Phần có tưới (bằng bình tưới hoặc nhờ mưa, F09) lớn đủ tốc độ,
+// phần không tưới lớn bằng UNWATERED_SPEED.
 export function update(box, now) {
   if (!box.crop) return false;
   const from = box.lastT;
   box.lastT = Math.max(box.lastT, now);
   if (box.progress >= 1 || now <= from) return false;
   const dt = now - from;
-  const watered = Math.max(0, Math.min(now, box.wateredUntil) - from);
+  const wet = weather.wetIntervals(weather.current(), from, now);
+  if (box.wateredUntil > from) wet.push([from, Math.min(now, box.wateredUntil)]);
+  const watered = weather.total(wet);
   const effective = watered + (dt - watered) * UNWATERED_SPEED;
   const before = stageOf(box);
   box.progress = box.progress + effective / cycleTime(box);
@@ -49,7 +53,11 @@ export function stageOf(box) {
 }
 
 export const isRipe = box => !!box.crop && box.progress >= 1;
-export const isDry = (box, now) => !!box.crop && box.progress < 1 && box.wateredUntil <= now;
+// Lúc `now` đất còn ẩm tới khi nào: lần tưới gần nhất hoặc mưa (F09), lấy cái muộn hơn
+export const moistUntil = (box, now) => Math.max(box.wateredUntil || 0, weather.wetUntil(weather.current(), now));
+export const isDry = (box, now) => !!box.crop && box.progress < 1 && moistUntil(box, now) <= now;
+// Đang mưa hoặc đất còn ẩm vì mưa
+export const isRainWet = now => weather.wetUntil(weather.current(), now) > now;
 
 // ----- F01 Gieo hạt -----
 // Trả về { ok } hoặc { ok: false, reason: 'occupied' | 'no_seed' | 'not_seed' }
@@ -71,12 +79,13 @@ export function plant(state, index, seedId, now) {
 }
 
 // ----- F02 Tưới nước -----
-// Trả về { ok } hoặc { ok: false, reason: 'empty' | 'ripe' | 'already' }
+// Trả về { ok } hoặc { ok: false, reason: 'empty' | 'ripe' | 'already' | 'rain' }
 export function water(box, now) {
   if (!box.crop) return { ok: false, reason: 'empty' };
   update(box, now);
   if (isRipe(box)) return { ok: false, reason: 'ripe' };
   if (box.wateredUntil > now) return { ok: false, reason: 'already' };
+  if (isRainWet(now)) return { ok: false, reason: 'rain' };
   box.wateredUntil = now + WATER_DURATION;
   return { ok: true };
 }
@@ -104,7 +113,7 @@ export function harvest(state, index, now) {
 export function timeLeft(box, now) {
   if (!box.crop || box.progress >= 1) return 0;
   const need = (1 - box.progress) * cycleTime(box);   // cần bấy nhiêu thời gian "đủ tốc độ"
-  const wateredLeft = Math.max(0, box.wateredUntil - now);
+  const wateredLeft = Math.max(0, moistUntil(box, now) - now);
   if (need <= wateredLeft) return need;
   return wateredLeft + (need - wateredLeft) / UNWATERED_SPEED;
 }

@@ -41,3 +41,29 @@ export function skyAt(hour) {
   out.moon = { ...arc(Math.min(1, fm)), alpha: fm < 1 ? Math.min(1, out.stars * 1.2) : 0 };
   return out;
 }
+
+// ----- F09 Thời tiết phủ lên màu trời -----
+// gloom: độ âm u 0 → 1 (mây dày, mưa); rain: độ mưa 0 → 1. Trả về bộ màu mới, không sửa `p`.
+const mulColor = (a, b) => {
+  const ch = (c, s) => (c >> s) & 255;
+  return (Math.round(ch(a, 16) * ch(b, 16) / 255) << 16) | (Math.round(ch(a, 8) * ch(b, 8) / 255) << 8) | Math.round(ch(a, 0) * ch(b, 0) / 255);
+};
+// Màu xám có cùng độ sáng, hơi ngả xanh lam như trời mưa
+const grayOf = c => {
+  const r = (c >> 16) & 255, g = (c >> 8) & 255, b = c & 255;
+  const y = Math.round((0.3 * r + 0.59 * g + 0.11 * b) * 0.9);
+  return (Math.max(0, y - 6) << 16) | (y << 8) | Math.min(255, y + 14);
+};
+export function withWeather(p, gloom = 0, rain = 0) {
+  if (gloom <= 0.001 && rain <= 0.001) return p;
+  const q = { ...p, sun: { ...p.sun }, moon: { ...p.moon } };
+  ['skyTop', 'skyBot', 'far', 'mid', 'near'].forEach(k => { q[k] = mixColor(p[k], grayOf(p[k]), Math.min(1, gloom * 0.8)); });
+  q.sun.alpha = p.sun.alpha * Math.max(0, 1 - gloom * 1.3);
+  q.moon.alpha = p.moon.alpha * Math.max(0, 1 - gloom * 1.2);
+  q.stars = p.stars * Math.max(0, 1 - gloom * 1.1);
+  q.cloud = Math.max(p.cloud, gloom);
+  q.lit = Math.max(p.lit, rain * 0.25);   // trời mưa ban ngày, vài nhà bật đèn
+  const dark = gloom * 0.3 + rain * 0.6;
+  q.shade = mixColor(p.shade, mulColor(p.shade, 0xb8c0ce), Math.min(1, dark));
+  return q;
+}

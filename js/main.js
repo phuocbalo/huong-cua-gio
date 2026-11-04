@@ -24,6 +24,8 @@ import { SettingsUI } from './ui-settings.js';
 import { TutorialUI, OrdersTipUI, restart as restartTutorial } from './tutorial.js';
 import * as level from './level.js';
 import { LevelUI } from './ui-level.js';
+import * as weather from './weather.js';
+import { FORECAST_AHEAD } from './config.js';
 
 const AWAY_NOTICE_MS = 60000;         // vắng từ 1 phút: lời chào ngắn
 const AWAY_SUMMARY_MS = 5 * 60000;    // vắng từ 5 phút và có thay đổi: bảng "Trong lúc bạn đi vắng"
@@ -32,6 +34,8 @@ async function boot() {
   const store = new SaveStore();
   await store.load();
   const state = () => store.data;   // store.reset() thay cả đối tượng, nên luôn đọc qua hàm này
+  // F09: thời tiết chỉ có sau khi xong hướng dẫn (trong lúc hướng dẫn trời luôn nắng, không mưa làm lệch các bước)
+  weather.bind(() => (state().tutorialDone ? state().weather : null));
   let tipRef = null;   // hướng dẫn trả đơn, tạo sau khi giao diện sẵn sàng
   let gainXp = () => {};   // cộng điểm kinh nghiệm, gắn thật sau khi dựng giao diện level
 
@@ -91,6 +95,9 @@ async function boot() {
     s.hungry = coop.status(state(), t).key === 'hungry' && !before.hungry;
     s.dust = state().dust.spots.length > 0 && !before.dust;
     s.expired = expiredSince; expiredSince = 0;
+    // F09: mưa trong lúc vắng (chỉ kể khi có cây đang trồng)
+    const rain = weather.total(weather.rainIntervals(weather.current(), t - away, t));
+    s.rain = rain >= 60000 && state().boxes.some(b => b.crop) ? rain : 0;
     state().boxes.forEach((b, i) => {
       const a = before[i] || {};
       if (!b.crop || a.crop !== b.crop) return;            // thùng đổi cây trong lúc vắng: bỏ qua
@@ -108,7 +115,7 @@ async function boot() {
     if (r.away < AWAY_NOTICE_MS) return;
     const s = awaySummary(lastSnapshot, r.away);
     lastSnapshot = snapshot();
-    if (r.away >= AWAY_SUMMARY_MS && (s.ripe.length || s.grew.length || s.dry.length || s.eggs || s.hungry || s.dust || s.expired)) ui.showAway(s);
+    if (r.away >= AWAY_SUMMARY_MS && (s.ripe.length || s.grew.length || s.dry.length || s.eggs || s.hungry || s.dust || s.expired || s.rain)) ui.showAway(s);
     else ui.toast(fmt(T.welcome_back, { time: duration(r.away) }));
   }
 
@@ -283,6 +290,55 @@ async function boot() {
     }
   };
 
+  // ----- F09 Thời tiết -----
+  let shownWeather = null;
+  // Gọi mỗi nhịp đồng hồ: bắt đầu lịch thời tiết khi vừa xong hướng dẫn, đổi hình và tiếng khi trời đổi
+  function syncWeather(announce) {
+    const w = state().weather;
+    if (state().tutorialDone && w && w.since == null) { w.since = now(); store.markDirty(); }
+    const kind = weather.kindAt(weather.current(), now());
+    if (kind === shownWeather) return;
+    const before = shownWeather;
+    shownWeather = kind;
+    if (scene) scene.setWeather(kind, before == null);
+    audio.setWeather(kind);
+    ui.setWeather(kind);
+    if (announce && before != null) {
+      if (kind === 'rain') ui.toast(T.weather_rain_start);
+      else if (before === 'rain') ui.toast(T.weather_rain_stop);
+    }
+    renderBoxes();
+  }
+  // Chạm ô đồng hồ: trời bây giờ và trời sắp mưa không
+  function forecast() {
+    const w = weather.current(), t = now();
+    if (!w) { ui.toast(T.forecast_off); return; }
+    const kind = weather.kindAt(w, t);
+    if (kind === 'rain') {
+      const r = weather.nextRain(w, t, 6 * 3600000);
+      ui.toast(fmt(T.forecast_raining, { time: duration(r ? r.e - t : 0) }));
+      return;
+    }
+    let msg = T['forecast_now_' + kind] || T.forecast_now_sun;
+    const wet = weather.wetUntil(w, t);
+    if (wet > t) msg += fmt(T.forecast_wet, { time: duration(wet - t) });
+    const next = weather.nextRain(w, t, FORECAST_AHEAD);
+    msg += next ? fmt(T.forecast_soon, { time: duration(next.s - t) }) : T.forecast_none;
+    ui.toast(msg);
+  }
+  const clockPill = document.getElementById('clockPill');
+  clockPill.addEventListener('click', () => { sound('tap'); forecast(); });
+  clockPill.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); forecast(); } });
+  // Bản thử: đặt tay kiểu trời trong 30 phút
+  document.querySelectorAll('#weatherChips .chip').forEach(c => c.addEventListener('click', () => {
+    if (!weather.current()) { ui.toast(T.test_weather_wait); return; }
+    weather.force(state().weather, c.dataset.w, now(), 30 * 60000);
+    document.querySelectorAll('#weatherChips .chip').forEach(x => x.setAttribute('aria-pressed', String(x === c)));
+    ui.toast(c.dataset.w === 'auto' ? T.test_weather_auto : fmt(T.test_weather_set, { kind: T['weather_' + c.dataset.w] }));
+    store.flush();
+    syncWeather(false);
+  }));
+
   // ----- Hành động của người chơi -----
   function waterBox(i, quiet) {
     const b = state().boxes[i];
@@ -346,7 +402,7 @@ async function boot() {
     const t = now();
     let n = 0, last = null;
     state().boxes.forEach((b, i) => { farm.update(b, t); if (farm.isDry(b, t) && waterBox(i, true)) { n++; last = b.crop; } });
-    if (n === 0) ui.toast(T.water_nothing);
+    if (n === 0) ui.toast(farm.isRainWet(t) && state().boxes.some(b => b.crop && !farm.isRipe(b)) ? T.water_rain : T.water_nothing);
     else sound('water');   // mỗi thùng vừa tưới có chữ nổi "Đã tưới" riêng
     if (n) store.flush();
     renderBoxes();
@@ -482,6 +538,8 @@ async function boot() {
     if (coop.update(state(), now())) store.markDirty();
     if (dust.update(state(), now())) store.markDirty();
     if (syncOrders(r ? r.delta : 0)) store.markDirty();
+    // Báo mưa/tạnh khi đang chơi; vắng mặt hay tua thì bảng đi vắng kể
+    syncWeather(!!r && r.delta < AWAY_NOTICE_MS);
     // Chỉ cộng thời gian chơi cho các nhịp bình thường (không tính lúc vắng hay lúc tua)
     if (r && r.delta > 0 && r.delta < 5000 && !document.hidden) state().stats.playMs += r.delta;
     renderBoxes();
@@ -516,6 +574,7 @@ async function boot() {
       renderBuySlot();
       scene.setChickens(state().coop.chickens);
       scene.setDecor(state().decor || []);
+      shownWeather = null; syncWeather(false);
       greet(first);
       tutor.start();
     },
@@ -531,7 +590,7 @@ async function boot() {
   pwa.register(firstInstall => { if (firstInstall) ui.toast(T.offline_ready); });
 
   // Cửa sổ kiểm thử cho người phát triển (gõ trong console): __game.store.data
-  window.__game = { store, clock, ui, pwa, farm, coop, dust, shop, orders, eco, audio, tutor, settings, get scene() { return scene; } };
+  window.__game = { store, clock, ui, pwa, farm, weather, coop, dust, shop, orders, eco, audio, tutor, settings, get scene() { return scene; } };
 }
 
 boot();

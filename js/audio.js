@@ -24,6 +24,7 @@ export class AudioEngine {
     this.ctx = null;
     this.mode = 'day';
     this.hour = 12;
+    this.weather = 'sun';
     this.timer = 0;
   }
 
@@ -62,7 +63,50 @@ export class AudioEngine {
     this.nightGain.gain.value = this.mode === 'night' ? 1 : 0;
     // Lọc ấm cho cả nhạc như phát qua đài cũ
     this.noise = this.makeNoise(ctx, 2);
+    this.buildWeather(ctx);
     this.applyLevels();
+  }
+
+  // ----- F09 Tiếng mưa và tiếng gió (đi theo thanh "Nhạc nền") -----
+  // Mưa: tiếng rào rào (nhiễu qua lọc) và tiếng giọt nước lách tách trên mái tôn. Gió: tiếng vù vù lên xuống chậm.
+  buildWeather(ctx) {
+    const loop = () => { const src = ctx.createBufferSource(); src.buffer = this.makeNoise(ctx, 3); src.loop = true; return src; };
+    const rs = loop(), hp = ctx.createBiquadFilter(), lp = ctx.createBiquadFilter();
+    hp.type = 'highpass'; hp.frequency.value = 500; lp.type = 'lowpass'; lp.frequency.value = 2600;
+    this.rainGain = ctx.createGain(); this.rainGain.gain.value = 0;
+    rs.connect(hp); hp.connect(lp); lp.connect(this.rainGain); this.rainGain.connect(this.ambBus); rs.start();
+    const ws = loop(), bp = ctx.createBiquadFilter(), lfo = ctx.createOscillator(), depth = ctx.createGain();
+    bp.type = 'bandpass'; bp.frequency.value = 420; bp.Q.value = 0.9;
+    lfo.frequency.value = 0.13; depth.gain.value = 220; lfo.connect(depth); depth.connect(bp.frequency); lfo.start();
+    this.windGain = ctx.createGain(); this.windGain.gain.value = 0;
+    const gust = ctx.createOscillator(), gustDepth = ctx.createGain();
+    gust.frequency.value = 0.07; gustDepth.gain.value = 0; gust.connect(gustDepth); gustDepth.connect(this.windGain.gain); gust.start();
+    this.gustDepth = gustDepth;
+    ws.connect(bp); bp.connect(this.windGain); this.windGain.connect(this.ambBus); ws.start();
+    this.applyWeather(0);
+  }
+
+  setWeather(kind) {
+    if (kind === this.weather) return;
+    this.weather = kind;
+    this.applyWeather(3);
+  }
+
+  applyWeather(fade) {
+    if (!this.rainGain) return;
+    const t = this.ctx.currentTime, k = this.weather;
+    const rain = k === 'rain' ? 0.32 : 0, wind = k === 'wind' ? 0.22 : k === 'rain' ? 0.08 : k === 'cloud' ? 0.04 : 0;
+    this.rainGain.gain.setTargetAtTime(rain, t, fade || 0.01);
+    this.windGain.gain.setTargetAtTime(wind, t, fade || 0.01);
+    this.gustDepth.gain.setTargetAtTime(wind * 0.5, t, fade || 0.01);
+  }
+
+  // Giọt nước rơi trên mái tôn, mái hiên: tiếng tách ngắn, cao thấp khác nhau
+  drip(t) {
+    const ctx = this.ctx, o = ctx.createOscillator(), g = ctx.createGain(), f = 1400 + Math.random() * 1800;
+    o.type = 'sine'; o.frequency.setValueAtTime(f, t); o.frequency.exponentialRampToValueAtTime(f * 0.55, t + 0.06);
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.02 + Math.random() * 0.02, t + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.08);
+    o.connect(g); g.connect(this.ambBus); o.start(t); o.stop(t + 0.1);
   }
 
   makeNoise(ctx, seconds) {
@@ -119,8 +163,10 @@ export class AudioEngine {
       this.step++;
     }
     // Chim hót buổi sáng (5–10 giờ), xe máy xa ban ngày
+    if (this.weather === 'rain' && Math.random() < 0.35) this.drip(ctx.currentTime + 0.05 + Math.random() * 0.05);
     if (ctx.currentTime > this.nextBird) {
-      if (this.hour >= 5 && this.hour < 10.5) this.bird(ctx.currentTime + 0.05);
+      // Trời mưa thì chim không hót
+      if (this.hour >= 5 && this.hour < 10.5 && this.weather !== 'rain') this.bird(ctx.currentTime + 0.05);
       this.nextBird = ctx.currentTime + 2.5 + Math.random() * 5;
     }
     if (ctx.currentTime > this.nextBike) {
@@ -245,7 +291,7 @@ export class AudioEngine {
     const ctx = this.ctx;
     const tick = () => {
       if (!this.ctx) return;
-      if (ctx.state === 'running' && this.mode === 'night') {
+      if (ctx.state === 'running' && this.mode === 'night' && this.weather !== 'rain') {
         const t = ctx.currentTime + 0.05, f = 4300 + Math.random() * 500;
         for (let k = 0; k < 3; k++) {
           const s = t + k * 0.07, o = ctx.createOscillator(), g = ctx.createGain();

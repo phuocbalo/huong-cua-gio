@@ -15,6 +15,13 @@ const ICONS = {
   evening:   '<path d="M4 22h24" stroke="#3b2f2a" stroke-width="2.5" stroke-linecap="round"/><path d="M8 22a8 8 0 0 1 16 0z" fill="#f29a6a" stroke="#3b2f2a" stroke-width="2.5" stroke-linejoin="round"/><path d="M16 6v4M6.5 12l2.5 2M25.5 12L23 14" stroke="#3b2f2a" stroke-width="2.5" stroke-linecap="round"/>',
   night:     '<path d="M21 5a11 11 0 1 0 6 18A9 9 0 0 1 21 5z" fill="#ffe3a3" stroke="#3b2f2a" stroke-width="2.5" stroke-linejoin="round"/>'
 };
+// F09: khi trời không nắng, biểu tượng thời tiết thay cho biểu tượng khung giờ
+const CLOUD = '<path d="M8 23h16a5 5 0 0 0 0-10 7 7 0 0 0-13 2 4.5 4.5 0 0 0-3 8z" fill="#d7dde8" stroke="#3b2f2a" stroke-width="2.5" stroke-linejoin="round"/>';
+const WEATHER_ICONS = {
+  cloud: CLOUD,
+  wind: '<path d="M4 12h15a4 4 0 1 0-4-4" fill="none" stroke="#3b2f2a" stroke-width="2.5" stroke-linecap="round"/><path d="M4 18h20a4 4 0 1 1-4 4" fill="none" stroke="#3b2f2a" stroke-width="2.5" stroke-linecap="round"/><path d="M4 24h8" stroke="#3b2f2a" stroke-width="2.5" stroke-linecap="round"/>',
+  rain: '<path d="M8 18h16a5 5 0 0 0 0-10 7 7 0 0 0-13 2 4.5 4.5 0 0 0-3 8z" fill="#aeb8ca" stroke="#3b2f2a" stroke-width="2.5" stroke-linejoin="round"/><path d="M11 22l-2 5M17 22l-2 5M23 22l-2 5" stroke="#4f8fc4" stroke-width="2.5" stroke-linecap="round"/>'
+};
 
 export class UI {
   constructor({ store, clock, pwa, onFrameResize, onTimeChange, onWaterAll, onPlant, onSkip, onAddSeeds, onFillBag, onSimAway, onNextDay, onAddDust }) {
@@ -39,6 +46,14 @@ export class UI {
     this.cycleTimer = 0;
     this.toastTimer = 0;
     this.resetArmed = 0;
+    this.weather = 'sun';
+  }
+
+  // F09: thời tiết hiện trên ô đồng hồ (biểu tượng và chữ thay cho khung giờ khi trời không nắng)
+  setWeather(kind) {
+    this.weather = kind;
+    this.shownPeriod = null;
+    this.refreshClock();
   }
 
   init() {
@@ -160,8 +175,10 @@ export class UI {
     const hh = Math.floor(h), mm = Math.floor((h - hh) * 60);
     const p = periodOf(hh);
     $('clock').textContent = this.override === 'auto' ? hhmm(new Date()) : pad2(hh) + ':' + pad2(mm);
-    $('period').textContent = T['period_' + p];
-    if (p !== this.shownPeriod) { $('periodIcon').innerHTML = ICONS[p]; this.shownPeriod = p; }
+    const wk = this.weather && this.weather !== 'sun' ? this.weather : null;
+    $('period').textContent = wk ? T['weather_' + wk] : T['period_' + p];
+    const iconKey = wk || p;
+    if (iconKey !== this.shownPeriod) { $('periodIcon').innerHTML = wk ? WEATHER_ICONS[wk] : ICONS[p]; this.shownPeriod = iconKey; }
     const minuteKey = hh * 60 + mm;
     if (force || minuteKey !== this.shownMinute) {
       this.shownMinute = minuteKey;
@@ -228,6 +245,7 @@ export class UI {
     if (s.hungry) rows.push([itemIcon('thuc_an_ga'), T.away_hungry]);
     if (s.expired) rows.push(['<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M10 8h20v26H10z" fill="#fffaf0" stroke="#3b2f2a" stroke-width="2.4" stroke-linejoin="round"/><path d="M14 16h12M14 21h12M14 26h8" stroke="#9a8a7a" stroke-width="2"/><rect x="18" y="4" width="4" height="8" fill="#c89a5a" stroke="#3b2f2a" stroke-width="2"/></svg>', fmt(T.away_orders, { n: s.expired })]);
     if (s.dust) rows.push(['<svg viewBox="0 0 40 40" aria-hidden="true"><rect x="18" y="5" width="4" height="17" fill="#c89a5a" stroke="#3b2f2a" stroke-width="2.2"/><path d="M15 21h10l7 14H8z" fill="#e2b65a" stroke="#3b2f2a" stroke-width="2.2" stroke-linejoin="round"/><path d="M15 23h10" stroke="#d8352a" stroke-width="2.4"/></svg>', T.away_dust]);
+    if (s.rain) rows.push(['<svg viewBox="0 0 32 32" aria-hidden="true">' + WEATHER_ICONS.rain + '</svg>', fmt(T.away_rain, { time: duration(s.rain) })]);
     if (s.dry.length) rows.push([drop, s.dry.length === 1 ? fmt(T.away_dry_one, { crop: name(s.dry[0]) }) : fmt(T.away_dry_many, { n: s.dry.length })]);
     $('awayTitle').textContent = fmt(T.away_title, { time: duration(s.away) });
     $('awayList').innerHTML = rows.map(([ico, txt]) => `<li><span class="ico">${ico}</span><span>${txt}</span></li>`).join('')

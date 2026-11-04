@@ -1,6 +1,6 @@
 // Cảnh sân thượng vẽ bằng Phaser. Toàn bộ hình ở đây là hình tạm, mang đúng phong cách của game.
 import { W, H, ZOOM, INK } from './config.js';
-import { skyAt, mixColor } from './daylight.js';
+import { skyAt, mixColor, withWeather } from './daylight.js';
 import { rng, reduceMotion } from './util.js';
 
 let hooks = { onReady() {}, onTapBox() {}, onTapCoop() {}, onTapTrough() {}, onTapDust() {}, onTapOrders() {}, onTapBuyBox() {} };
@@ -25,6 +25,7 @@ class Rooftop extends Phaser.Scene {
 
     this.sky = this.add.graphics();
     this.clouds = this.makeClouds();
+    this.darkClouds = this.makeDarkClouds();   // F09: mây xám khi trời âm u, mưa
     this.cityFar = this.add.graphics();
     this.cityMid = this.add.graphics();
     this.cityNear = this.add.graphics();
@@ -45,6 +46,7 @@ class Rooftop extends Phaser.Scene {
     this.shade = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0).setBlendMode(Phaser.BlendModes.MULTIPLY);
     this.glow = this.add.graphics(); // đèn dây sáng ban đêm, vẽ sau lớp tối
     this.drawLights();
+    this.makeWeather();   // F09: mưa rơi và lá bay, nằm trên cùng
 
     // Chạm và rê chuột trên sân: thùng xốp (và sau này vệt bụi) được chọn bằng hàm boxAt/dustAt
     this.input.on('pointerup', pointer => {
@@ -1132,9 +1134,110 @@ class Rooftop extends Phaser.Scene {
     this.tweens.add({ targets: target, scaleX: sx * 1.06, scaleY: sy * 0.94, duration: 90, yoyo: true, ease: 'Quad.easeOut', onComplete: () => target.setScale(sx, sy) });
   }
 
+  // ----- F09 Thời tiết -----
+  makeDarkClouds() {
+    const list = [];
+    const shapes = [[20, 40, 1.3], [120, 70, 1.1], [215, 36, 1.4], [320, 80, 1.15], [70, 120, 0.9], [270, 130, 1]];
+    shapes.forEach(([x, y, s], i) => {
+      const g = this.add.graphics({ x, y }).setAlpha(0);
+      const col = i % 2 ? 0x8d96a8 : 0x9aa3b4;
+      g.fillStyle(col, 1);
+      g.fillEllipse(0, 0, 96 * s, 28 * s);
+      g.fillEllipse(-20 * s, -11 * s, 46 * s, 34 * s);
+      g.fillEllipse(16 * s, -15 * s, 54 * s, 40 * s);
+      g.fillStyle(0x7d8697, 0.7); g.fillEllipse(4 * s, 8 * s, 84 * s, 12 * s);
+      list.push(g);
+      if (!reduceMotion) this.tweens.add({ targets: g, x: x + 18, duration: 11000 + i * 2300, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    });
+    return list;
+  }
+
+  makeWeather() {
+    this.wx = { gloom: 0, rain: 0, wind: 0 };
+    this.weatherKind = 'sun';
+    this.rainG = this.add.graphics();
+    const r = rng(53);
+    this.drops = Array.from({ length: 120 }, () => ({ x: r() * (W + 80) - 40, y: r() * H, len: 9 + r() * 8, v: 420 + r() * 160, end: 300 + r() * (H - 300) }));
+    this.splashes = [];
+    // Lá khô bay ngang khi trời gió
+    this.leaves = Array.from({ length: 7 }, (_, i) => {
+      const g = this.add.graphics();
+      g.fillStyle(i % 3 ? 0x9cbf5a : 0xd9a35a, 1); g.lineStyle(1.4, INK, 1);
+      g.fillEllipse(0, 0, 9, 4.5); g.strokeEllipse(0, 0, 9, 4.5);
+      g.lineBetween(-4, 0, 4, 0);
+      g.setVisible(false);
+      return { g, x: r() * W, y: 120 + r() * 560, v: 70 + r() * 70, ph: r() * 6.28, spin: 2 + r() * 3 };
+    });
+  }
+
+  // kind: 'sun' | 'cloud' | 'wind' | 'rain'. Chuyển dần trong vài giây; instant để vẽ ngay khi mở game
+  setWeather(kind, instant) {
+    const T = { sun: { gloom: 0, rain: 0, wind: 0 }, cloud: { gloom: 0.45, rain: 0, wind: 0.15 }, wind: { gloom: 0.15, rain: 0, wind: 1 }, rain: { gloom: 0.85, rain: 1, wind: 0.35 } }[kind] || { gloom: 0, rain: 0, wind: 0 };
+    this.weatherKind = kind;
+    if (this.wxTween) this.wxTween.stop();
+    const done = () => { if (this.hour != null) this.applyTime(this.hour); };
+    if (instant || reduceMotion) { Object.assign(this.wx, T); done(); this.drawStaticRain(); return; }
+    this.wxTween = this.tweens.add({ targets: this.wx, ...T, duration: 3500, ease: 'Sine.easeInOut', onUpdate: done, onComplete: done });
+  }
+
+  // Người chọn giảm chuyển động: vẽ vệt mưa đứng yên, không có lá bay
+  drawStaticRain() {
+    if (!reduceMotion) return;
+    const g = this.rainG; g.clear();
+    if (this.wx.rain < 0.05) return;
+    g.lineStyle(1.3, 0xdbe8fb, 0.45 * this.wx.rain);
+    this.drops.forEach(d => g.lineBetween(d.x, d.y, d.x - 3, d.y + d.len));
+  }
+
+  update(time, delta) {
+    if (reduceMotion || !this.wx) return;
+    const dt = Math.min(0.1, delta / 1000), wx = this.wx, g = this.rainG;
+    if (wx.rain > 0.01 || this.splashes.length) {
+      g.clear();
+      const slant = 50 + wx.wind * 110, col = mixColor(0xe6f1ff, 0x93a2c8, this.nightness || 0);
+      if (wx.rain > 0.01) {
+        g.lineStyle(1.3, col, 0.6 * wx.rain);
+        const n = Math.round(this.drops.length * Math.min(1, wx.rain * 1.2));
+        for (let i = 0; i < n; i++) {
+          const d = this.drops[i];
+          d.y += d.v * dt; d.x -= slant * dt;
+          const k = d.len / d.v;
+          g.lineBetween(d.x, d.y, d.x + slant * k, d.y - d.len);
+          if (d.y > d.end) {
+            if (d.end > 380 && this.splashes.length < 40) this.splashes.push({ x: d.x, y: d.end, t: 0 });
+            d.y = -10 - Math.random() * 80; d.x = Math.random() * (W + 120) - 20; d.end = 300 + Math.random() * (H - 300);
+          }
+        }
+      }
+      g.lineStyle(1, col, 1);
+      this.splashes = this.splashes.filter(sp => {
+        sp.t += dt;
+        const a = 1 - sp.t / 0.35;
+        if (a <= 0) return false;
+        g.lineStyle(1, col, 0.55 * a * Math.max(0.3, wx.rain));
+        g.strokeEllipse(sp.x, sp.y, 2 + sp.t * 26, 1 + sp.t * 9);
+        return true;
+      });
+    } else if (this.rainDrawn) { g.clear(); }
+    this.rainDrawn = wx.rain > 0.01 || this.splashes.length > 0;
+
+    const showLeaves = wx.wind > 0.05;
+    this.leaves.forEach(l => {
+      l.g.setVisible(showLeaves);
+      if (!showLeaves) return;
+      l.x += (l.v + wx.wind * 90) * dt; l.ph += dt * l.spin;
+      if (l.x > W + 20) { l.x = -20; l.y = 120 + Math.random() * 560; }
+      l.g.setPosition(l.x, l.y + Math.sin(l.ph) * 10).setRotation(Math.sin(l.ph * 0.7) * 1.4).setAlpha(Math.min(1, wx.wind * 1.4));
+    });
+  }
+
   // Vẽ lại trời, phố, đèn và lớp phủ màu cho một giờ trong ngày (giờ thập phân, ví dụ 18.75)
   applyTime(hour) {
-    const p = skyAt(hour);
+    this.hour = hour;
+    const base = skyAt(hour);
+    this.nightness = base.stars;
+    const p = withWeather(base, this.wx.gloom, this.wx.rain);
+    this.darkClouds.forEach(c => c.setAlpha(this.wx.gloom));
     this.paintSky(p);
     this.paintCity(p);
     // Lớp phủ nhân màu: trắng = giữ nguyên, càng xa trắng thì cả sân càng tối hoặc ấm

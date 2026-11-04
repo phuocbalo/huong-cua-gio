@@ -50,6 +50,7 @@
     display: flex; justify-content: space-between; align-items: center; gap: 2cqw;
     pointer-events: none;
   }
+  #clockPill { cursor: pointer; }
   .pill {
     pointer-events: auto;
     display: inline-flex; align-items: center; gap: 1.6cqw;
