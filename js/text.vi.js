@@ -98,6 +98,16 @@ export const T = {
   coop_done_today: 'Hôm nay gà đã ăn và đẻ trứng rồi. Mai nhớ cho ăn tiếp nhé.',
   coop_no_feed: 'Hết thức ăn gà. Ghé tiệm anh Bảo mua thêm nhé.',
   eggs_collected: '+{n} trứng gà vào túi đồ.',
+  eggs_collected_good: '+{n} trứng vào túi đồ, có {good} trứng ngon!',
+
+  // F07 Thân thiết với gà
+  float_pet_done: 'Hôm nay vuốt rồi',
+  float_water_done: 'Bình còn đầy nước',
+  float_water: 'Đã đổ nước',
+  heart_up: 'Đàn gà quý bạn hơn rồi! Thân thiết {n}/5 tim.',
+  love_info: 'Đàn gà thân thiết {n}/5 tim. Hôm nay: {feed}, {water}, vuốt ve {pet}/{all} con. Tim càng nhiều, gà càng hay đẻ trứng ngon.',
+  love_feed_yes: 'đã cho ăn', love_feed_no: 'chưa cho ăn',
+  love_water_yes: 'đã đổ nước', love_water_no: 'chưa đổ nước',
   eggs_full: 'Túi đồ đã đầy. Trứng vẫn nằm trong chuồng chờ bạn.',
   coop_empty_hungry: 'Chưa có trứng. Gà đang đói, chạm máng ăn để cho gà ăn.',
   coop_empty_digesting: 'Chưa có trứng. Gà sẽ đẻ sau khoảng {time}.',
@@ -106,7 +116,7 @@ export const T = {
   // ----- Đơn vị đếm và tên gọi trong câu -----
   unit_bo: 'bó', unit_trai: 'trái', unit_qua: 'quả', unit_goi: 'gói', unit_bao: 'bao',
   noun_rau_muong: 'rau muống', noun_cai: 'cải', noun_hung_que: 'húng quế', noun_dua_leo: 'dưa leo',
-  noun_ot: 'ớt', noun_ca_chua: 'cà chua', noun_trung_ga: 'trứng gà',
+  noun_ot: 'ớt', noun_ca_chua: 'cà chua', noun_trung_ga: 'trứng gà', noun_trung_ga_ngon: 'trứng gà ngon',
 
   // ----- F11 Tiệm anh Bảo -----
   shop_title: 'Tiệm tạp hóa anh Bảo',
@@ -366,6 +376,7 @@ export const T = {
   item_ot: 'Trái ớt',
   item_ca_chua: 'Trái cà chua',
   item_trung_ga: 'Trứng gà',
+  item_trung_ga_ngon: 'Trứng gà ngon',
   item_thuc_an_ga: 'Thức ăn gà',
   item_phan_lon_nhanh: 'Phân lớn nhanh',
   item_phan_sai_qua: 'Phân sai quả'

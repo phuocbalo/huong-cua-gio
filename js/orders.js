@@ -43,7 +43,7 @@ export function syncSeen(state) {
   const before = seen.size;
   Object.keys(state.inventory.items).forEach(id => {
     const it = ITEMS[id];
-    if (!it) return;
+    if (!it || it.noOrder) return;
     if (it.kind === 'seed') seen.add(it.crop);
     else if (it.kind === 'produce' || it.kind === 'animal') seen.add(id);
   });

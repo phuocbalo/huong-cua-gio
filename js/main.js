@@ -124,7 +124,7 @@ async function boot() {
   function renderCoop() {
     if (!scene) return;
     const st = coop.status(state(), now());
-    scene.setCoop({ eggs: state().coop.eggs, fed: st.key === 'digesting', hungry: st.key === 'hungry' });
+    scene.setCoop({ eggs: state().coop.eggs, fed: st.key === 'digesting', hungry: st.key === 'hungry', watered: coop.wateredToday(state(), now()), hearts: coop.hearts(state()) });
   }
   function coopStatusText(prefix) {
     const st = coop.status(state(), now());
@@ -138,6 +138,7 @@ async function boot() {
       if (scene) scene.feedFx();
       sound('feed');
       ui.toast(fmt(T.coop_fed, { time: duration(LAY_DELAY) }));
+      if (r.heartUp) setTimeout(() => heartUp(r.hearts), 2400);
       gainXp(level.xpFor('feed'));
       store.flush();
       tutor.event('feed');
@@ -157,7 +158,7 @@ async function boot() {
       const tg = ui.bagTarget();
       if (scene) scene.eggsFx(r.qty, tg.x, tg.y);
       sound('egg');
-      ui.toast(fmt(T.eggs_collected, { n: r.qty }));
+      ui.toast(r.good ? fmt(T.eggs_collected_good, { n: r.qty, good: r.good }) : fmt(T.eggs_collected, { n: r.qty }));
       gainXp(level.xpFor('eggs'));
       store.flush();
     } else if (r.reason === 'full') {
@@ -168,6 +169,40 @@ async function boot() {
     }
     renderCoop();
     ui.refreshOpenSheets();
+  }
+
+  // ----- F07 Thân thiết với gà -----
+  function heartUp(n) { ui.toast(fmt(T.heart_up, { n })); sound('chime'); }
+  function onTapChicken(i) {
+    const r = coop.pet(state(), i, now());
+    if (!r.ok) { if (scene) scene.floatAtChicken(i, T.float_pet_done); return; }
+    if (scene) scene.petFx(i);
+    sound('pet');
+    gainXp(level.xpFor('pet'));
+    if (r.heartUp) heartUp(r.hearts);
+    store.flush();
+    renderCoop();
+  }
+  function onTapWaterer() {
+    const r = coop.water(state(), now());
+    if (!r.ok) { if (scene) scene.floatAtWaterer(T.float_water_done); return; }
+    if (scene) { scene.watererFx(); scene.floatAtWaterer(T.float_water); }
+    sound('water');
+    gainXp(level.xpFor('water'));
+    if (r.heartUp) heartUp(r.hearts);
+    store.flush();
+    renderCoop();
+  }
+  function onTapLove() {
+    const s = state(), t = now(), c = s.coop;
+    const petted = c.petDay === coop.dayKey(s, t) ? (c.petted || []).length : 0;
+    sound('tap');
+    ui.toast(fmt(T.love_info, {
+      n: coop.hearts(s),
+      feed: coop.status(s, t).key === 'hungry' ? T.love_feed_no : T.love_feed_yes,
+      water: coop.wateredToday(s, t) ? T.love_water_yes : T.love_water_no,
+      pet: petted, all: c.chickens
+    }));
   }
 
   // ----- F23 Quét bụi -----
@@ -609,6 +644,9 @@ async function boot() {
     onTapBox,
     onTapCoop: gate('coop', onTapCoop),
     onTapTrough: gate('feed', onTapTrough),
+    onTapChicken: gate('pet', onTapChicken),
+    onTapWaterer: gate('waterer', onTapWaterer),
+    onTapLove,
     onTapDust: gate('dust', onTapDust),
     onTapOrders: gate('orders', () => { sound('open'); eco.openOrders(); ordersTip.update(); tutor.event('openOrders'); }),
     onTapBuyBox: gate('buyBox', () => { sound('open'); eco.openBuyBox(); })

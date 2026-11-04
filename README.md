@@ -18,7 +18,7 @@ Bản chơi thử: https://phuocbalo.github.io/huong-cua-gio/
 | `js/farm.js` | Luật trồng trọt: gieo, tưới, tính tiến độ, thu hoạch, bón phân (F04) |
 | `js/inventory.js` | Luật túi đồ: số ô, gộp cùng loại, đầy thì từ chối |
 | `js/icons.js` | Biểu tượng vật phẩm |
-| `js/coop.js` | Luật nuôi gà: cho ăn mỗi ngày, đẻ trứng, nhặt trứng |
+| `js/coop.js` | Luật nuôi gà: cho ăn mỗi ngày, đẻ trứng, nhặt trứng; thân thiết (F07): đổ nước, vuốt ve, tim, trứng ngon |
 | `js/dust.js` | Luật bụi sân thượng: bám bụi sau 3–4 ngày, quét để nhận xu |
 | `js/shop.js` | Luật tiệm anh Bảo: giá mua bán, mua thùng, nâng cấp túi đồ |
 | `js/orders.js` | Luật đơn hàng hàng xóm: 3 đơn, giao hàng, đổi đơn, tự đổi sau 3 ngày, 7 hàng xóm mở dần, điểm thân thiết |
@@ -31,7 +31,7 @@ Bản chơi thử: https://phuocbalo.github.io/huong-cua-gio/
 | `js/weather.js` | Luật thời tiết (F09): lịch nắng, mây, gió, mưa theo khối 6 giờ, tính từ một con số lưu trong bản lưu; mưa tưới cây kể cả lúc tắt game |
 | `js/daylight.js` | Màu trời, phố, đèn cho từng giờ trong ngày; chuyển dần giữa các khung giờ |
 | `js/scene.js` | Cảnh sân thượng vẽ bằng Phaser (hình tạm) |
-| `tests/` | Kiểm thử luật chơi: `node tests/farm.test.mjs`, `node tests/daylight.test.mjs`, `node tests/coop.test.mjs`, `node tests/dust.test.mjs`, `node tests/economy.test.mjs`, `node tests/settings.test.mjs`, `node tests/tutorial.test.mjs`, `node tests/level.test.mjs`, `node tests/weather.test.mjs`, `node tests/fertilizer.test.mjs` |
+| `tests/` | Kiểm thử luật chơi: `node tests/farm.test.mjs`, `node tests/daylight.test.mjs`, `node tests/coop.test.mjs`, `node tests/dust.test.mjs`, `node tests/economy.test.mjs`, `node tests/settings.test.mjs`, `node tests/tutorial.test.mjs`, `node tests/level.test.mjs`, `node tests/weather.test.mjs`, `node tests/fertilizer.test.mjs`, `node tests/love.test.mjs` |
 | `js/ui.js` | Điều khiển giao diện HTML |
 | `js/pwa.js` | Bật chơi offline và theo dõi trạng thái |
 | `manifest.webmanifest` | Khai báo PWA: tên app, biểu tượng, mở toàn màn hình, màn dọc |
@@ -136,6 +136,21 @@ Trong bảng "Bản thử" có "Thêm 10 xu" nếu cần thêm xu để thử mu
 - [ ] **I-25** Người chơi mới (cửa sổ ẩn danh, hoặc Cài đặt → Xóa dữ liệu): trong lúc bà Tư hướng dẫn **không** thấy ô "+ 40 xu" ở chỗ trống bên dưới 4 thùng.
 - [ ] **I-25** Đi hết hướng dẫn: ô "+ 40 xu" hiện ra ngay, chạm vào mở bảng mua thùng.
 - [ ] **I-25** Cài đặt → "Xem lại hướng dẫn": ô "+" ẩn đi; xong hướng dẫn thì hiện lại.
+
+## Kiểm thử bản 0.13.0 – Thân thiết với gà (F07)
+
+Dùng "Tua tới sáng mai" trong bảng "Bản thử" để sang ngày mới.
+
+- [ ] **Hàng tim:** dưới sân gà có tấm 5 tim (người chơi mới: 5 tim trắng). Chạm vào: thông báo số tim và việc đã làm hôm nay ("đã cho ăn / chưa đổ nước / vuốt ve 1/2 con").
+- [ ] **Vuốt ve:** chạm vào từng con gà (kể cả lúc gà đang đi): gà ngoảnh đầu, tim nhỏ bay lên, tiếng "cục cục". Chạm lại con đó trong ngày: nhãn "Hôm nay vuốt rồi", không tăng thêm. Chạm gà đứng trước máng: vuốt gà, không đổ thức ăn.
+- [ ] **Bình nước:** chưa đổ nước hôm nay thì bình cạn và có bong bóng giọt nước. Chạm bình: nước rót vào, bình đầy, nhãn "Đã đổ nước". Chạm lại: "Bình còn đầy nước". Sang ngày mới bình cạn lại.
+- [ ] **Cho ăn** cũng tính là chăm gà như trước (thêm điểm thân thiết).
+- [ ] **Tăng tim:** mỗi ngày làm đủ ba việc (cho ăn, đổ nước, vuốt hết gà) được khoảng 2/3 tim; khoảng 8 ngày thì đầy 5 tim. Lên một tim mới: thông báo "Đàn gà quý bạn hơn rồi! Thân thiết n/5 tim".
+- [ ] **Bỏ vài ngày:** "Tua tới sáng mai" 3–4 lần không chăm gà: tim chỉ giảm nhẹ (mỗi ngày bỏ trừ 3 điểm, khoảng 1/7 tim), không mất hết, gà không bỏ đi.
+- [ ] **Trứng ngon:** tim càng nhiều càng nhiều trứng ngon (1 tim 15%, 5 tim 75% số trứng). Nhặt trứng: "+2 trứng vào túi đồ, có 1 trứng ngon!"; túi có "Trứng gà ngon" (vỏ hồng nâu, có tim).
+- [ ] **Tiệm:** trứng gà ngon bán 14 xu (trứng thường 8 xu). Hàng xóm không đặt trứng ngon.
+- [ ] **Trong lúc hướng dẫn:** chạm gà, bình nước bị chặn như các chỗ khác.
+- [ ] **Bản lưu cũ:** mở lên có 0 tim, trứng đang nằm trong chuồng vẫn nhặt được bình thường.
 
 ## Kiểm thử bản 0.12.0 – Phân bón (F04)
 

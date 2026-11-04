@@ -1,7 +1,7 @@
 // Bảng dữ liệu của game. Muốn cân bằng lại game thì sửa số ở đây, không cần đụng vào code khác.
 // Đơn vị thời gian là mili giây; dùng các hằng PHUT, GIO cho dễ đọc.
 
-export const APP_VERSION = '0.12.0';
+export const APP_VERSION = '0.13.0';
 
 const PHUT = 60 * 1000;
 const GIO = 60 * PHUT;
@@ -96,6 +96,8 @@ export const ITEMS = {
   ot:            { kind: 'produce', unit: 'trai' },
   ca_chua:       { kind: 'produce', unit: 'trai' },
   trung_ga:      { kind: 'animal', unit: 'qua', sellPrice: 8 },
+  // F07: gà thân thiết đẻ trứng ngon, bán giá cao hơn; hàng xóm không đặt món này
+  trung_ga_ngon: { kind: 'animal', unit: 'qua', sellPrice: 14, noOrder: true },
   thuc_an_ga:    { kind: 'supply', unit: 'bao', price: 4 },
   // F04 Phân bón (bản 0.12): mỗi lứa cây bón một gói, xem FERTILIZERS bên dưới
   phan_lon_nhanh: { kind: 'supply', unit: 'goi', price: 5 },
@@ -153,6 +155,18 @@ export const LAY_DELAY = 2 * GIO;     // đề xuất: đẻ 2 giờ sau khi ăn
 export const EGGS_PER_CHICKEN = 1;
 export const FEED_ITEM = 'thuc_an_ga';
 
+// ---------- Thân thiết với gà (F07, bản 0.13) ----------
+// Cả đàn gà có chung một mức thân thiết 0 → 100 điểm, hiện thành 0–5 tim (mỗi tim 20 điểm).
+// Mỗi ngày (ngày ảo của chuồng gà) chăm gà bằng ba việc, mỗi việc tính một lần trong ngày:
+//   cho ăn (máng) · đổ nước (bình nước) · vuốt ve từng con gà
+// Ngày nào không chăm gì thì giảm nhẹ LOVE_DECAY điểm; không bao giờ phạt nặng, gà không bỏ đi.
+// Tim càng cao, càng nhiều trứng là trứng ngon (LOVE_GOOD_SHARE[số tim] = tỉ lệ trứng ngon).
+export const LOVE_MAX = 100;
+export const LOVE_PER_HEART = 20;
+export const LOVE_GAIN = { feed: 4, water: 4, pet: 3 };   // pet: mỗi con gà
+export const LOVE_DECAY = 3;                              // mỗi ngày bỏ không chăm
+export const LOVE_GOOD_SHARE = [0, 0.15, 0.3, 0.45, 0.6, 0.75];
+
 // ---------- Quét bụi sân thượng (F23) ----------
 // Cứ 3–4 ngày (thời gian game) sân lại bám vài vệt bụi; chạm từng vệt để quét, mỗi vệt được thưởng xu.
 export const DUST_INTERVAL_MIN = 3 * NGAY;
@@ -187,7 +201,9 @@ export const XP = {
   deliver: 15,                      // mỗi đơn hàng xóm
   feed: 3,                          // cho gà ăn
   eggs: 2,                          // mỗi lần nhặt trứng
-  dust: 1                           // mỗi vệt bụi quét
+  dust: 1,                          // mỗi vệt bụi quét
+  pet: 1,                           // vuốt ve một con gà (F07)
+  water: 2                          // đổ nước cho gà (F07)
 };
 
 // 10 level đầu. xp: tổng điểm KN cần để đạt level đó (lên nhanh lúc đầu, chậm dần).

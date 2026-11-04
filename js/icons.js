@@ -38,6 +38,8 @@ const seedPacket = crop =>
 
 const OTHER = {
   trung_ga: `<ellipse cx="20" cy="22" rx="10" ry="13" fill="#fbf3e4" ${SW}/><path d="M15 16 c1 -2 2 -3 4 -4" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/>`,
+  // F07 Trứng ngon: vỏ hồng nâu, có tim nhỏ và ánh lấp lánh
+  trung_ga_ngon: `<ellipse cx="19" cy="22" rx="10" ry="13" fill="#e9b98f" ${SW}/><path d="M14 16 c1 -2 2 -3 4 -4" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M19 29 c-5 -3 -6 -6 -4 -7.5 c1.5 -1 3 0 4 1.5 c1 -1.5 2.5 -2.5 4 -1.5 c2 1.5 1 4.5 -4 7.5z" fill="#e2475a" stroke="${INK}" stroke-width="1.6" stroke-linejoin="round"/><path d="M32 6 l1.2 3 l3 1.2 l-3 1.2 l-1.2 3 l-1.2 -3 l-3 -1.2 l3 -1.2z" fill="#ffd84a" stroke="${INK}" stroke-width="1.2" stroke-linejoin="round"/>`,
   // F04 Phân bón: bao phân có nhãn; lớn nhanh = mầm và mũi tên lên, sai quả = quả cà chua có dấu cộng
   phan_lon_nhanh: `<path d="M9 13 h22 l-2 22 h-18z" fill="#cfe3a6" ${SW}/><path d="M9 13 l4 -6 h14 l4 6" fill="#9cc65a" ${SW}/><path d="M20 31 v-9" ${SW}/><path d="M20 24 c-5 0 -7 -4 -6 -7 c4 0 6 3 6 7z" fill="#5fa548" ${SW}/><path d="M20 22 c4 0 6 -3 5 -6 c-3 0 -5 3 -5 6z" fill="#5fa548" ${SW}/><path d="M27 26 v-6 m-2.5 2.5 l2.5 -2.5 l2.5 2.5" fill="none" ${SW}/>`,
   phan_sai_qua: `<path d="M9 13 h22 l-2 22 h-18z" fill="#f6d2a8" ${SW}/><path d="M9 13 l4 -6 h14 l4 6" fill="#f08a3c" ${SW}/><circle cx="18" cy="25" r="6" fill="#e5533c" ${SW}/><path d="M18 19 l-2 -2 m2 2 l2 -2" ${SW}/><path d="M27 21 v7 M23.5 24.5 h7" ${SW}/>`,

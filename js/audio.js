@@ -335,6 +335,8 @@ export class AudioEngine {
       case 'feed':                        // thóc rơi lách tách
         for (let k = 0; k < 6; k++) this.noiseHit(bus, t + k * 0.045 + Math.random() * 0.02, { dur: 0.03, vol: 0.08, type: 'highpass', freq: 4000 }); break;
       case 'egg': tone(600, t, 0.12, 0.14, 'sine', 950); tone(950, t + 0.09, 0.15, 0.08); break;
+      case 'pet':                         // gà kêu "cục cục" khe khẽ, rồi một nốt ấm
+        tone(420, t, 0.08, 0.07, 'triangle', 330); tone(440, t + 0.12, 0.08, 0.06, 'triangle', 340); tone(mtof(79), t + 0.24, 0.3, 0.05); break;
       case 'sweep':                       // chổi quét soạt soạt
         [0, 0.17].forEach(d => { const h = this.noiseHit(bus, t + d, { dur: 0.16, vol: 0.1, type: 'bandpass', freq: 2500, q: 0.6 }); h.f.frequency.linearRampToValueAtTime(1200, t + d + 0.15); }); break;
       case 'buy':                         // gõ gỗ rồi chuông nhỏ

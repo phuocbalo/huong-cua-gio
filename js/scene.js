@@ -3,7 +3,7 @@ import { W, H, ZOOM, INK } from './config.js';
 import { skyAt, mixColor, withWeather } from './daylight.js';
 import { rng, reduceMotion } from './util.js';
 
-let hooks = { onReady() {}, onTapBox() {}, onTapCoop() {}, onTapTrough() {}, onTapDust() {}, onTapOrders() {}, onTapBuyBox() {} };
+let hooks = { onReady() {}, onTapBox() {}, onTapCoop() {}, onTapTrough() {}, onTapDust() {}, onTapOrders() {}, onTapBuyBox() {}, onTapChicken() {}, onTapWaterer() {}, onTapLove() {} };
 
 // Thùng xốp nhỏ để sân chứa được nhiều thùng. Lưới có chỗ cho tối đa 8 thùng (mua thêm ở F14):
 // hàng 1 hai thùng bên trái (bên phải là sân gà), hàng 2 và 3 mỗi hàng ba thùng. 4 thùng đầu là khối 2×2 bên trái.
@@ -51,6 +51,9 @@ class Rooftop extends Phaser.Scene {
     // Chạm và rê chuột trên sân: thùng xốp (và sau này vệt bụi) được chọn bằng hàm boxAt/dustAt
     this.input.on('pointerup', pointer => {
       if (!this.isCanvasTap(pointer)) return;
+      // F07: chạm vào gà để vuốt ve (gà đi lại khắp sân nên dò theo vị trí hiện tại, ưu tiên hơn máng và chuồng)
+      const ch = this.chickenAt(pointer.worldX, pointer.worldY);
+      if (ch >= 0) { this.petBounce(ch); hooks.onTapChicken(ch); return; }
       const d = this.dustAt ? this.dustAt(pointer.worldX, pointer.worldY) : -1;
       if (d >= 0) { hooks.onTapDust(d); return; }
       if (this.buySlotAt(pointer.worldX, pointer.worldY)) { hooks.onTapBuyBox(); return; }
@@ -59,7 +62,7 @@ class Rooftop extends Phaser.Scene {
     });
     this.input.on('pointermove', pointer => {
       if (pointer.event && pointer.event.target !== this.game.canvas) return;
-      const over = this.boxAt(pointer.worldX, pointer.worldY) >= 0 || this.buySlotAt(pointer.worldX, pointer.worldY) || (this.dustAt && this.dustAt(pointer.worldX, pointer.worldY) >= 0);
+      const over = this.chickenAt(pointer.worldX, pointer.worldY) >= 0 || this.boxAt(pointer.worldX, pointer.worldY) >= 0 || this.buySlotAt(pointer.worldX, pointer.worldY) || (this.dustAt && this.dustAt(pointer.worldX, pointer.worldY) >= 0);
       if (over) this.game.canvas.style.cursor = 'pointer';
       else if (this.game.canvas.style.cursor === 'pointer' && !this.input.manager.isOver) this.game.canvas.style.cursor = '';
     });
@@ -473,7 +476,7 @@ class Rooftop extends Phaser.Scene {
     this.coopPos = { x: 301, y: 320 };
     this.coopC = this.add.container(0, 0, [g, this.eggG]);   // để chạm thì cả chuồng nảy nhẹ
     const zone = this.add.zone(330, 314, 104, 80).setInteractive({ useHandCursor: true });
-    zone.on('pointerup', pointer => { if (!this.isCanvasTap(pointer)) return; this.bounceAt(g, this.eggG); hooks.onTapCoop(); });
+    zone.on('pointerup', pointer => { if (!this.isCanvasTap(pointer) || this.chickenAt(pointer.worldX, pointer.worldY) >= 0) return; this.bounceAt(g, this.eggG); hooks.onTapCoop(); });
 
     // Máng ăn bằng ống tre bổ đôi, gác trên hai cọc chữ Y
     const tx = 320, ty = 404;
@@ -493,7 +496,7 @@ class Rooftop extends Phaser.Scene {
     this.feedBubble.setPosition(0, -36).setVisible(false);
     this.trough.add(this.feedBubble);
     const tz = this.add.zone(tx, ty - 8, 66, 44).setInteractive({ useHandCursor: true });
-    tz.on('pointerup', pointer => { if (!this.isCanvasTap(pointer)) return; this.bounce(this.trough); hooks.onTapTrough(); });
+    tz.on('pointerup', pointer => { if (!this.isCanvasTap(pointer) || this.chickenAt(pointer.worldX, pointer.worldY) >= 0) return; this.bounce(this.trough); hooks.onTapTrough(); });
 
     // Bình nước gà: đế đỏ, bình trong
     const wg = this.add.graphics();
@@ -501,9 +504,16 @@ class Rooftop extends Phaser.Scene {
     wg.lineStyle(2.2, INK, 1);
     wg.fillStyle(0xd8352a, 1); wg.fillEllipse(368, 408, 24, 8); wg.strokeEllipse(368, 408, 24, 8);
     wg.fillStyle(0x6fb4e0, 0.9); wg.fillEllipse(368, 406, 18, 4);
-    wg.fillStyle(0xdff0f6, 0.92); wg.fillRoundedRect(361, 386, 14, 20, { tl: 7, tr: 7, bl: 2, br: 2 }); wg.strokeRoundedRect(361, 386, 14, 20, { tl: 7, tr: 7, bl: 2, br: 2 });
-    wg.fillStyle(0x8cc6e6, 0.9); wg.fillRect(362.5, 396, 11, 9);
-    wg.fillStyle(0xd8352a, 1); wg.fillRoundedRect(363, 382, 10, 5, 2); wg.strokeRoundedRect(363, 382, 10, 5, 2);
+    wg.fillStyle(0xdff0f6, 0.92); wg.fillRoundedRect(361, 386, 14, 20, { tl: 7, tr: 7, bl: 2, br: 2 });
+    // F07: mực nước trong bình (đầy khi hôm nay đã đổ nước), vẽ lại trong setCoop
+    this.waterLevel = this.add.graphics();
+    const wo = this.add.graphics();
+    wo.lineStyle(2.2, INK, 1); wo.strokeRoundedRect(361, 386, 14, 20, { tl: 7, tr: 7, bl: 2, br: 2 });
+    wo.fillStyle(0xd8352a, 1); wo.fillRoundedRect(363, 382, 10, 5, 2); wo.strokeRoundedRect(363, 382, 10, 5, 2);
+    this.waterer = { x: 368, y: 396 };
+    this.waterBubble = this.makeBubble().setPosition(374, 362).setScale(0.85).setVisible(false);
+    const wz = this.add.zone(368, 394, 34, 40).setInteractive({ useHandCursor: true });
+    wz.on('pointerup', pointer => { if (!this.isCanvasTap(pointer) || this.chickenAt(pointer.worldX, pointer.worldY) >= 0) return; this.bounceAt(this.waterLevel, wo); hooks.onTapWaterer(); });
 
     // Gà trống và gà mái đi lại trong sân
     this.chickens = [this.makeChicken(304, 396, 1, 'rooster'), this.makeChicken(356, 424, -1, 'hen')];
@@ -518,6 +528,12 @@ class Rooftop extends Phaser.Scene {
     front.lineStyle(2.5, POST, 1);
     front.lineBetween(RUN.x0, RUN.back - 22, RUN.x0, RUN.front - 30); front.lineBetween(RUN.x1, RUN.back - 22, RUN.x1, RUN.front - 30);
     this.coopView = '';
+
+    // F07: hàng tim thân thiết dưới sân gà; chạm để xem cách chăm gà
+    this.loveG = this.add.graphics();
+    this.loveView = '';
+    const lz = this.add.zone(335, 449, 92, 22).setInteractive({ useHandCursor: true });
+    lz.on('pointerup', pointer => { if (!this.isCanvasTap(pointer)) return; this.bounceAt(this.loveG); hooks.onTapLove(); });
 
     // Phóng cả cụm chuồng quanh góc trước bên phải của sân gà (COOP_ANCHOR): nở lên trên và sang trái,
     // không đè lên thùng xốp. Mọi thứ bên trong vẫn vẽ theo toạ độ gốc; vùng chạm đổi theo coopPoint().
@@ -712,7 +728,7 @@ class Rooftop extends Phaser.Scene {
 
   // Vẽ lại chuồng theo trạng thái: { eggs, fed, hungry }
   setCoop(v) {
-    const key = [v.eggs, v.fed, v.hungry].join('|');
+    const key = [v.eggs, v.fed, v.hungry, v.watered, v.hearts].join('|');
     if (key === this.coopView) return;
     this.coopView = key;
     const g = this.eggG; g.clear();
@@ -730,7 +746,86 @@ class Rooftop extends Phaser.Scene {
       for (let k = 0; k < 11; k++) gr.fillEllipse(-21 + k * 4.2, -4.5 + (k % 2) * 0.8, 3.6, 2.6);
     }
     this.feedBubble.setVisible(!!v.hungry);
+    // F07: bình nước đầy hay cạn, bong bóng nhắc đổ nước
+    const wl = this.waterLevel; wl.clear();
+    wl.fillStyle(0x6fb4e0, 0.95);
+    if (v.watered) wl.fillRoundedRect(362.5, 390, 11, 15, { tl: 5, tr: 5, bl: 1, br: 1 }); else wl.fillRect(362.5, 403, 11, 2);
+    this.waterBubble.setVisible(!v.watered);
+    this.drawLove(v.hearts || 0);
   }
+
+  // Hàng 5 tim trên tấm gỗ nhỏ: tim đỏ là đã có, tim trắng là chưa
+  drawLove(n) {
+    if (String(n) === this.loveView) return;
+    this.loveView = String(n);
+    const g = this.loveG; g.clear();
+    const x0 = 293, y = 449, w = 84, h = 17;
+    g.fillStyle(0xfff8ec, 0.97); g.lineStyle(2, INK, 1);
+    g.fillRoundedRect(x0, y - h / 2, w, h, h / 2); g.strokeRoundedRect(x0, y - h / 2, w, h, h / 2);
+    for (let k = 0; k < 5; k++) {
+      const cx = x0 + 12 + k * 15, cy = y;
+      g.fillStyle(k < n ? 0xe2475a : 0xf1e4d3, 1); g.lineStyle(1.6, INK, 1);
+      this.heartPath(g, cx, cy, 5.2);
+    }
+  }
+
+  heartPath(g, cx, cy, r) {
+    const pts = [];
+    for (let k = 0; k <= 24; k++) {
+      const t = k / 24 * Math.PI * 2;
+      pts.push({ x: cx + r * 0.0625 * 16 * Math.pow(Math.sin(t), 3), y: cy - r * 0.0625 * (13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t)) });
+    }
+    g.fillPoints(pts, true); g.strokePoints(pts, true);
+  }
+
+  // ----- F07 Vuốt ve gà -----
+  // Con gà nằm dưới điểm chạm (toạ độ cảnh); -1 nếu không có
+  chickenAt(x, y) {
+    if (!this.chickens) return -1;
+    let best = -1, bestD = Infinity;
+    this.chickens.forEach((c, i) => {
+      const p = this.coopPoint(c.x, c.y), s = COOP_SCALE;
+      const cx = p.x, cy = p.y - 16 * s;
+      if (Math.abs(x - cx) <= 17 * s && y >= p.y - 38 * s && y <= p.y + 5 * s) {
+        const d = Math.hypot(x - cx, y - cy);
+        if (d < bestD) { bestD = d; best = i; }
+      }
+    });
+    return best;
+  }
+
+  petBounce(i) {
+    const c = this.chickens[i];
+    if (!c || reduceMotion) return;
+    this.tweens.add({ targets: c.head, angle: -18, duration: 120, yoyo: true, repeat: 1 });
+  }
+
+  // Tim nhỏ bay lên từ con gà vừa được vuốt ve
+  petFx(i) {
+    const c = this.chickens[i];
+    if (!c) return;
+    const p = this.coopPoint(c.x, c.y - 30);
+    if (reduceMotion) return;
+    for (let k = 0; k < 3; k++) {
+      const g = this.add.graphics({ x: p.x + (k - 1) * 9, y: p.y });
+      g.fillStyle(0xe2475a, 1); g.lineStyle(1.4, INK, 1); this.heartPath(g, 0, 0, 4.2 + (k % 2));
+      this.tweens.add({ targets: g, y: p.y - 26 - k * 6, alpha: 0, delay: k * 120, duration: 900, ease: 'Quad.easeOut', onComplete: () => g.destroy() });
+    }
+  }
+
+  // Nước rót vào bình
+  watererFx() {
+    if (reduceMotion) return;
+    const p = this.coopPoint(this.waterer.x, this.waterer.y - 30);
+    for (let k = 0; k < 6; k++) {
+      const d = this.add.ellipse(p.x - 6 + k * 2.5, p.y - (k % 3) * 6, 3.5, 6, 0x6fb4e0).setStrokeStyle(1, INK);
+      this.tweens.add({ targets: d, y: p.y + 22, alpha: 0.2, delay: k * 50, duration: 320, ease: 'Quad.easeIn', onComplete: () => d.destroy() });
+    }
+  }
+
+  // Nhãn chữ nhỏ trên con gà hoặc bình nước (cùng kiểu nhãn trên thùng)
+  floatAtChicken(i, msg) { const c = this.chickens[i]; if (c) { const p = this.coopPoint(c.x, c.y); this.floatAt(c, p.x, p.y - 50, msg); } }
+  floatAtWaterer(msg) { const p = this.coopPoint(this.waterer.x, this.waterer.y); this.floatAt(this.waterer, p.x, p.y - 40, msg); }
 
   feedFx() {
     if (reduceMotion) return;
@@ -757,15 +852,19 @@ class Rooftop extends Phaser.Scene {
   floatAtBox(i, msg) {
     const c = this.boxes[i];
     if (!c) return;
-    // Thùng này đang có nhãn cũ thì bỏ nhãn cũ, tránh chồng chữ khi chạm liên tục
+    this.floatAt(c, c.x, c.y - 46, msg);
+  }
+
+  // owner: vật giữ nhãn (thùng, gà…) để mỗi vật chỉ có một nhãn
+  floatAt(c, x, y, msg) {
+    // Vật này đang có nhãn cũ thì bỏ nhãn cũ, tránh chồng chữ khi chạm liên tục
     if (c.floatLabel) { c.floatLabel.destroy(); c.floatLabel = null; }
     const t = this.add.text(0, 0, msg, { fontFamily: '"Be Vietnam Pro", system-ui, sans-serif', fontSize: '10px', fontStyle: '600', color: '#3b2f2a' }).setOrigin(0.5).setResolution(3);
     const w = t.width + 12, h = t.height + 5;
     const g = this.add.graphics();
     g.fillStyle(0xfff8ec, 0.96); g.fillRoundedRect(-w / 2, -h / 2, w, h, h / 2);
     g.lineStyle(1.6, INK, 1); g.strokeRoundedRect(-w / 2, -h / 2, w, h, h / 2);
-    const y = c.y - 46;
-    const lbl = this.add.container(c.x, y, [g, t]).setAlpha(0);
+    const lbl = this.add.container(x, y, [g, t]).setAlpha(0);
     c.floatLabel = lbl;
     this.tweens.add({ targets: lbl, alpha: 1, y: y - 6, duration: 180, ease: 'Quad.easeOut' });
     this.tweens.add({ targets: lbl, alpha: 0, y: y - 18, delay: 1500, duration: 450, ease: 'Quad.easeIn', onComplete: () => { lbl.destroy(); if (c.floatLabel === lbl) c.floatLabel = null; } });

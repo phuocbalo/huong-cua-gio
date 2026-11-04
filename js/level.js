@@ -46,7 +46,7 @@ export function itemUnlockLevel(id) {
   return unlockLevel(ITEMS[id].kind === 'seed' ? 'seeds' : 'items', id);
 }
 
-// Điểm KN cho một việc. what: 'harvest' (tier) | 'deliver' | 'feed' | 'eggs' | 'dust' (số vệt)
+// Điểm KN cho một việc. what: 'harvest' (tier) | 'deliver' | 'feed' | 'eggs' | 'dust' (số vệt) | 'pet' | 'water'
 export function xpFor(what, arg) {
   if (what === 'harvest') return XP.harvest[CROPS[arg] ? CROPS[arg].tier : 1] || 0;
   if (what === 'dust') return XP.dust * (arg || 1);
