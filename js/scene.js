@@ -7,14 +7,15 @@ let hooks = { onReady() {}, onTapBox() {}, onTapCoop() {}, onTapTrough() {}, onT
 
 // Thùng xốp nhỏ để sân chứa được nhiều thùng. Lưới có chỗ cho tối đa 8 thùng (mua thêm ở F14):
 // hàng 1 hai thùng bên trái (bên phải là sân gà), hàng 2 và 3 mỗi hàng ba thùng. 4 thùng đầu là khối 2×2 bên trái.
-export const BOX_SLOTS = [[86, 456], [202, 456], [86, 550], [202, 550], [318, 550], [86, 640], [202, 640], [318, 640]];
+// Bản 0.14.2: dời các hàng thùng xuống thấp hơn để hàng trên cách xa dãy chuồng vật nuôi
+export const BOX_SLOTS = [[86, 494], [202, 494], [86, 574], [202, 574], [318, 574], [86, 652], [202, 652], [318, 652]];
 const BOX_SCALE = 0.68;
 // Chuồng gà vẽ to hơn 18%, phóng quanh góc trước bên phải của sân gà
 const COOP_SCALE = 1.18;
 const COOP_ANCHOR = { x: 386, y: 436 };
 // Các chỗ trên sân có thể bám bụi (F23): khe giữa các thùng và mép sân, không nằm dưới thùng hay chuồng gà
 // Bản 0.14: hai chỗ sau sân nhường cho chậu cá và chuồng thỏ (F06), dời xuống khe giữa các thùng
-export const DUST_POS = [[372, 598], [30, 598], [248, 410], [30, 508], [144, 506], [260, 506], [144, 598], [260, 598]];
+export const DUST_POS = [[24, 470], [256, 470], [144, 534], [260, 534], [30, 614], [144, 614], [260, 614], [372, 614]];
 // Cây vẽ to so với thùng (1,5 × 0,68 ≈ cỡ gốc) cho dễ nhìn trên điện thoại
 const PLANT_SCALE = 1.5;
 // Màu quả chín đỏ của cà chua và ớt (đồng bộ với biểu tượng trong icons.js)
@@ -552,8 +553,8 @@ class Rooftop extends Phaser.Scene {
   // vùng chạm. Đặt ở dải sau sân, chỗ không trùng vùng chạm của thùng xốp.
   buildPens() {
     const DEF = {
-      ca:     { x: 30,  y: 404, w: 58, h: 40, bubble: [44, 368], make: () => this.makeFishBasin() },
-      tho:    { x: 146, y: 386, w: 80, h: 80, bubble: [176, 330], make: () => this.makeHutch() },
+      ca:     { x: 52,  y: 412, w: 98, h: 58, bubble: [84, 372], make: () => this.makeFishPond() },
+      tho:    { x: 158, y: 376, w: 104, h: 124, bubble: [200, 300], make: () => this.makeHutch() },
       bo_cau: { x: 62,  y: 296, w: 72, h: 128, bubble: [104, 236], make: () => this.makeDovecote() }
     };
     this.pens = {};
@@ -622,39 +623,73 @@ class Rooftop extends Phaser.Scene {
     return b;
   }
 
-  // Chậu sành nuôi cá: miệng loe, nước xanh, lá súng, ba con cá cam bơi vòng
-  makeFishBasin() {
-    const c = this.add.container(30, 404);
+  // Hồ cá (bản 0.14.2): hồ chữ nhật xây gạch, bờ đá, nước xanh có gợn, lá súng và hoa, bốn con cá vàng/cam bơi.
+  // Toạ độ quanh tâm hồ (52, 412).
+  makeFishPond() {
+    const c = this.add.container(52, 412);
     const g = this.add.graphics();
-    g.fillStyle(0x000000, 0.18); g.fillEllipse(0, 18, 60, 12);
-    g.lineStyle(2.6, INK, 1);
-    g.fillStyle(0x8a4f2e, 1); g.fillEllipse(0, 6, 50, 30); g.strokeEllipse(0, 6, 50, 30);
-    g.fillStyle(0xb0683e, 1); g.fillEllipse(0, -2, 56, 20); g.strokeEllipse(0, -2, 56, 20);
-    g.fillStyle(0x4f97b8, 1); g.fillEllipse(0, -2, 46, 13);
-    g.fillStyle(0xffffff, 0.25); g.fillEllipse(-9, -5, 14, 3);
+    g.fillStyle(0x000000, 0.18); g.fillEllipse(2, 30, 104, 12);
+    // thành hồ xây gạch (mặt trước)
+    g.lineStyle(2.5, INK, 1); g.fillStyle(0xb5654a, 1);
+    g.fillRoundedRect(-47, -6, 94, 34, 8); g.strokeRoundedRect(-47, -6, 94, 34, 8);
+    g.lineStyle(1.3, 0x8e4a35, 1);
+    g.lineBetween(-45, 10, 45, 10); g.lineBetween(-45, 19, 45, 19);
+    [[-30, -2, 10], [-6, -2, 10], [18, -2, 10], [-42, 10, 19], [-18, 10, 19], [6, 10, 19], [30, 10, 19], [-30, 19, 27], [-6, 19, 27], [18, 19, 27]].forEach(([bx, y0, y1]) => g.lineBetween(bx, y0, bx, y1));
+    // bờ đá trên
+    g.lineStyle(2.5, INK, 1); g.fillStyle(0xd6cbb6, 1);
+    g.fillRoundedRect(-50, -24, 100, 24, 11); g.strokeRoundedRect(-50, -24, 100, 24, 11);
+    g.fillStyle(0xbfb29a, 1);
+    [[-40, -14], [-22, -21], [0, -21], [24, -21], [42, -14], [-42, -6], [40, -6]].forEach(([sx, sy]) => g.fillEllipse(sx, sy, 9, 4));
+    // mặt nước
+    g.fillStyle(0x3f8fb5, 1); g.fillRoundedRect(-43, -19, 86, 15, 7);
+    g.fillStyle(0x5aa9cc, 1); g.fillRoundedRect(-43, -19, 86, 6, { tl: 7, tr: 7, bl: 0, br: 0 });
+    g.lineStyle(1.2, 0xbfe3f2, 0.8);
+    [[-30, -10, -22], [6, -14, 14], [22, -9, 30]].forEach(([x0, y, x1]) => g.lineBetween(x0, y, x1, y));
+    g.lineStyle(2, INK, 1); g.strokeRoundedRect(-43, -19, 86, 15, 7);
     c.add(g);
+    // cá bơi trong hồ (vẽ trước lá súng để lá che bớt)
     c.fish = [];
-    [[-8, -2, 1], [6, -1, -1], [0, -4, 1]].forEach(([fx, fy, dir]) => {
+    [[-24, -12, 1, 0xf28a3a], [8, -11, -1, 0xf2b544], [24, -14, 1, 0xf28a3a], [-6, -9, -1, 0xfbf3e4]].forEach(([fx, fy, dir, col]) => {
       const f = this.add.graphics({ x: fx, y: fy });
-      f.fillStyle(0xf28a3a, 1); f.lineStyle(1, INK, 1);
-      f.fillEllipse(0, 0, 7, 3.6); f.strokeEllipse(0, 0, 7, 3.6);
-      f.fillTriangle(-3, 0, -6, -2, -6, 2);
+      f.fillStyle(col, 1); f.lineStyle(1.1, INK, 1);
+      f.fillEllipse(0, 0, 9, 4.4); f.strokeEllipse(0, 0, 9, 4.4);
+      f.fillTriangle(-4, 0, -8, -2.6, -8, 2.6); f.strokeTriangle(-4, 0, -8, -2.6, -8, 2.6);
+      f.fillStyle(INK, 1); f.fillCircle(2.4, -0.6, 0.7);
       f.setScale(dir, 1);
       c.add(f); c.fish.push(f);
     });
+    // lá súng và hoa súng hồng
     const pad = this.add.graphics();
-    pad.fillStyle(0x6fae4a, 1); pad.lineStyle(1.4, INK, 1);
-    pad.slice(13, -4, 5.5, Phaser.Math.DegToRad(30), Phaser.Math.DegToRad(330), false); pad.fillPath(); pad.strokePath();
-    pad.fillStyle(0xf3a6c4, 1); pad.fillCircle(16, -6, 2.2);
+    const lily = (lx, ly, r) => {
+      pad.fillStyle(0x6fae4a, 1); pad.lineStyle(1.4, INK, 1);
+      pad.slice(lx, ly, r, Phaser.Math.DegToRad(20), Phaser.Math.DegToRad(340), false); pad.fillPath(); pad.strokePath();
+    };
+    lily(-34, -9, 5.5); lily(30, -13, 6.5); lily(12, -6, 4.5);
+    pad.fillStyle(0xf3a6c4, 1); pad.lineStyle(1.2, INK, 1);
+    [[0, -3], [-2.6, -1], [2.6, -1]].forEach(([dx, dy]) => { pad.fillEllipse(31 + dx, -15 + dy, 3.4, 4.6); pad.strokeEllipse(31 + dx, -15 + dy, 3.4, 4.6); });
+    pad.fillStyle(0xf2d15a, 1); pad.fillCircle(31, -15, 1.4);
+    // hòn đá nhỏ và khóm cỏ ở góc
+    pad.fillStyle(0x9a948a, 1); pad.lineStyle(2, INK, 1); pad.fillEllipse(-46, -20, 14, 9); pad.strokeEllipse(-46, -20, 14, 9);
+    pad.lineStyle(2, 0x4f9a3a, 1); [[40, -24, 36, -34], [43, -24, 44, -36], [46, -23, 50, -32]].forEach(([x0, y0, x1, y1]) => pad.lineBetween(x0, y0, x1, y1));
     c.add(pad);
     c.food = this.add.graphics(); c.add(c.food);
     return c;
   }
 
-  // Chuồng thỏ (bản 0.14.1): to hơn, gỗ ván có mái tôn, cửa lưới, khoang ngủ, cầu thang nhỏ.
-  // Thỏ trắng ngồi ngoài, thỏ nâu ló đầu ở khoang ngủ. Toạ độ tính quanh tâm chuồng (146, 386).
+  // Chuồng thỏ: gỗ ván có mái tôn, cửa lưới, khoang ngủ, cầu thang nhỏ (0.14.1);
+  // bản 0.14.2 thêm sân quây lưới B40 phía trước giống chuồng gà, thỏ trắng chạy trong sân.
+  // Toạ độ tính quanh nhà thỏ (158, 352); sân quây kéo xuống tới y 436.
   makeHutch() {
-    const c = this.add.container(146, 386);
+    const c = this.add.container(158, 352);
+    const RUN = { x0: -50, x1: 50, front: 84, back: 30 };
+    // lưới phía sau sân (hai bên nhà thỏ) và rơm lót
+    const back = this.add.graphics();
+    this.mesh(back, RUN.x0, -40, RUN.back - 14, RUN.back + 6); this.mesh(back, 40, RUN.x1, RUN.back - 14, RUN.back + 6);
+    back.fillStyle(0xe6c27e, 0.6); back.fillEllipse(0, 62, 96, 36);
+    back.lineStyle(1.2, 0xc99a4e, 0.8);
+    const rr = rng(11);
+    for (let k = 0; k < 22; k++) { const fx = -42 + rr() * 84, fy = 50 + rr() * 26; back.lineBetween(fx, fy, fx + 5 - rr() * 10, fy + 2 - rr() * 4); }
+    c.add(back);
     const WOOD = 0xc89a6a, WOOD_D = 0x9c6b45, POST = 0x7a5236;
     const g = this.add.graphics();
     g.fillStyle(0x000000, 0.18); g.fillEllipse(0, 38, 88, 12);
@@ -682,18 +717,27 @@ class Rooftop extends Phaser.Scene {
     const ramp = [{ x: 8, y: 17 }, { x: 20, y: 17 }, { x: 26, y: 38 }, { x: 4, y: 38 }];
     g.fillStyle(0xb98856, 1); g.lineStyle(2.2, INK, 1); g.fillPoints(ramp, true); g.strokePoints(ramp, true);
     g.lineStyle(1.8, POST, 1); for (let ry = 23; ry < 38; ry += 6) g.lineBetween(7 - (ry - 17) * 0.12, ry, 21 + (ry - 17) * 0.24, ry);
-    // bát cỏ khô trước chuồng
+    // bát cỏ khô trong sân
     g.fillStyle(0xc9a54a, 1); g.lineStyle(1.6, INK, 1);
-    g.fillEllipse(-22, 33, 18, 6); g.strokeEllipse(-22, 33, 18, 6);
-    g.lineStyle(1.4, 0x9cc25a, 1); [[-28, 31], [-24, 29], [-19, 30], [-15, 31]].forEach(([hx, hy]) => g.lineBetween(hx, hy, hx + 2, hy - 4));
+    g.fillEllipse(-30, 58, 18, 6); g.strokeEllipse(-30, 58, 18, 6);
+    g.lineStyle(1.4, 0x9cc25a, 1); [[-36, 56], [-32, 54], [-27, 55], [-23, 56]].forEach(([hx, hy]) => g.lineBetween(hx, hy, hx + 2, hy - 4));
     c.add(g);
     // thỏ nâu ló đầu ở khoang ngủ
     const inside = this.makeRabbit('brown', true).setPosition(-18, 8).setScale(0.9);
     c.add(inside); c.inside = inside;
-    // thỏ trắng ngồi ngoài, trước chuồng
-    // (đứng giữa hai thùng xốp để cây cao không che)
-    const r = this.makeRabbit('white').setPosition(2, 46).setScale(1.12);
+    // thỏ trắng chạy trong sân quây
+    const r = this.makeRabbit('white').setPosition(-6, 74).setScale(1.12);
     c.add(r); c.rabbit = r;
+    // lưới phía trước sân, vẽ sau thỏ để thỏ nằm trong sân (giống chuồng gà)
+    const front = this.add.graphics();
+    this.mesh(front, RUN.x0, RUN.x1, RUN.front - 20, RUN.front);
+    front.lineStyle(2.6, INK, 1); front.fillStyle(POST, 1);
+    [RUN.x0, 0, RUN.x1].forEach(px => { front.fillRect(px - 2, RUN.front - 24, 4, 26); front.strokeRect(px - 2, RUN.front - 24, 4, 26); });
+    front.lineStyle(2.4, POST, 1);
+    front.lineBetween(RUN.x0, RUN.back - 16, RUN.x0, RUN.front - 24); front.lineBetween(RUN.x1, RUN.back - 16, RUN.x1, RUN.front - 24);
+    front.lineStyle(2.6, INK, 1); front.fillStyle(POST, 1);
+    [RUN.x0, RUN.x1].forEach(px => { front.fillRect(px - 2, RUN.back - 16, 4, 22); front.strokeRect(px - 2, RUN.back - 16, 4, 22); });
+    c.add(front);
     return c;
   }
 
@@ -791,20 +835,39 @@ class Rooftop extends Phaser.Scene {
     return c;
   }
 
+  // Bồ câu trắng (bản 0.14.2), vẽ cùng kiểu với gà: đường cong mềm, viền nâu, cánh có lớp lông,
+  // đầu tách riêng để gật gù. i: con thứ mấy (con giữa có đầu cánh xám nhạt cho đỡ giống nhau).
   makePigeon(i) {
+    const WHITE = 0xfbfaf6, SHADE = 0xe6e3dc, TIP = i === 1 ? 0xb9bfcb : 0xd9d5cc;
     const b = this.add.container(0, 0);
     const g = this.add.graphics();
-    g.lineStyle(1.6, INK, 1);
-    g.fillStyle(0x8f98a8, 1); g.fillTriangle(-8, -5, -13, -2, -8, -1); g.strokeTriangle(-8, -5, -13, -2, -8, -1);
-    g.fillStyle(i === 1 ? 0xb9bfcb : 0xa4acba, 1); g.fillEllipse(-1, -5, 15, 9); g.strokeEllipse(-1, -5, 15, 9);
-    g.fillStyle(0x7b8496, 1); g.fillEllipse(-2, -6, 8, 4);
-    g.lineStyle(1.4, 0xe58a5a, 1); g.lineBetween(-2, -1, -2, 1); g.lineBetween(1, -1, 1, 1);
+    g.fillStyle(0x000000, 0.14); g.fillEllipse(0, 0.5, 18, 3.5);
+    // chân hồng
+    g.lineStyle(1.6, 0xe58a8a, 1); g.lineBetween(-2, -3, -2, 0); g.lineBetween(2, -3, 2, 0);
+    g.lineBetween(-2, 0, 0, 0.5); g.lineBetween(2, 0, 4, 0.5);
+    // đuôi xòe
+    this.shape(g, [this.bez([-6, -7], [-11, -8], [-15, -5], [-14, -2]), this.bez([-14, -2], [-11, -2], [-8, -3], [-5, -4])], SHADE, 1.5);
+    // thân bầu
+    this.shape(g, [
+      this.bez([6, -12], [9, -9], [8, -4], [3, -2.5]),
+      this.bez([3, -2.5], [-2, -1.5], [-7, -3], [-8, -7]),
+      this.bez([-8, -7], [-8, -11], [-3, -13], [1, -12.5]),
+      this.bez([1, -12.5], [3, -12.5], [4, -13.5], [6, -12])
+    ], WHITE, 1.6);
+    // cánh với đầu lông
+    this.shape(g, [this.bez([-7, -8], [-3, -11.5], [3, -11], [4, -7]), this.bez([4, -7], [1, -4], [-4, -4], [-7, -8])], SHADE, 1.4);
+    g.fillStyle(TIP, 1); g.fillEllipse(-5.5, -6.6, 4, 2.4);
+    g.lineStyle(1, INK, 0.6); g.lineBetween(-3, -6, 1, -7); g.lineBetween(-4, -7.6, 0, -8.6);
     b.add(g);
-    const head = this.add.graphics({ x: 5, y: -10 });
-    head.fillStyle(0x6f8f7c, 1); head.lineStyle(1.4, INK, 1); head.fillEllipse(-1, 3, 5, 5);
-    head.fillStyle(0x8f98a8, 1); head.fillCircle(0, 0, 3.4); head.strokeCircle(0, 0, 3.4);
-    head.fillStyle(0xd9a032, 1); head.fillTriangle(3, -0.5, 5.5, 0.5, 3, 1.2);
-    head.fillStyle(INK, 1); head.fillCircle(1, -0.8, 0.8);
+    const head = this.add.container(5.5, -13);
+    const hg = this.add.graphics();
+    hg.fillStyle(WHITE, 1); hg.lineStyle(1.5, INK, 1); hg.fillCircle(0, -1, 3.8); hg.strokeCircle(0, -1, 3.8);
+    hg.fillStyle(0xf3dede, 1); hg.fillEllipse(-0.5, 2.2, 5, 2.4);                       // lông cổ hồng nhạt
+    hg.fillStyle(0xe8a0a0, 1); hg.lineStyle(1, INK, 1);
+    hg.fillTriangle(3.2, -1.6, 6.2, -0.6, 3.2, 0.4); hg.strokeTriangle(3.2, -1.6, 6.2, -0.6, 3.2, 0.4);   // mỏ hồng
+    hg.fillStyle(0xffffff, 1); hg.fillCircle(3.4, -1.8, 0.9);                            // mũi trắng
+    hg.fillStyle(INK, 1); hg.fillCircle(1, -1.8, 1); hg.fillStyle(0xffffff, 1); hg.fillCircle(1.3, -2.1, 0.35);
+    head.add(hg);
     b.add(head); b.head = head;
     return b;
   }
@@ -814,7 +877,7 @@ class Rooftop extends Phaser.Scene {
     if (k === 'ca') {
       c.fish.forEach((f, i) => {
         const swim = () => {
-          const nx = -14 + Math.random() * 28, ny = -6 + Math.random() * 7;
+          const nx = -34 + Math.random() * 66, ny = -15 + Math.random() * 7;
           f.setScale(nx >= f.x ? 1 : -1, 1);
           this.tweens.add({ targets: f, x: nx, y: ny, duration: 1400 + Math.random() * 1600, ease: 'Sine.easeInOut', onComplete: () => this.time.delayedCall(200 + Math.random() * 900, swim) });
         };
@@ -829,9 +892,9 @@ class Rooftop extends Phaser.Scene {
           this.tweens.add({ targets: r.head, y: r.head.y + 4, angle: 18, duration: 160, yoyo: true, repeat: 1 + Math.floor(Math.random() * 3), ease: 'Quad.easeOut', onComplete: next });
           return;
         }
-        const nx = Phaser.Math.Clamp(r.x + (Math.random() * 20 - 10), -10, 14);
+        const nx = Phaser.Math.Clamp(r.x + (Math.random() * 28 - 14), -32, 36);
         r.setScale(nx >= r.x ? 1.12 : -1.12, 1.12);
-        this.tweens.add({ targets: r, y: 39, duration: 150, yoyo: true, ease: 'Quad.easeOut' });
+        this.tweens.add({ targets: r, y: 67, duration: 150, yoyo: true, ease: 'Quad.easeOut' });
         this.tweens.add({ targets: r, x: nx, duration: 300, onComplete: next });
       };
       this.time.delayedCall(800, hop);
@@ -848,7 +911,7 @@ class Rooftop extends Phaser.Scene {
             this.tweens.add({ targets: b, x: lx, y: this.lineY(62 + lx) - 296 + 4, duration: 900, ease: 'Sine.easeInOut', yoyo: true, hold: 2200, onComplete: () => this.time.delayedCall(1500, bob) });
             return;
           }
-          this.tweens.add({ targets: b.head, x: 6.5, y: -9, duration: 140, yoyo: true, repeat: 1 + Math.floor(Math.random() * 2), onComplete: () => this.time.delayedCall(800 + Math.random() * 2400, bob) });
+          this.tweens.add({ targets: b.head, x: 6.5, y: -12, duration: 140, yoyo: true, repeat: 1 + Math.floor(Math.random() * 2), onComplete: () => this.time.delayedCall(800 + Math.random() * 2400, bob) });
         };
         this.time.delayedCall(i * 500, bob);
       });

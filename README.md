@@ -96,6 +96,14 @@ Dùng "Tua +1 giờ", "Tua tới sáng mai" và "Giả lập vắng 8 giờ" tro
 - [ ] **F05** Túi đầy ("Lấp đầy túi") rồi nhặt trứng: hiện "Túi đồ đã đầy", trứng vẫn nằm trong chuồng.
 - [ ] **F20** Cho gà ăn, đóng game hơn 5 phút rồi mở lại (hoặc "Giả lập vắng 8 giờ"): bảng đi vắng có dòng "Gà đã đẻ 2 quả trứng…". Sang ngày mới thì có dòng "Gà đang đói…".
 
+## Kiểm thử bản 0.14.2 – Hồ cá, sân thỏ, bồ câu trắng, giãn thùng
+
+- [ ] **Chuồng thỏ có sân quây lưới B40** giống chuồng gà: cọc gỗ hai bên và giữa, rơm lót, bát cỏ khô trong sân. Thỏ trắng chạy, gặm cỏ trong sân (lưới phía trước che chân thỏ).
+- [ ] **Hồ cá** thay chậu tròn: hồ chữ nhật xây gạch, bờ đá, nước có gợn, lá súng và hoa súng hồng, bốn con cá bơi khắp hồ. Chạm hồ vẫn cho ăn / vớt cá được.
+- [ ] **Bồ câu trắng**, vẽ cùng kiểu với gà: thân trắng, cánh có lớp lông, đuôi xòe, mỏ và chân hồng, đầu gật gù. Một con có đầu cánh xám nhạt.
+- [ ] **Hàng thùng dời xuống**: hàng trên cách xa hồ cá, sân thỏ, chuồng gà rõ hơn. Đủ 8 thùng thì hàng dưới cùng vẫn nằm trên thanh công cụ, không bị che.
+- [ ] Vệt bụi (bảng Bản thử → "Cho bụi bám") nằm ở khe giữa các thùng, không nằm dưới hồ cá hay chuồng.
+
 ## Kiểm thử bản 0.14.1 – Tinh chỉnh cảnh sân và tiệm
 
 Dùng "+50 KN" trong bảng "Bản thử" để lên level 13 và mở đủ chuồng.
