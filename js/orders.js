@@ -10,6 +10,7 @@ import { CROPS, ITEMS, ORDER_SLOTS, ORDER_BONUS, ORDER_EXPIRE, NEIGHBORS, LIKE_C
 import * as inv from './inventory.js';
 import { sellPrice } from './shop.js';
 import { levelNow } from './level.js';
+import { orderSlots, orderReward } from './decor.js';
 
 export const newOrders = () => ({ list: [], nextId: 1, delivered: 0 });
 export const newFriends = () => Object.fromEntries(Object.keys(NEIGHBORS).map(n => [n, 0]));
@@ -32,7 +33,7 @@ export function welcome(state, who, now, rand = Math.random) {
   if (state.orders.list.some(x => x.from === who)) return false;
   const o = makeOrder(state, now, rand, who);
   if (!o) return false;
-  if (state.orders.list.length >= ORDER_SLOTS) state.orders.list.pop();
+  if (state.orders.list.length >= orderSlots(state)) state.orders.list.pop();
   state.orders.list.push(o);
   return true;
 }
@@ -95,7 +96,7 @@ export function makeOrder(state, now, rand = Math.random, forceWho = null) {
 // Bổ sung cho đủ ORDER_SLOTS đơn. Trả về số đơn vừa thêm.
 export function refill(state, now, rand = Math.random) {
   let n = 0;
-  while (state.orders.list.length < ORDER_SLOTS) {
+  while (state.orders.list.length < orderSlots(state)) {   // 3 đơn, thêm 1 khi sân đẹp đủ điểm (bản 0.15)
     const o = makeOrder(state, now, rand);
     if (!o) break;
     state.orders.list.push(o);
@@ -137,8 +138,9 @@ export function deliver(state, orderId, now, rand = Math.random) {
   if (have < o.qty) return { ok: false, reason: 'not_enough', missing: o.qty - have };
   const before = new Set(unlocked(state));
   inv.remove(state.inventory, o.item, o.qty);
-  state.coins += o.coins;
-  state.friends[o.from] = (state.friends[o.from] || 0) + o.hearts;
+  const rw = orderReward(state, o);   // đã cộng thưởng sân đẹp (bản 0.15)
+  state.coins += rw.coins;
+  state.friends[o.from] = (state.friends[o.from] || 0) + rw.hearts;
   state.orders.delivered = (state.orders.delivered || 0) + 1;
   state.orders.list.splice(k, 1);
   const met = unlocked(state).filter(n => !before.has(n));
@@ -148,7 +150,7 @@ export function deliver(state, orderId, now, rand = Math.random) {
     const last = state.orders.list.pop();
     state.orders.list.push(makeOrder(state, now, rand, met[0]) || last);
   }
-  return { ok: true, order: o, met };
+  return { ok: true, order: o, met, coins: rw.coins, hearts: rw.hearts };
 }
 
 // Đổi đơn khác: bỏ đơn này, ghim đơn mới vào đúng chỗ

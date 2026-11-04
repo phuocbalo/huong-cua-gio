@@ -28,6 +28,8 @@ import * as weather from './weather.js';
 import * as pens from './pens.js';
 import { PENS } from './config.js';
 import { FORECAST_AHEAD } from './config.js';
+import * as decor from './decor.js';
+import { DECOR } from './config.js';
 
 const AWAY_NOTICE_MS = 60000;         // vắng từ 1 phút: lời chào ngắn
 const AWAY_SUMMARY_MS = 5 * 60000;    // vắng từ 5 phút và có thay đổi: bảng "Trong lúc bạn đi vắng"
@@ -334,6 +336,18 @@ async function boot() {
       afterTrade();
       tutor.event('buy');
     },
+    // Trang trí sân (bản 0.15): mua là đặt luôn lên sân; đạt mốc sân đẹp thì báo
+    onBuyDecor(id) {
+      const r = decor.buy(state(), id);
+      if (!r.ok) return;
+      if (scene) { scene.setDecor(state().decor || []); ui.forceTime(); }   // forceTime: đèn lồng sáng ngay nếu trời tối
+      ui.toast(fmt(T.decor_bought, { name: T['decor_' + id].toLowerCase(), n: DECOR[id].points }));
+      eco.say(pickLine(T.shop_after_buy));
+      sound('buy');
+      r.perks.forEach((p, k) => setTimeout(() => { ui.toast(fmt(T.beauty_reached, { n: p.points, perk: T['perk_' + p.perk] })); sound('chime'); }, 2400 * (k + 1)));
+      if (r.perks.some(p => p.perk === 'slot')) syncOrders();   // ghim thêm đơn thứ 4 ngay
+      afterTrade();
+    },
     onBagUpgrade() {
       const r = shop.buyBagUpgrade(state());
       if (!r.ok) return;
@@ -346,7 +360,7 @@ async function boot() {
       const r = orders.deliver(state(), id, now());
       if (!r.ok) return;
       const o = r.order;
-      ui.toast(fmt(T.delivered, { name: T['name_' + o.from], coins: o.coins, hearts: o.hearts }));
+      ui.toast(fmt(T.delivered, { name: T['name_' + o.from], coins: r.coins, hearts: r.hearts }));
       sound('coin');
       if (r.met.length) setTimeout(() => { ui.toast(T['met_' + r.met[0]]); sound('chime'); }, 2600);
       ordersTip.delivered();

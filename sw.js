@@ -1,6 +1,6 @@
 // Bộ nhớ offline của game.
 // Mỗi lần phát hành bản mới, tăng VERSION để trình duyệt tải lại toàn bộ.
-const VERSION = '0.14.3';
+const VERSION = '0.15.0';
 const CACHE = 'san-thuong-' + VERSION;
 
 // Mọi thứ game cần để chạy khi tắt mạng.
@@ -30,6 +30,7 @@ const CORE = [
   './js/audio.js',
   './js/tutorial.js',
   './js/level.js',
+  './js/decor.js',
   './js/ui-level.js',
   './js/ui-settings.js',
   './js/weather.js',

@@ -1,7 +1,7 @@
 // Bảng dữ liệu của game. Muốn cân bằng lại game thì sửa số ở đây, không cần đụng vào code khác.
 // Đơn vị thời gian là mili giây; dùng các hằng PHUT, GIO cho dễ đọc.
 
-export const APP_VERSION = '0.14.3';
+export const APP_VERSION = '0.15.0';
 
 const PHUT = 60 * 1000;
 const GIO = 60 * PHUT;
@@ -247,3 +247,22 @@ export const LEVELS = [
   { xp: 900, unlock: { pen: 'ca', items: ['cam_ca'] },                      reward: { coins: 80, items: { cam_ca: 5 } } }
 ];
 export const MAX_LEVEL = LEVELS.length;
+
+// ---------- Trang trí sân (bản 0.15) ----------
+// Mỗi món mua một lần, đặt cố định vào chỗ riêng trên sân (DECOR_SLOTS trong scene.js) và cộng "điểm sân đẹp".
+// price 0 = không bán, là quà level (chậu hoa giấy ở level 10). Nhóm "Trang trí" ở tiệm mở từ DECOR_LEVEL.
+export const DECOR_LEVEL = 10;
+export const DECOR = {
+  hoa_giay:  { points: 2, price: 0 },
+  ghe_da:    { points: 3, price: 80 },
+  den_long:  { points: 4, price: 120 },
+  cay_canh:  { points: 4, price: 150 },
+  chum_nuoc: { points: 5, price: 200 }
+};
+// Mốc điểm sân đẹp và phần thưởng (giữ mãi khi đã đạt):
+//   heart: mỗi đơn hàng thêm 1 tim thân thiết · coins: đơn hàng trả thêm 10% xu · slot: thêm 1 ô đơn hàng (4 thay vì 3)
+export const BEAUTY_PERKS = [
+  { points: 5,  perk: 'heart' },
+  { points: 10, perk: 'coins', bonus: 0.1 },
+  { points: 18, perk: 'slot' }
+];

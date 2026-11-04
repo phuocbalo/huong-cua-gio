@@ -6,6 +6,8 @@ import { T, fmt } from './text.vi.js';
 import { itemIcon } from './icons.js';
 import { AVATARS, unitOf, nounOf } from './ui-economy.js';
 import * as level from './level.js';
+import * as decor from './decor.js';
+import { BEAUTY_PERKS } from './config.js';
 
 const $ = id => document.getElementById(id);
 const pick = arr => arr[Math.floor(Math.random() * arr.length)];
@@ -80,6 +82,11 @@ export class LevelUI {
     $('levelBigBar').style.width = Math.round(p.frac * 100) + '%';
     $('levelLeft').textContent = p.max ? T.level_max : fmt(T.level_progress, { have: p.have, need: p.need }) + ' · ' + fmt(T.level_left, { n: p.left, next: p.level + 1 });
     $('levelHow').textContent = fmt(T.level_how, { h1: XP.harvest[1], h2: XP.harvest[2], h3: XP.harvest[3], deliver: XP.deliver, feed: XP.feed, eggs: XP.eggs, dust: XP.dust });
+    // Sân đẹp (bản 0.15): thanh điểm và ba mốc thưởng
+    const pt = decor.points(this.s), max = decor.maxPoints();
+    $('beautyBox').innerHTML = `<div class="beauty-head"><b>${fmt(T.beauty_now, { n: pt, max })}</b><span class="lvl-bigbar"><i style="width:${Math.round(pt / max * 100)}%"></i></span></div>`
+      + `<ul class="beauty-perks">${BEAUTY_PERKS.map(p => `<li class="${pt >= p.points ? 'done' : ''}"><b>${p.points}</b><span>${T['perk_' + p.perk]}</span></li>`).join('')}</ul>`
+      + `<p class="note">${T.beauty_how}</p>`;
     $('levelRoad').innerHTML = LEVELS.map((L, i) => {
       const lv = i + 1, state = lv < p.level ? 'done' : lv === p.level ? 'now' : 'later';
       const lines = unlockLines(L.unlock || {});

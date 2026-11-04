@@ -9,6 +9,8 @@ import * as inv from './inventory.js';
 import * as orders from './orders.js';
 import { duration } from './util.js';
 import * as level from './level.js';
+import * as decor from './decor.js';
+import { DECOR } from './config.js';
 
 const $ = id => document.getElementById(id);
 const pick = arr => arr[Math.floor(Math.random() * arr.length)];
@@ -33,11 +35,21 @@ export const AVATARS = {
   be_na: `<svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="22" fill="#fde2cf"/><path d="M12 46c1-8 5-12 12-12s11 4 12 12z" fill="#f2b544" ${S}/><circle cx="11" cy="24" r="4" fill="#4a3326" ${S}/><circle cx="37" cy="24" r="4" fill="#4a3326" ${S}/><circle cx="24" cy="23" r="10" fill="#f6d2ae" ${S}/><path d="M14 21c1-6 5-9 10-9s9 3 10 9c-4-2-6-5-10-5s-6 3-10 5z" fill="#4a3326" ${S}/><path d="M28 12l5-3v6z" fill="#e5533c" ${S}/><circle cx="20" cy="23" r="1.4" fill="#3b2f2a"/><circle cx="28" cy="23" r="1.4" fill="#3b2f2a"/><circle cx="18" cy="27" r="1.8" fill="#f2a5a0"/><circle cx="30" cy="27" r="1.8" fill="#f2a5a0"/><path d="M21 28c2 1.4 4 1.4 6 0" stroke="#3b2f2a" stroke-width="2.2" stroke-linecap="round" fill="none"/></svg>`
 };
 const HEART = '<svg class="heart" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 17s-7-4.4-7-9.2A3.8 3.8 0 0 1 10 5.6a3.8 3.8 0 0 1 7 2.2C17 12.6 10 17 10 17z" fill="#e5533c" stroke="#3b2f2a" stroke-width="1.8" stroke-linejoin="round"/></svg>';
+// Biểu tượng món trang trí (bản 0.15)
+const SI = 'stroke="#3b2f2a" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"';
+export const DECOR_ICONS = {
+  hoa_giay: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M12 26h16l-2 9H14z" fill="#c8703f" ${SI}/><circle cx="14" cy="17" r="5" fill="#e0559a" ${SI}/><circle cx="25" cy="14" r="5" fill="#ef7ab4" ${SI}/><circle cx="20" cy="21" r="5" fill="#d9418a" ${SI}/></svg>`,
+  ghe_da: `<svg viewBox="0 0 40 40" aria-hidden="true"><rect x="5" y="15" width="30" height="8" rx="3" fill="#c9c3b6" ${SI}/><path d="M9 23v10h6V23M25 23v10h6V23" fill="#aaa294" ${SI}/></svg>`,
+  den_long: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3v6" ${SI}/><path d="M15 9h10" ${SI}/><ellipse cx="20" cy="21" rx="10" ry="11" fill="#e4473a" ${SI}/><path d="M20 10v22M13 13c-2 5-2 11 0 16M27 13c2 5 2 11 0 16" fill="none" stroke="#a82a20" stroke-width="1.6"/><path d="M15 32h10l-2 3h-6z" fill="#f2b544" ${SI}/><path d="M20 35v3" ${SI}/></svg>`,
+  cay_canh: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M10 28h20l-2 7H12z" fill="#4f7fa8" ${SI}/><path d="M20 28c0-6-3-8-1-14" fill="none" ${SI}/><ellipse cx="13" cy="15" rx="7" ry="4.5" fill="#4f9a3a" ${SI}/><ellipse cx="25" cy="11" rx="8" ry="5" fill="#5fa548" ${SI}/><ellipse cx="22" cy="20" rx="6" ry="3.6" fill="#3f8a4a" ${SI}/></svg>`,
+  chum_nuoc: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M11 12c-4 4-4 16 2 21h14c6-5 6-17 2-21z" fill="#8a5a3a" ${SI}/><ellipse cx="20" cy="12" rx="9" ry="3" fill="#5aa9cc" ${SI}/><path d="M24 12l9-6" ${SI}/><ellipse cx="34" cy="5.5" rx="3.4" ry="2.4" fill="#c89a5a" ${SI}/><path d="M13 21h14" stroke="#6b4329" stroke-width="1.6"/></svg>`
+};
+
 const BAG_ICON = '<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M10 15h20l-2 18H12z" fill="#d9a46b" stroke="#3b2f2a" stroke-width="2.5" stroke-linejoin="round"/><path d="M15 15c0-4 2-7 5-7s5 3 5 7" fill="none" stroke="#3b2f2a" stroke-width="2.5" stroke-linecap="round"/><path d="M20 20v8M16 24h8" stroke="#3b2f2a" stroke-width="2.5" stroke-linecap="round"/></svg>';
 
 // Nhóm của một món trong mục Mua của tiệm
 const FERT = ['phan_lon_nhanh', 'phan_sai_qua'];
-export const shopCat = id => ITEMS[id].kind === 'seed' ? 'seed' : FERT.includes(id) ? 'fert' : 'other';
+export const shopCat = id => ITEMS[id] && ITEMS[id].kind === 'seed' ? 'seed' : FERT.includes(id) ? 'fert' : 'other';
 
 // "4 bó rau muống"
 export const unitOf = id => T['unit_' + ITEMS[id].unit];
@@ -75,6 +87,7 @@ export class EconomyUI {
       if (act === 'sell') this.h.onSell(id, qty);
       else if (act === 'buy') this.h.onBuy(id, qty);
       else if (act === 'bag') this.h.onBagUpgrade();
+      else if (act === 'decor') this.h.onBuyDecor(id);
     });
     $('orderList').addEventListener('click', e => {
       const b = e.target.closest('button[data-act]');
@@ -129,6 +142,8 @@ export class EconomyUI {
             <button class="btn small primary" type="button" data-act="sell" data-id="${id}" data-qty="${n}">${fmt(T.shop_sell_all, { coins: n * price })}</button>
           </span></li>`;
       });
+    } else if (this.cat === 'decor') {
+      html += this.decorRows(s);
     } else {
       // Nhóm "Thức ăn & túi đồ": nâng cấp túi đồ đứng đầu
       const up = this.cat === 'other' ? shop.nextBagUpgrade(s) : null;
@@ -171,6 +186,26 @@ export class EconomyUI {
     $('shopList').innerHTML = html;
   }
 
+  // Nhóm "Trang trí" (bản 0.15): điểm sân đẹp ở đầu, rồi từng món
+  decorRows(s) {
+    const pt = decor.points(s), next = decor.nextPerk(s);
+    let html = `<li class="note beauty-line">${fmt(T.beauty_now, { n: pt, max: decor.maxPoints() })}${next ? ' · ' + fmt(T.beauty_next, { n: next.points - pt, perk: T['perk_' + next.perk] }) : ' · ' + T.beauty_all}</li>`;
+    decor.DECOR_IDS.forEach(id => {
+      const d = DECOR[id], have = decor.owned(s, id), c = decor.canBuy(s, id);
+      const pts = fmt(T.decor_points, { n: d.points });
+      let btn, why = '';
+      if (have) btn = `<button class="btn small" type="button" disabled>${T.decor_owned}</button>`;
+      else if (!d.price) { btn = `<button class="btn small" type="button" disabled>${fmt(T.shop_locked_btn, { n: level.unlockLevel('decor', id) })}</button>`; why = T.decor_gift; }
+      else if (c.reason === 'locked') { btn = `<button class="btn small" type="button" disabled>${fmt(T.shop_locked_btn, { n: c.level })}</button>`; why = fmt(T.shop_locked, { n: c.level }); }
+      else { btn = `<button class="btn small${c.ok ? ' primary' : ''}" type="button" data-act="decor" data-id="${id}"${c.ok ? '' : ' disabled'}>${fmt(T.shop_buy_bag, { price: d.price })}</button>`; if (c.reason === 'coins') why = fmt(T.shop_missing, { n: c.missing }); }
+      html += `<li class="shop-row${have ? ' owned' : ''}${c.reason === 'locked' ? ' locked' : ''}">
+        <span class="ico">${DECOR_ICONS[id]}</span>
+        <span class="meta"><b>${T['decor_' + id]}</b><small>${T['decor_desc_' + id]} · ${pts}</small>${why ? `<small class="why">${why}</small>` : ''}</span>
+        <span class="acts one">${btn}</span></li>`;
+    });
+    return html;
+  }
+
   // ----- F12 Đơn hàng -----
   openOrders() { this.renderOrders(); this.ui.openWrap($('ordersWrap')); }
 
@@ -190,7 +225,7 @@ export class EconomyUI {
           <b>${fmt(T.order_need, { name: T['name_' + o.from], qty: o.qty, unit: unitOf(o.item), noun: nounOf(o.item) })}</b>
           <small>${flavors[o.id % flavors.length]} · ${fmt(T.order_wait, { time: duration(orders.timeLeft(o, this.now())) })}</small>
           <span class="row"><span class="ico">${itemIcon(o.item)}</span><span class="bar"><i style="width:${Math.min(100, Math.round(have / o.qty * 100))}%"></i></span><span>${fmt(T.order_progress, { have: Math.min(have, o.qty), qty: o.qty })}</span></span>
-          <span class="row"><span class="reward">${fmt(T.order_reward, { coins: o.coins, hearts: o.hearts })} ${HEART}</span></span>
+          <span class="row"><span class="reward">${fmt(T.order_reward, decor.orderReward(s, o))} ${HEART}</span></span>
         </span>
         <span class="acts">
           <button class="btn small${ready ? ' primary' : ''}" type="button" data-act="deliver" data-id="${o.id}"${ready ? '' : ' disabled'}>${ready ? T.order_deliver : fmt(T.order_missing, { n: o.qty - have })}</button>

@@ -26,13 +26,14 @@ Bản chơi thử: https://phuocbalo.github.io/huong-cua-gio/
 | `js/tutorial.js` | Hướng dẫn mở đầu cùng bà Tư: gieo → tưới → thu → bán → cho gà ăn; không bỏ qua được, chỉ bấm được chỗ mũi tên chỉ, mở lại giữa chừng vẫn tiếp tục |
 | `js/audio.js` | Nhạc lo-fi và tiếng động tạo bằng code (không có file âm thanh), đổi nhạc ngày/đêm |
 | `js/ui-settings.js` | Cài đặt: âm lượng, xuất/nhập file lưu, xem lại hướng dẫn, xóa dữ liệu, thống kê |
+| `js/decor.js` | Luật trang trí sân: mua món, điểm sân đẹp, các mốc thưởng cho đơn hàng |
 | `js/level.js` | Luật level: điểm kinh nghiệm, lên level, mở khóa, quà (dữ liệu 10 level trong `config.js`) |
 | `js/ui-level.js` | Giao diện level: viên level trên thanh trạng thái, con đường level, bảng chúc mừng |
 | `js/pens.js` | Luật vật nuôi khác (F06): thỏ, bồ câu, bể cá — cho ăn mỗi ngày, sản phẩm chờ nhặt, mở ở level 11–13 |
 | `js/weather.js` | Luật thời tiết (F09): lịch nắng, mây, gió, mưa theo khối 6 giờ, tính từ một con số lưu trong bản lưu; mưa tưới cây kể cả lúc tắt game |
 | `js/daylight.js` | Màu trời, phố, đèn cho từng giờ trong ngày; chuyển dần giữa các khung giờ |
 | `js/scene.js` | Cảnh sân thượng vẽ bằng Phaser (hình tạm) |
-| `tests/` | Kiểm thử luật chơi: `node tests/farm.test.mjs`, `node tests/daylight.test.mjs`, `node tests/coop.test.mjs`, `node tests/dust.test.mjs`, `node tests/economy.test.mjs`, `node tests/settings.test.mjs`, `node tests/tutorial.test.mjs`, `node tests/level.test.mjs`, `node tests/weather.test.mjs`, `node tests/fertilizer.test.mjs`, `node tests/love.test.mjs`, `node tests/pens.test.mjs` |
+| `tests/` | Kiểm thử luật chơi: `node tests/farm.test.mjs`, `node tests/daylight.test.mjs`, `node tests/coop.test.mjs`, `node tests/dust.test.mjs`, `node tests/economy.test.mjs`, `node tests/settings.test.mjs`, `node tests/tutorial.test.mjs`, `node tests/level.test.mjs`, `node tests/decor.test.mjs`, `node tests/weather.test.mjs`, `node tests/fertilizer.test.mjs`, `node tests/love.test.mjs`, `node tests/pens.test.mjs` |
 | `js/ui.js` | Điều khiển giao diện HTML |
 | `js/pwa.js` | Bật chơi offline và theo dõi trạng thái |
 | `manifest.webmanifest` | Khai báo PWA: tên app, biểu tượng, mở toàn màn hình, màn dọc |
@@ -95,6 +96,18 @@ Dùng "Tua +1 giờ", "Tua tới sáng mai" và "Giả lập vắng 8 giờ" tro
 - [ ] **F05** Hết thức ăn (cho ăn đủ 5 ngày): chạm máng hiện "Hết thức ăn gà".
 - [ ] **F05** Túi đầy ("Lấp đầy túi") rồi nhặt trứng: hiện "Túi đồ đã đầy", trứng vẫn nằm trong chuồng.
 - [ ] **F20** Cho gà ăn, đóng game hơn 5 phút rồi mở lại (hoặc "Giả lập vắng 8 giờ"): bảng đi vắng có dòng "Gà đã đẻ 2 quả trứng…". Sang ngày mới thì có dòng "Gà đang đói…".
+
+## Kiểm thử bản 0.15.0 – Trang trí sân
+
+Dùng "+50 KN" để lên level 10 trở lên, "Thêm 10 xu" để có đủ xu.
+
+- [ ] **Tiệm → Mua → Trang trí** (nhóm thứ 4). Dưới level 10: các món khóa "Mở ở level 10". Dòng đầu ghi "Sân đẹp: N/18 điểm · còn … điểm nữa: …".
+- [ ] 5 món: Chậu hoa giấy (+2, quà level 10, không bán), Ghế đá (+3, 80 xu), Đèn lồng (+4, 120 xu), Chậu cây cảnh (+4, 150 xu), Chum nước gáo dừa (+5, 200 xu). Mua xong nút đổi thành "Đã đặt trên sân", không mua lại được.
+- [ ] Mua là món hiện ngay trên sân (nảy ra) ở chỗ riêng: ghế đá cạnh hàng thùng trên bên phải, đèn lồng mép trái dưới hồ cá, cây cảnh mép trái dưới cùng, chum nước mép phải dưới cùng. Không món nào che chuồng, hàng tim, thùng xốp hay che nhau (thử với đủ 8 thùng có cà chua).
+- [ ] Đèn lồng đung đưa; ban đêm có quầng sáng ấm.
+- [ ] **Mốc sân đẹp** (báo bằng thông báo khi vừa đạt): 5 điểm → mỗi đơn hàng thêm 1 tim; 10 điểm → đơn hàng trả thêm 10% xu; 18 điểm → dây phơi có 4 đơn (đơn thứ 4 ghim ngay).
+- [ ] Bảng đơn hàng hiện đúng phần thưởng đã cộng thêm; giao đơn nhận đúng số đó.
+- [ ] Chạm viên level: có khung hồng "Sân đẹp" với thanh điểm và 3 mốc (mốc đã đạt có dấu ✓).
 
 ## Kiểm thử bản 0.14.3 – Chậu hoa không che hàng tim
 

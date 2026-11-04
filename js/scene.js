@@ -16,11 +16,11 @@ const COOP_ANCHOR = { x: 386, y: 436 };
 // Chỗ đặt đồ trang trí (bản 0.14.3). Mỗi món có chỗ riêng, đã kiểm tra không che chuồng, hàng tim của gà,
 // thùng xốp hay nhau. Toạ độ là chân món đồ. Các chỗ đánh dấu "dành sẵn" để cho hệ thống trang trí sau này.
 export const DECOR_SLOTS = {
-  hoa_giay: [372, 522],   // mép phải, dưới hàng tim của gà, giữa hai hàng thùng
-  slot_b:   [318, 500],   // dành sẵn: chỗ trống cạnh hàng thùng trên (món thấp, ví dụ ghế đá)
-  slot_c:   [18, 540],    // dành sẵn: mép trái, dưới hồ cá (món cao mảnh, ví dụ đèn lồng)
-  slot_d:   [18, 626],    // dành sẵn: mép trái, giữa hai hàng thùng dưới
-  slot_e:   [372, 610]    // dành sẵn: mép phải, giữa hai hàng thùng dưới
+  hoa_giay:  [372, 522],   // mép phải, dưới hàng tim của gà, giữa hai hàng thùng
+  ghe_da:    [318, 487],   // chỗ trống cạnh hàng thùng trên (món thấp; cao hơn ngọn cà chua hàng giữa)
+  den_long:  [20, 548],    // mép trái, dưới hồ cá (món cao mảnh)
+  cay_canh:  [20, 628],    // mép trái, giữa hai hàng thùng dưới
+  chum_nuoc: [372, 612]    // mép phải, giữa hai hàng thùng dưới
 };
 // Các chỗ trên sân có thể bám bụi (F23): khe giữa các thùng và mép sân, không nằm dưới thùng hay chuồng gà
 // Bản 0.14: hai chỗ sau sân nhường cho chậu cá và chuồng thỏ (F06), dời xuống khe giữa các thùng
@@ -941,8 +941,101 @@ class Rooftop extends Phaser.Scene {
   penPoint(k) { const p = this.pens[k]; return { x: p.d.x, y: p.d.y }; }
 
   // ----- Trang trí sân (level 10: chậu hoa giấy) -----
+  // Bản 0.15: mỗi món có chỗ riêng trong DECOR_SLOTS; món mới mua thì nảy ra
   setDecor(list) {
-    if (list.includes('hoa_giay') && !this.hoaGiay) { const [x, y] = DECOR_SLOTS.hoa_giay; this.hoaGiay = this.makeHoaGiay(x, y); }
+    this.decorArt = this.decorArt || {};
+    const MAKE = { hoa_giay: (x, y) => this.makeHoaGiay(x, y), ghe_da: (x, y) => this.makeGheDa(x, y), den_long: (x, y) => this.makeDenLong(x, y), cay_canh: (x, y) => this.makeCayCanh(x, y), chum_nuoc: (x, y) => this.makeChumNuoc(x, y) };
+    list.forEach(id => {
+      if (this.decorArt[id] || !MAKE[id] || !DECOR_SLOTS[id]) return;
+      const [x, y] = DECOR_SLOTS[id];
+      const c = MAKE[id](x, y);
+      this.decorArt[id] = c;
+      if (id === 'hoa_giay') this.hoaGiay = c;
+    });
+  }
+
+  // Món mới hiện ra: nảy từ nhỏ lên đúng cỡ
+  popIn(c, scale = 1) {
+    this.children.moveBelow(c, this.frontWall);
+    c.setScale(scale);
+    if (!reduceMotion) { c.setScale(scale * 0.3); this.tweens.add({ targets: c, scale, duration: 500, ease: 'Back.easeOut' }); }
+    return c;
+  }
+
+  // Ghế đá: mặt đá mài xám, hai chân đá
+  makeGheDa(x, y) {
+    const c = this.add.container(x, y), g = this.add.graphics();
+    g.fillStyle(0x000000, 0.18); g.fillEllipse(0, 2, 62, 9);
+    g.lineStyle(2.4, INK, 1); g.fillStyle(0xaaa294, 1);
+    [[-22, -14], [14, -14]].forEach(([lx, ly]) => { g.fillRect(lx, ly, 8, 15); g.strokeRect(lx, ly, 8, 15); });
+    g.fillStyle(0xc9c3b6, 1); g.fillRoundedRect(-28, -22, 56, 9, 4); g.strokeRoundedRect(-28, -22, 56, 9, 4);
+    g.fillStyle(0xdcd7cc, 1); g.fillRoundedRect(-25, -21, 50, 3, 1.5);
+    g.fillStyle(0x9a948a, 0.6); [[-14, -17], [6, -18], [18, -16]].forEach(([sx, sy]) => g.fillCircle(sx, sy, 1.1));
+    c.add(g);
+    return this.popIn(c);
+  }
+
+  // Đèn lồng đỏ treo trên cột tre; ban đêm sáng ấm (paintLights)
+  makeDenLong(x, y) {
+    const c = this.add.container(x, y), g = this.add.graphics();
+    g.fillStyle(0x000000, 0.18); g.fillEllipse(0, 2, 22, 6);
+    g.lineStyle(2.4, INK, 1); g.fillStyle(0x9cc25a, 1);
+    g.fillRect(-2, -62, 4, 63); g.strokeRect(-2, -62, 4, 63);
+    g.lineStyle(1.2, 0x6f9440, 1); [-48, -32, -16].forEach(yy => g.lineBetween(-2, yy, 2, yy));
+    g.lineStyle(2.2, INK, 1); g.lineBetween(0, -60, 9, -60); g.lineBetween(9, -60, 9, -54);
+    c.add(g);
+    // lồng đèn (tách riêng để đung đưa)
+    const l = this.add.container(9, -54), lg = this.add.graphics();
+    lg.fillStyle(0xe4473a, 1); lg.lineStyle(2, INK, 1); lg.fillEllipse(0, 9, 16, 16); lg.strokeEllipse(0, 9, 16, 16);
+    lg.lineStyle(1.2, 0xa82a20, 1); lg.lineBetween(0, 1, 0, 17); lg.lineBetween(-4, 3, -4, 15); lg.lineBetween(4, 3, 4, 15);
+    lg.fillStyle(0xf2b544, 1); lg.lineStyle(1.6, INK, 1);
+    lg.fillRect(-4, 0, 8, 2.5); lg.strokeRect(-4, 0, 8, 2.5); lg.fillRect(-4, 16, 8, 2.5); lg.strokeRect(-4, 16, 8, 2.5);
+    lg.lineStyle(1.4, 0xf2b544, 1); lg.lineBetween(-2, 19, -2, 24); lg.lineBetween(0, 19, 0, 25); lg.lineBetween(2, 19, 2, 24);
+    l.add(lg); c.add(l);
+    if (!reduceMotion) this.tweens.add({ targets: l, angle: { from: -5, to: 5 }, duration: 1800, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    this.lantern = { x: x + 9, y: y - 45 };
+    return this.popIn(c);
+  }
+
+  // Chậu cây cảnh dáng nghiêng, chậu men xanh
+  makeCayCanh(x, y) {
+    const c = this.add.container(x, y), g = this.add.graphics();
+    g.fillStyle(0x000000, 0.18); g.fillEllipse(0, 2, 32, 7);
+    g.lineStyle(2.4, INK, 1); g.fillStyle(0x4f7fa8, 1);
+    g.fillPoints([{ x: -14, y: -12 }, { x: 14, y: -12 }, { x: 11, y: 0 }, { x: -11, y: 0 }], true);
+    g.strokePoints([{ x: -14, y: -12 }, { x: 14, y: -12 }, { x: 11, y: 0 }, { x: -11, y: 0 }], true);
+    g.fillStyle(0x3d6788, 1); g.fillRect(-16, -15, 32, 4); g.strokeRect(-16, -15, 32, 4);
+    g.lineStyle(1.2, 0xbfd8ea, 0.8); g.lineBetween(-8, -8, 8, -8);
+    // thân cong
+    g.lineStyle(4.5, INK, 1); g.beginPath(); g.moveTo(-2, -15); g.lineTo(-6, -26); g.lineTo(2, -36); g.lineTo(8, -44); g.strokePath();
+    g.lineStyle(2.6, 0x8a5b38, 1); g.beginPath(); g.moveTo(-2, -15); g.lineTo(-6, -26); g.lineTo(2, -36); g.lineTo(8, -44); g.strokePath();
+    // tán lá từng tầng
+    g.lineStyle(1.8, INK, 1);
+    [[-10, -30, 16, 8, 0x4f9a3a], [9, -42, 18, 9, 0x5fa548], [-2, -48, 14, 7, 0x3f8a4a], [12, -34, 10, 6, 0x3f8a4a]].forEach(([lx, ly, w, h, col]) => {
+      g.fillStyle(col, 1); g.fillEllipse(lx, ly, w, h); g.strokeEllipse(lx, ly, w, h);
+    });
+    c.add(g);
+    return this.popIn(c);
+  }
+
+  // Chum sành nâu, miệng có nước, gáo dừa gác bên
+  makeChumNuoc(x, y) {
+    const c = this.add.container(x, y), g = this.add.graphics();
+    g.fillStyle(0x000000, 0.18); g.fillEllipse(0, 2, 34, 8);
+    this.shape(g, [
+      this.bez([-8, -30], [-18, -24], [-18, -6], [-9, 0]),
+      this.bez([-9, 0], [-4, 2], [4, 2], [9, 0]),
+      this.bez([9, 0], [18, -6], [18, -24], [8, -30])
+    ], 0x8a5a3a, 2.4);
+    g.lineStyle(1.4, 0x6b4329, 1); g.lineBetween(-15, -16, 15, -16); g.lineBetween(-14, -12, 14, -12);
+    g.fillStyle(0xffffff, 0.25); g.fillEllipse(-9, -20, 4, 9);
+    g.fillStyle(0x6b4329, 1); g.lineStyle(2.2, INK, 1); g.fillEllipse(0, -30, 20, 6); g.strokeEllipse(0, -30, 20, 6);
+    g.fillStyle(0x5aa9cc, 1); g.fillEllipse(0, -30, 15, 3.6);
+    // gáo dừa
+    g.lineStyle(2.2, INK, 1); g.lineBetween(4, -31, 14, -40);
+    g.fillStyle(0xc89a5a, 1); g.fillEllipse(16, -41, 9, 6); g.strokeEllipse(16, -41, 9, 6);
+    c.add(g);
+    return this.popIn(c);
   }
 
   makeHoaGiay(x, y) {
@@ -1630,6 +1723,11 @@ class Rooftop extends Phaser.Scene {
   paintLights(p) {
     const g = this.glow; g.clear();
     const on = p.lamp;
+    // Đèn lồng trang trí (bản 0.15) sáng ấm khi trời tối
+    if (this.lantern && on > 0.02) {
+      g.fillStyle(0xffc46a, 0.22 * on); g.fillCircle(this.lantern.x, this.lantern.y, 22);
+      g.fillStyle(0xffd98a, 0.35 * on); g.fillCircle(this.lantern.x, this.lantern.y, 11);
+    }
     this.bulbs.forEach(b => {
       if (on > 0.02) { g.fillStyle(0xffd98a, 0.28 * on); g.fillCircle(b.x, b.y + 2, 9); }
       g.fillStyle(mixColor(0xf3ead7, 0xffe6a6, on), 1); g.lineStyle(1.5, INK, 1);

@@ -402,3 +402,16 @@
   .chips.sub { gap: 1.6cqw; margin-top: -1cqw; }
   .chips.sub .chip { padding: 1.2cqw 2.8cqw; font-size: 3cqw; min-height: 28px; border-width: 0.5cqw; }
   .chips.sub .chip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+
+  /* ---------- Sân đẹp (bản 0.15) ---------- */
+  .beauty { display: grid; gap: 1.6cqw; padding: 2.4cqw; border-radius: 3.6cqw; background: #fdf0f6; border: 0.6cqw solid #ef9cc4; }
+  .beauty-head { display: grid; gap: 1.2cqw; font-size: 3.3cqw; }
+  .beauty .lvl-bigbar i { background: #e0559a; }
+  .beauty-perks { list-style: none; margin: 0; padding: 0; display: grid; gap: 1cqw; }
+  .beauty-perks li { display: grid; grid-template-columns: 7cqw 1fr; gap: 2cqw; align-items: center; font-size: 3cqw; line-height: 1.35; color: var(--muted); }
+  .beauty-perks li b { display: grid; place-items: center; height: 6cqw; border-radius: 999px; background: var(--paper-2); color: var(--ink); font: 700 3cqw/1 var(--font-display); }
+  .beauty-perks li.done { color: var(--ink); font-weight: 600; }
+  .beauty-perks li.done b { background: #e0559a; color: #fff; }
+  .beauty-perks li.done span::after { content: ' ✓'; color: var(--leaf); }
+  .beauty-line { font-weight: 600; color: #b23c79 !important; }
+  .shop-row.owned { opacity: 0.75; }
