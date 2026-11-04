@@ -1,7 +1,7 @@
 // Bảng dữ liệu của game. Muốn cân bằng lại game thì sửa số ở đây, không cần đụng vào code khác.
 // Đơn vị thời gian là mili giây; dùng các hằng PHUT, GIO cho dễ đọc.
 
-export const APP_VERSION = '0.11.0';
+export const APP_VERSION = '0.12.0';
 
 const PHUT = 60 * 1000;
 const GIO = 60 * PHUT;
@@ -96,11 +96,24 @@ export const ITEMS = {
   ot:            { kind: 'produce', unit: 'trai' },
   ca_chua:       { kind: 'produce', unit: 'trai' },
   trung_ga:      { kind: 'animal', unit: 'qua', sellPrice: 8 },
-  thuc_an_ga:    { kind: 'supply', unit: 'bao', price: 4 }
+  thuc_an_ga:    { kind: 'supply', unit: 'bao', price: 4 },
+  // F04 Phân bón (bản 0.12): mỗi lứa cây bón một gói, xem FERTILIZERS bên dưới
+  phan_lon_nhanh: { kind: 'supply', unit: 'goi', price: 5 },
+  phan_sai_qua:   { kind: 'supply', unit: 'goi', price: 8 }
+};
+
+// ---------- Phân bón (F04, bản 0.12) ----------
+// Chạm cây đang lớn để bón. Mỗi lứa chỉ bón một lần (một trong hai loại); thu hoạch xong lứa mới bón tiếp được.
+//   grow:  cây lớn nhanh gấp `speed` lần cho tới khi chín (cả lúc đã tưới lẫn lúc khô đất)
+//   yield: lần thu của lứa này thêm `bonus` phần sản lượng, làm tròn, ít nhất 1
+// Giá đặt để phân lớn nhanh đáng dùng cho cây lâu, phân sai quả lời với cây quả đắt (cà chua, ớt).
+export const FERTILIZERS = {
+  phan_lon_nhanh: { effect: 'grow', speed: 1.5, color: 0x8cc63f },
+  phan_sai_qua:   { effect: 'yield', bonus: 0.5, color: 0xf08a3c }
 };
 
 // ---------- Tiệm tạp hóa anh Bảo (F11) ----------
-export const SHOP_BUY = ['hat_rau_muong', 'hat_cai', 'hat_hung_que', 'hat_dua_leo', 'hat_ot', 'hat_ca_chua', 'thuc_an_ga'];
+export const SHOP_BUY = ['hat_rau_muong', 'hat_cai', 'hat_hung_que', 'hat_dua_leo', 'hat_ot', 'hat_ca_chua', 'thuc_an_ga', 'phan_lon_nhanh', 'phan_sai_qua'];
 export const SHOP_SELL_KINDS = ['produce', 'animal'];
 // Mỗi lần nâng cấp túi đồ thêm 4 ô; giá tăng dần
 export const BAG_UPGRADES = [{ slots: 4, price: 60 }, { slots: 4, price: 120 }, { slots: 4, price: 200 }];
@@ -180,12 +193,12 @@ export const XP = {
 // 10 level đầu. xp: tổng điểm KN cần để đạt level đó (lên nhanh lúc đầu, chậm dần).
 // unlock: mở khóa · reward: quà khi lên level (xu và vật phẩm; túi đầy thì đổi vật phẩm ra xu)
 //   seeds: hạt bán ở tiệm · neighbor: hàng xóm bắt đầu đặt đơn · boxes: mua thêm thùng xốp
-//   bag: nâng cấp túi đồ · chickens: thêm gà · decor: món trang trí sân
+//   bag: nâng cấp túi đồ · chickens: thêm gà · decor: món trang trí sân · items: món khác bán ở tiệm (phân bón)
 export const LEVELS = [
   { xp: 0,   unlock: { seeds: ['hat_rau_muong', 'hat_cai'], neighbors: ['ba_tu', 'be_na'] } },
   { xp: 20,  unlock: { seeds: ['hat_hung_que'], boxes: true },              reward: { coins: 20, items: { hat_hung_que: 2 } } },
-  { xp: 50,  unlock: { seeds: ['hat_dua_leo'] },                            reward: { coins: 25, items: { hat_dua_leo: 2 } } },
-  { xp: 90,  unlock: { neighbors: ['co_mai'] },                             reward: { coins: 30 } },
+  { xp: 50,  unlock: { seeds: ['hat_dua_leo'], items: ['phan_lon_nhanh'] }, reward: { coins: 25, items: { hat_dua_leo: 2, phan_lon_nhanh: 2 } } },
+  { xp: 90,  unlock: { neighbors: ['co_mai'], items: ['phan_sai_qua'] },    reward: { coins: 30, items: { phan_sai_qua: 2 } } },
   { xp: 140, unlock: { seeds: ['hat_ot'], bag: true },                      reward: { coins: 35, items: { hat_ot: 2 } } },
   { xp: 200, unlock: { neighbors: ['anh_tuan'] },                           reward: { coins: 40, items: { thuc_an_ga: 5 } } },
   { xp: 270, unlock: { seeds: ['hat_ca_chua'] },                            reward: { coins: 45, items: { hat_ca_chua: 2 } } },

@@ -68,6 +68,22 @@ export const T = {
   float_planted: 'Chín sau {time}',
   float_left: 'Chín sau {time}',
   float_regrow: 'Ra lứa mới sau {time}',
+
+  // F04 Phân bón
+  fert_title: 'Bón phân',
+  fert_box: '{crop}: chín sau khoảng {time}',
+  fert_hint: 'Mỗi lứa cây chỉ bón được một gói. Thu hoạch xong, lứa mới bón tiếp được.',
+  fert_desc_phan_lon_nhanh: 'Cây lớn nhanh gấp rưỡi tới khi chín: còn khoảng {time}.',
+  fert_desc_phan_sai_qua: 'Lần thu này được thêm {n} {unit} {noun}.',
+  fert_use: 'Bón',
+  fert_none_left: 'Hết phân',
+  fert_buy_hint: 'Mua thêm phân ở tiệm anh Bảo.',
+  float_fert_grow: 'Lớn nhanh hơn!',
+  float_fert_yield: 'Thu thêm +{n}',
+  float_fert_done: 'Đã bón phân',
+  shop_desc_phan_lon_nhanh: 'Cây lớn nhanh gấp rưỡi',
+  shop_desc_phan_sai_qua: 'Thu thêm khoảng một nửa',
+  unlock_item: '{item} ở tiệm anh Bảo. Chạm cây đang lớn để bón',
   watered_many: 'Đã tưới {n} cây.',
   water_nothing: 'Không có cây nào cần tưới lúc này.',
 
@@ -350,7 +366,9 @@ export const T = {
   item_ot: 'Trái ớt',
   item_ca_chua: 'Trái cà chua',
   item_trung_ga: 'Trứng gà',
-  item_thuc_an_ga: 'Thức ăn gà'
+  item_thuc_an_ga: 'Thức ăn gà',
+  item_phan_lon_nhanh: 'Phân lớn nhanh',
+  item_phan_sai_qua: 'Phân sai quả'
 };
 
 // Thay {tên} trong câu bằng giá trị: fmt(T.welcome_back, { time: '2 giờ' })

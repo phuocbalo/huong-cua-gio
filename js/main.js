@@ -6,7 +6,7 @@ import { GameClock } from './clock.js';
 import { UI } from './ui.js';
 import { Pwa } from './pwa.js';
 import { createGame } from './scene.js';
-import { ITEMS } from './config.js';
+import { ITEMS, FERTILIZERS } from './config.js';
 import { T, fmt } from './text.vi.js';
 import { duration } from './util.js';
 import { CROP_COLOR } from './icons.js';
@@ -74,6 +74,7 @@ async function boot() {
       stage: farm.stageOf(b),
       dry: farm.isDry(b, t),
       ripe: farm.isRipe(b),
+      fert: b.crop && !farm.isRipe(b) ? b.fert || null : null,
       // Tiến độ lứa hiện tại cho thanh trên thùng; cây chín lại tính từ lúc vừa thu
       grow: !b.crop ? 0 : b.regrowing ? (b.progress - farm.REGROW_FROM) / (1 - farm.REGROW_FROM) : b.progress
     }));
@@ -370,9 +371,36 @@ async function boot() {
       waterBox(i, false);
       store.flush();
       tutor.event('water', i);
+    } else if (!b.fert && s.tutorialDone && hasFertilizer()) {
+      openFertPicker(i);   // F04: cây đang lớn, chưa bón, có phân trong túi → mở bảng bón phân
     } else {
       if (scene) scene.floatAtBox(i, fmt(b.regrowing ? T.float_regrow : T.float_left, { time: duration(farm.timeLeft(b, t)) }));
     }
+    renderBoxes();
+    ui.refreshOpenSheets();
+  }
+
+  // ----- F04 Bón phân -----
+  const FERT_IDS = Object.keys(FERTILIZERS);
+  const hasFertilizer = () => FERT_IDS.some(id => inv.count(state().inventory, id) > 0);
+  function openFertPicker(i) {
+    const b = state().boxes[i], t = now();
+    sound('open');
+    const rows = FERT_IDS.map(id => {
+      const n = inv.count(state().inventory, id), f = FERTILIZERS[id];
+      const desc = f.effect === 'grow'
+        ? fmt(T.fert_desc_phan_lon_nhanh, { time: duration(farm.timeLeft({ ...b, fert: id }, t)) })
+        : fmt(T.fert_desc_phan_sai_qua, { n: farm.yieldBonus(b, id), unit: unitOf(b.crop), noun: nounOf(b.crop) });
+      return { id, n, desc };
+    });
+    ui.openFertPicker(i, fmt(T.fert_box, { crop: T['crop_' + b.crop], time: duration(farm.timeLeft(b, t)) }), rows);
+  }
+  function onFertilize(i, id) {
+    const r = farm.fertilize(state(), i, id, now());
+    if (!r.ok) { sound('deny'); if (r.reason === 'already') ui.toast(T.float_fert_done); return; }
+    if (scene) { scene.fertFx(i, FERTILIZERS[id].color); scene.floatAtBox(i, r.effect === 'grow' ? T.float_fert_grow : fmt(T.float_fert_yield, { n: r.bonus })); }
+    sound('feed');
+    store.flush();
     renderBoxes();
     ui.refreshOpenSheets();
   }
@@ -455,7 +483,7 @@ async function boot() {
     store, clock, pwa,
     onFrameResize: () => { if (game) game.scale.refresh(); },
     onTimeChange: h => { if (scene) scene.applyTime(h); audio.setTime(h); },
-    onWaterAll, onPlant, onSkip, onAddSeeds, onFillBag, onSimAway, onNextDay, onAddDust
+    onWaterAll, onPlant, onFertilize, onSkip, onAddSeeds, onFillBag, onSimAway, onNextDay, onAddDust
   });
   ui.init();
   const eco = new EconomyUI(ui, store, ecoHandlers, now);

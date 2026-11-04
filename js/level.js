@@ -28,11 +28,11 @@ export function progress(s) {
   return { level: lv, max: false, have: xp - from, need: to - from, frac: (xp - from) / (to - from), left: to - xp };
 }
 
-// Level cần để mở một thứ. kind: 'seeds' | 'neighbors' | 'boxes' | 'bag' | 'decor'
+// Level cần để mở một thứ. kind: 'seeds' | 'neighbors' | 'items' | 'boxes' | 'bag' | 'decor'
 export function unlockLevel(kind, key) {
   for (let i = 0; i < LEVELS.length; i++) {
     const u = LEVELS[i].unlock || {};
-    if (kind === 'seeds' || kind === 'neighbors') { if ((u[kind] || []).includes(key)) return i + 1; }
+    if (kind === 'seeds' || kind === 'neighbors' || kind === 'items') { if ((u[kind] || []).includes(key)) return i + 1; }
     else if (u[kind] && (key == null || u[kind] === key)) return i + 1;
   }
   return 1;   // không có trong bảng: mở sẵn từ đầu
@@ -40,9 +40,10 @@ export function unlockLevel(kind, key) {
 
 export const isUnlocked = (s, kind, key) => levelNow(s) >= unlockLevel(kind, key);
 
-// Món ở tiệm: hạt giống mở theo level, món khác (thức ăn gà) bán sẵn
+// Món ở tiệm: hạt giống và phân bón mở theo level; món không có trong bảng level (thức ăn gà) bán sẵn
 export function itemUnlockLevel(id) {
-  return ITEMS[id] && ITEMS[id].kind === 'seed' && SHOP_BUY.includes(id) ? unlockLevel('seeds', id) : 1;
+  if (!ITEMS[id] || !SHOP_BUY.includes(id)) return 1;
+  return unlockLevel(ITEMS[id].kind === 'seed' ? 'seeds' : 'items', id);
 }
 
 // Điểm KN cho một việc. what: 'harvest' (tier) | 'deliver' | 'feed' | 'eggs' | 'dust' (số vệt)

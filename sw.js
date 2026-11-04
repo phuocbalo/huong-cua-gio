@@ -1,6 +1,6 @@
 // Bộ nhớ offline của game.
 // Mỗi lần phát hành bản mới, tăng VERSION để trình duyệt tải lại toàn bộ.
-const VERSION = '0.11.0';
+const VERSION = '0.12.0';
 const CACHE = 'san-thuong-' + VERSION;
 
 // Mọi thứ game cần để chạy khi tắt mạng.

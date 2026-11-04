@@ -871,6 +871,11 @@ class Rooftop extends Phaser.Scene {
     c.add(c.bar);
     c.barKey = '';
 
+    // F04: dấu bao phân nhỏ ở góc thùng khi lứa này đã bón
+    c.fertG = this.add.graphics().setVisible(false);
+    c.add(c.fertG);
+    c.fertKey = '';
+
     c.viewKey = '';
 
     return c;
@@ -881,12 +886,13 @@ class Rooftop extends Phaser.Scene {
   drawBar(c, v) {
     const show = !!v.crop && !v.ripe;
     const f = Math.max(0, Math.min(1, v.grow || 0));
-    const key = show ? Math.round(f * 100) + '|' + v.dry : 'off';
+    const key = show ? Math.round(f * 100) + '|' + v.dry + '|' + !!v.fert : 'off';
     if (key === c.barKey) return;
     c.barKey = key;
     c.bar.setVisible(show);
     if (!show) return;
-    const g = c.bar, x = -36, y = 7, w = 72, h = 13, r = 6.5;
+    // Lứa đã bón phân: thanh ngắn lại một chút để chừa chỗ cho dấu bao phân bên trái (F04)
+    const g = c.bar, x = v.fert ? -24 : -36, y = 7, w = v.fert ? 60 : 72, h = 13, r = 6.5;
     g.clear();
     g.fillStyle(0xe7dccb, 1); g.fillRoundedRect(x, y, w, h, r);
     const fw = Math.max(h, w * f);
@@ -895,6 +901,24 @@ class Rooftop extends Phaser.Scene {
       g.fillStyle(0xffffff, 0.35); g.fillRoundedRect(x + 3, y + 2, Math.max(0, fw - 6), 3.5, 1.75);
     }
     g.lineStyle(2.6, INK, 1); g.strokeRoundedRect(x, y, w, h, r);
+  }
+
+  // F04: bao phân nhỏ ở góc trước bên trái thùng; màu theo loại phân (config FERTILIZERS)
+  drawFert(c, fert) {
+    const key = fert || '';
+    if (key === c.fertKey) return;
+    c.fertKey = key;
+    const g = c.fertG; g.clear(); g.setVisible(!!fert);
+    if (!fert) return;
+    const col = fert === 'phan_sai_qua' ? 0xf08a3c : 0x8cc63f;
+    const x = -45, y = 1;
+    g.fillStyle(0xfff8ec, 1); g.lineStyle(2.4, INK, 1);
+    g.fillRoundedRect(x - 2, y - 2, 22, 26, 5); g.strokeRoundedRect(x - 2, y - 2, 22, 26, 5);
+    g.fillStyle(col, 1); g.fillRoundedRect(x + 2, y + 6, 14, 15, 3); g.strokeRoundedRect(x + 2, y + 6, 14, 15, 3);
+    g.fillTriangle(x + 4, y + 6, x + 14, y + 6, x + 9, y + 1); g.lineBetween(x + 4, y + 6, x + 9, y + 1); g.lineBetween(x + 14, y + 6, x + 9, y + 1);
+    g.lineStyle(2, INK, 1);
+    if (fert === 'phan_sai_qua') { g.lineBetween(x + 9, y + 10, x + 9, y + 18); g.lineBetween(x + 5, y + 14, x + 13, y + 14); }
+    else { g.lineBetween(x + 9, y + 18, x + 9, y + 10); g.lineBetween(x + 6, y + 13, x + 9, y + 10); g.lineBetween(x + 12, y + 13, x + 9, y + 10); }
   }
 
   paintSoil(c, wet) {
@@ -1042,6 +1066,7 @@ class Rooftop extends Phaser.Scene {
     const c = this.boxes[i];
     if (!c) return;
     this.drawBar(c, v);
+    this.drawFert(c, v.fert);
     const key = [v.crop, v.stage, v.dry, v.ripe].join('|');
     if (key === c.viewKey) return;
     const prev = c.viewKey.split('|');
@@ -1062,6 +1087,20 @@ class Rooftop extends Phaser.Scene {
       const d = this.add.circle(p.x, p.y - 4, 2.4, 0x7a5236);
       this.tweens.add({ targets: d, x: p.x + (k - 2.5) * 7, y: p.y - 14 - (k % 2) * 6, alpha: 0, duration: 420, ease: 'Quad.easeOut', onComplete: () => d.destroy() });
     }
+  }
+
+  // F04: hạt phân rắc xuống đất rồi lấp lánh nhẹ
+  fertFx(i, color) {
+    if (reduceMotion) return;
+    const p = this.boxWorld(i);
+    for (let k = 0; k < 12; k++) {
+      const d = this.add.circle(p.x - 26 + k * 4.7, p.y - 58 - (k % 3) * 7, 2.6, color).setStrokeStyle(1, INK);
+      this.tweens.add({ targets: d, y: p.y - 4 + (k % 2) * 3, delay: k * 30, duration: 380, ease: 'Quad.easeIn', onComplete: () => {
+        this.tweens.add({ targets: d, alpha: 0, scale: 0.4, duration: 260, onComplete: () => d.destroy() });
+      } });
+    }
+    const sp = this.makeSparkle().setPosition(p.x + 22, p.y - 40).setScale(0.9);
+    this.time.delayedCall(1100, () => sp.destroy());
   }
 
   waterFx(i) {

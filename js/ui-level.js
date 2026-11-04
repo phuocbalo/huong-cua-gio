@@ -24,6 +24,7 @@ const ICON = {
 export function unlockLines(u) {
   const out = [];
   (u.seeds || []).forEach(id => out.push({ ico: itemIcon(id), text: fmt(T.unlock_seed, { item: T['item_' + id] }) }));
+  (u.items || []).forEach(id => out.push({ ico: itemIcon(id), text: fmt(T.unlock_item, { item: T['item_' + id] }) }));
   (u.neighbors || []).forEach(n => out.push({ ico: ICON.neighbor(n), text: fmt(T.unlock_neighbor, { name: T['name_' + n] }) }));
   if (u.boxes) out.push({ ico: ICON.boxes, text: T.unlock_boxes });
   if (u.bag) out.push({ ico: ICON.bag, text: T.unlock_bag });

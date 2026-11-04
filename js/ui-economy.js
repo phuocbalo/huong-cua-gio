@@ -145,7 +145,7 @@ export class EconomyUI {
         }
         html += `<li class="shop-row${tier ? ' tier-' + tier : ''}">
           <span class="ico">${itemIcon(id)}</span>
-          <span class="meta"><b>${T['item_' + id]}${tier ? ` <i class="tier-tag">${T['tier_' + tier]}</i>` : ''}</b><small>${fmt(T.shop_price, { price, unit: unitOf(id) })} · ${fmt(T.shop_have, { n: inv.count(s.inventory, id), price, unit: unitOf(id) }).split(' · ')[0]}</small>${why ? `<small class="why">${why}</small>` : ''}</span>
+          <span class="meta"><b>${T['item_' + id]}${tier ? ` <i class="tier-tag">${T['tier_' + tier]}</i>` : ''}</b><small>${T['shop_desc_' + id] ? T['shop_desc_' + id] + ' · ' : ''}${fmt(T.shop_price, { price, unit: unitOf(id) })} · ${fmt(T.shop_have, { n: inv.count(s.inventory, id), price, unit: unitOf(id) }).split(' · ')[0]}</small>${why ? `<small class="why">${why}</small>` : ''}</span>
           <span class="acts">
             <button class="btn small${one.ok ? ' primary' : ''}" type="button" data-act="buy" data-id="${id}" data-qty="1"${one.ok ? '' : ' disabled'}>${T.shop_buy_one}</button>
             <button class="btn small" type="button" data-act="buy" data-id="${id}" data-qty="5"${five.ok ? '' : ' disabled'}>${T.shop_buy_five}</button>

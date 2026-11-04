@@ -24,13 +24,15 @@ const WEATHER_ICONS = {
 };
 
 export class UI {
-  constructor({ store, clock, pwa, onFrameResize, onTimeChange, onWaterAll, onPlant, onSkip, onAddSeeds, onFillBag, onSimAway, onNextDay, onAddDust }) {
+  constructor({ store, clock, pwa, onFrameResize, onTimeChange, onWaterAll, onPlant, onFertilize, onSkip, onAddSeeds, onFillBag, onSimAway, onNextDay, onAddDust }) {
     this.onAddDust = onAddDust;
     this.onNextDay = onNextDay;
     this.onSimAway = onSimAway;
     this.onFillBag = onFillBag;
     this.onWaterAll = onWaterAll;
     this.onPlant = onPlant;
+    this.onFertilize = onFertilize;
+    this.fertBox = -1;
     this.onSkip = onSkip;
     this.onAddSeeds = onAddSeeds;
     this.seedBox = -1;
@@ -82,6 +84,13 @@ export class UI {
       const box = this.seedBox;
       this.closeWrap($('seedWrap'));
       this.onPlant(box, b.dataset.seed);
+    });
+    $('fertList').addEventListener('click', e => {
+      const b = e.target.closest('button[data-fert]');
+      if (!b || b.disabled) return;
+      const box = this.fertBox;
+      this.closeWrap($('fertWrap'));
+      this.onFertilize(box, b.dataset.fert);
     });
     document.querySelectorAll('#bagTabs .chip').forEach(c => c.addEventListener('click', () => {
       this.bagKind = c.dataset.kind;
@@ -229,6 +238,20 @@ export class UI {
     });
     $('seedList').innerHTML = rows.join('');
     this.openWrap($('seedWrap'), 'button[data-seed]:not([disabled])');
+  }
+
+  // ----- F04 Bảng bón phân -----
+  // rows: [{ id, n, desc }] — các loại phân và dòng mô tả tác dụng cho cây này
+  openFertPicker(boxIndex, line, rows) {
+    this.fertBox = boxIndex;
+    $('fertBox').textContent = line;
+    $('fertList').innerHTML = rows.map(r => `<li class="seed-row${r.n ? '' : ' empty'}">
+        <span class="ico">${itemIcon(r.id)}</span>
+        <span class="meta"><b>${T['item_' + r.id]}</b><small>${r.desc}</small></span>
+        <span class="qty" aria-label="${r.n}">×${r.n}</span>
+        <button class="btn small${r.n ? ' primary' : ''}" type="button" data-fert="${r.id}"${r.n ? '' : ' disabled'}>${r.n ? T.fert_use : T.fert_none_left}</button>
+      </li>`).join('') + (rows.some(r => !r.n) ? `<li class="note">${T.fert_buy_hint}</li>` : '');
+    this.openWrap($('fertWrap'), 'button[data-fert]:not([disabled])');
   }
 
   // ----- F20 Trong lúc bạn đi vắng -----

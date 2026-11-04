@@ -10,8 +10,9 @@
 //   wateredUntil  tưới còn tác dụng tới lúc này
 //   harvestsLeft  còn thu được mấy lần
 //   regrowing     đang chín lại sau một lần thu (cây thu nhiều lần)
+//   fert          phân đã bón cho lứa này (F04), null nếu chưa bón
 
-import { CROPS, ITEMS, STAGES, UNWATERED_SPEED, WATER_DURATION } from './config.js';
+import { CROPS, ITEMS, STAGES, UNWATERED_SPEED, WATER_DURATION, FERTILIZERS } from './config.js';
 import * as inv from './inventory.js';
 import * as weather from './weather.js';
 
@@ -20,10 +21,35 @@ export const REGROW_FROM = STAGES.find(s => s.key === 'grown').from;
 
 export const emptyBox = () => ({ crop: null });
 
-// Thời gian cả lứa hiện tại (0 → 1) nếu luôn được tưới
+// Thời gian cả lứa hiện tại (0 → 1) nếu luôn được tưới (chưa tính phân bón)
 export function cycleTime(box) {
   const c = CROPS[box.crop];
   return box.regrowing ? c.regrowTime / (1 - REGROW_FROM) : c.growTime;
+}
+
+// ----- F04 Phân bón -----
+const fertOf = box => (box.fert && FERTILIZERS[box.fert]) || null;
+// Tốc độ lớn nhân thêm nhờ phân lớn nhanh
+export const speedOf = box => { const f = fertOf(box); return f && f.effect === 'grow' ? f.speed : 1; };
+// Số nông sản thêm khi thu lứa này nhờ phân sai quả
+export function yieldBonus(box, fertId = box.fert) {
+  const f = FERTILIZERS[fertId];
+  if (!box.crop || !f || f.effect !== 'yield') return 0;
+  return Math.max(1, Math.round(CROPS[box.crop].yield * f.bonus));
+}
+export const isFertilizer = id => !!FERTILIZERS[id];
+
+// Bón phân. Trả về { ok, effect } hoặc { ok: false, reason: 'empty' | 'ripe' | 'already' | 'not_fert' | 'none' }
+export function fertilize(state, index, fertId, now) {
+  const box = state.boxes[index];
+  if (!box || !box.crop) return { ok: false, reason: 'empty' };
+  if (!isFertilizer(fertId)) return { ok: false, reason: 'not_fert' };
+  update(box, now);   // phần đã lớn trước lúc bón tính theo tốc độ cũ
+  if (isRipe(box)) return { ok: false, reason: 'ripe' };
+  if (box.fert) return { ok: false, reason: 'already' };
+  if (!inv.remove(state.inventory, fertId, 1)) return { ok: false, reason: 'none' };
+  box.fert = fertId;
+  return { ok: true, effect: FERTILIZERS[fertId].effect, bonus: yieldBonus(box) };
 }
 
 // Tính tiến độ từ lần trước tới `now`. Phần có tưới (bằng bình tưới hoặc nhờ mưa, F09) lớn đủ tốc độ,
@@ -39,7 +65,7 @@ export function update(box, now) {
   const watered = weather.total(wet);
   const effective = watered + (dt - watered) * UNWATERED_SPEED;
   const before = stageOf(box);
-  box.progress = box.progress + effective / cycleTime(box);
+  box.progress = box.progress + effective * speedOf(box) / cycleTime(box);
   // Cộng dồn từng giây sinh sai số làm tròn (0,99999…): coi như đã chín
   if (box.progress > 1 - 1e-9) box.progress = 1;
   return stageOf(box) !== before;
@@ -73,7 +99,8 @@ export function plant(state, index, seedId, now) {
     lastT: now,
     wateredUntil: 0,
     harvestsLeft: CROPS[item.crop].harvests,
-    regrowing: false
+    regrowing: false,
+    fert: null
   };
   return { ok: true };
 }
@@ -96,7 +123,7 @@ export function harvest(state, index, now) {
   const box = state.boxes[index];
   update(box, now);
   if (!isRipe(box)) return { ok: false, reason: 'not_ripe' };
-  const crop = box.crop, qty = CROPS[crop].yield;
+  const crop = box.crop, qty = CROPS[crop].yield + yieldBonus(box);
   if (!inv.add(state.inventory, crop, qty)) return { ok: false, reason: 'full' };
   box.harvestsLeft -= 1;
   if (box.harvestsLeft <= 0) {
@@ -105,6 +132,7 @@ export function harvest(state, index, now) {
     box.progress = REGROW_FROM;
     box.regrowing = true;
     box.lastT = now;
+    box.fert = null;   // lứa mới bón lại được
   }
   return { ok: true, crop, qty };
 }
@@ -112,7 +140,7 @@ export function harvest(state, index, now) {
 // Còn bao lâu nữa chín, tính theo tình trạng tưới hiện tại (hết tác dụng tưới thì lớn chậm lại)
 export function timeLeft(box, now) {
   if (!box.crop || box.progress >= 1) return 0;
-  const need = (1 - box.progress) * cycleTime(box);   // cần bấy nhiêu thời gian "đủ tốc độ"
+  const need = (1 - box.progress) * cycleTime(box) / speedOf(box);   // cần bấy nhiêu thời gian "đủ tốc độ"
   const wateredLeft = Math.max(0, moistUntil(box, now) - now);
   if (need <= wateredLeft) return need;
   return wateredLeft + (need - wateredLeft) / UNWATERED_SPEED;

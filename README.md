@@ -15,7 +15,7 @@ Bản chơi thử: https://phuocbalo.github.io/huong-cua-gio/
 | `js/text.vi.js` | **Mọi câu chữ tiếng Việt**. Thêm tiếng Anh: sao chép thành `text.en.js` rồi dịch |
 | `js/save.js` | Lưu dữ liệu trong máy (IndexedDB), có số phiên bản để nâng cấp bản lưu cũ |
 | `js/clock.js` | Đồng hồ game: tính thời gian đã trôi khi tắt game, không chạy lùi khi giờ máy bị lùi |
-| `js/farm.js` | Luật trồng trọt: gieo, tưới, tính tiến độ, thu hoạch |
+| `js/farm.js` | Luật trồng trọt: gieo, tưới, tính tiến độ, thu hoạch, bón phân (F04) |
 | `js/inventory.js` | Luật túi đồ: số ô, gộp cùng loại, đầy thì từ chối |
 | `js/icons.js` | Biểu tượng vật phẩm |
 | `js/coop.js` | Luật nuôi gà: cho ăn mỗi ngày, đẻ trứng, nhặt trứng |
@@ -31,7 +31,7 @@ Bản chơi thử: https://phuocbalo.github.io/huong-cua-gio/
 | `js/weather.js` | Luật thời tiết (F09): lịch nắng, mây, gió, mưa theo khối 6 giờ, tính từ một con số lưu trong bản lưu; mưa tưới cây kể cả lúc tắt game |
 | `js/daylight.js` | Màu trời, phố, đèn cho từng giờ trong ngày; chuyển dần giữa các khung giờ |
 | `js/scene.js` | Cảnh sân thượng vẽ bằng Phaser (hình tạm) |
-| `tests/` | Kiểm thử luật chơi: `node tests/farm.test.mjs`, `node tests/daylight.test.mjs`, `node tests/coop.test.mjs`, `node tests/dust.test.mjs`, `node tests/economy.test.mjs`, `node tests/settings.test.mjs`, `node tests/tutorial.test.mjs`, `node tests/level.test.mjs`, `node tests/weather.test.mjs` |
+| `tests/` | Kiểm thử luật chơi: `node tests/farm.test.mjs`, `node tests/daylight.test.mjs`, `node tests/coop.test.mjs`, `node tests/dust.test.mjs`, `node tests/economy.test.mjs`, `node tests/settings.test.mjs`, `node tests/tutorial.test.mjs`, `node tests/level.test.mjs`, `node tests/weather.test.mjs`, `node tests/fertilizer.test.mjs` |
 | `js/ui.js` | Điều khiển giao diện HTML |
 | `js/pwa.js` | Bật chơi offline và theo dõi trạng thái |
 | `manifest.webmanifest` | Khai báo PWA: tên app, biểu tượng, mở toàn màn hình, màn dọc |
@@ -136,6 +136,21 @@ Trong bảng "Bản thử" có "Thêm 10 xu" nếu cần thêm xu để thử mu
 - [ ] **I-25** Người chơi mới (cửa sổ ẩn danh, hoặc Cài đặt → Xóa dữ liệu): trong lúc bà Tư hướng dẫn **không** thấy ô "+ 40 xu" ở chỗ trống bên dưới 4 thùng.
 - [ ] **I-25** Đi hết hướng dẫn: ô "+ 40 xu" hiện ra ngay, chạm vào mở bảng mua thùng.
 - [ ] **I-25** Cài đặt → "Xem lại hướng dẫn": ô "+" ẩn đi; xong hướng dẫn thì hiện lại.
+
+## Kiểm thử bản 0.12.0 – Phân bón (F04)
+
+Dùng nút "+50 KN" trong bảng "Bản thử" để lên level nhanh.
+
+- [ ] **Tiệm:** tab "Mua" có "Phân lớn nhanh" (5 xu, mở ở level 3) và "Phân sai quả" (8 xu, mở ở level 4). Chưa đủ level thì mờ và ghi "Mở ở level N". Mỗi dòng có mô tả ngắn tác dụng.
+- [ ] **Lên level 3:** bảng chúc mừng có dòng "Phân lớn nhanh ở tiệm anh Bảo. Chạm cây đang lớn để bón" và quà 2 gói phân lớn nhanh. **Level 4:** tương tự với phân sai quả.
+- [ ] **Bón phân:** có phân trong túi, chạm cây **đang lớn** (đã tưới, chưa chín) → bảng "Bón phân" ghi cây gì, còn bao lâu chín; mỗi loại phân ghi tác dụng cho đúng cây đó ("còn khoảng …", "thêm 2 trái cà chua"), số gói đang có. Loại đã hết thì mờ, có dòng nhắc mua ở tiệm.
+- [ ] Bấm "Bón": hạt phân rắc xuống thùng, chữ nổi "Lớn nhanh hơn!" hoặc "Thu thêm +n"; túi giảm 1 gói; góc trái thùng có dấu bao phân (xanh lá = lớn nhanh, cam = sai quả), thanh tiến độ ngắn lại để chừa chỗ.
+- [ ] **Lớn nhanh:** gieo 2 cây cùng loại, bón 1 cây: cây bón chín trước (nhanh gấp rưỡi), thời gian "chín sau …" ngắn lại.
+- [ ] **Sai quả:** thu cây đã bón được thêm khoảng một nửa (cà chua 3 → 5 trái, rau muống 3 → 5 bó, cải 2 → 3 bó).
+- [ ] **Mỗi lứa bón một lần:** chạm lại cây đã bón chỉ hiện "Chín sau …", không mở bảng. Cây quả thu xong (quay về lứa mới) thì bón tiếp được; phần thêm không dồn sang lứa sau.
+- [ ] Không có phân trong túi, hoặc cây khô (chạm là tưới), hoặc cây chín (chạm là thu): không mở bảng bón phân.
+- [ ] Đóng mở game: dấu bao phân và tác dụng vẫn còn; tắt game lâu cây vẫn lớn nhanh đúng tỉ lệ.
+- [ ] Phân không bán được ở tiệm, hàng xóm không đặt phân.
 
 ## Kiểm thử bản 0.11.0 – Thời tiết (F09)
 
