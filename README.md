@@ -35,7 +35,7 @@ Bản chơi thử: https://phuocbalo.github.io/huong-cua-gio/
 | `js/weather.js` | Luật thời tiết (F09): lịch nắng, mây, gió, mưa theo khối 6 giờ, tính từ một con số lưu trong bản lưu; mưa tưới cây kể cả lúc tắt game |
 | `js/daylight.js` | Màu trời, phố, đèn cho từng giờ trong ngày; chuyển dần giữa các khung giờ |
 | `js/scene.js` | Cảnh sân thượng vẽ bằng Phaser (hình tạm) |
-| `tests/` | Kiểm thử luật chơi: `node tests/farm.test.mjs`, `node tests/daylight.test.mjs`, `node tests/coop.test.mjs`, `node tests/dust.test.mjs`, `node tests/economy.test.mjs`, `node tests/settings.test.mjs`, `node tests/tutorial.test.mjs`, `node tests/level.test.mjs`, `node tests/decor.test.mjs`, `node tests/weather.test.mjs`, `node tests/fertilizer.test.mjs`, `node tests/love.test.mjs`, `node tests/pens.test.mjs`, `node tests/kitchen.test.mjs` |
+| `tests/` | Kiểm thử luật chơi: `node tests/farm.test.mjs`, `node tests/daylight.test.mjs`, `node tests/coop.test.mjs`, `node tests/dust.test.mjs`, `node tests/economy.test.mjs`, `node tests/settings.test.mjs`, `node tests/tutorial.test.mjs`, `node tests/level.test.mjs`, `node tests/decor.test.mjs`, `node tests/weather.test.mjs`, `node tests/fertilizer.test.mjs`, `node tests/love.test.mjs`, `node tests/pens.test.mjs`, `node tests/kitchen.test.mjs`, `node tests/flavor.test.mjs` |
 | `js/ui.js` | Điều khiển giao diện HTML |
 | `js/pwa.js` | Bật chơi offline và theo dõi trạng thái |
 | `manifest.webmanifest` | Khai báo PWA: tên app, biểu tượng, mở toàn màn hình, màn dọc |
@@ -98,6 +98,11 @@ Dùng "Tua +1 giờ", "Tua tới sáng mai" và "Giả lập vắng 8 giờ" tro
 - [ ] **F05** Hết thức ăn (cho ăn đủ 5 ngày): chạm máng hiện "Hết thức ăn gà".
 - [ ] **F05** Túi đầy ("Lấp đầy túi") rồi nhặt trứng: hiện "Túi đồ đã đầy", trứng vẫn nằm trong chuồng.
 - [ ] **F20** Cho gà ăn, đóng game hơn 5 phút rồi mở lại (hoặc "Giả lập vắng 8 giờ"): bảng đi vắng có dòng "Gà đã đẻ 2 quả trứng…". Sang ngày mới thì có dòng "Gà đang đói…".
+
+## Kiểm thử bản 0.16.2 – Sửa lỗi B-01, B-02 (Bug Log)
+
+- [ ] **B-01:** câu phụ dưới mỗi đơn hợp với món được đặt. Đơn rau quả: "Bà nấu cơm cho cả nhà."; đơn trứng: "Ăn sáng rồi mới chạy xe."; đơn lông thỏ, cá giống: "Con muốn khoe với cả lớp!"; đơn món nấu: "Bữa trưa của con với mẹ đó." Không còn câu kiểu "Để bà muối dưa" cho rau muống hay "Để cô làm gỏi cuốn" cho trứng chiên.
+- [ ] **B-02:** khi mũi tên vàng chỉ nút "Giao hàng" (hướng dẫn trả đơn, hoặc bước cuối hướng dẫn bà Tư), mũi tên nằm ở đầu trái nút, trên ảnh người đặt; dòng "+xu · +tim" đọc được.
 
 ## Kiểm thử bản 0.16.1 – Hàng xóm đặt món ăn
 

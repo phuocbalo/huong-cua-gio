@@ -467,6 +467,9 @@ function placeArrow(el) {
   if (!r || r.width <= 0) { arrow.hidden = true; return; }
   const f = $('frame').getBoundingClientRect();
   arrow.hidden = false;
-  arrow.style.left = (r.left + r.width / 2 - f.left) + 'px';
+  // Nút "Giao hàng" (B-02, bản 0.16.2): mũi tên đặt ở đầu trái nút, trên chỗ ảnh người đặt,
+  // không đè lên dòng phần thưởng "+xu · +tim" nằm ngay phía trên giữa nút
+  const atStart = el.matches('[data-act="deliver"]');
+  arrow.style.left = (atStart ? r.left + f.width * 0.07 - f.left : r.left + r.width / 2 - f.left) + 'px';
   arrow.style.top = (r.top - f.top) + 'px';
 }

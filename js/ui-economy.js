@@ -59,6 +59,15 @@ export const nounOf = id => {
   return T['noun_' + id] || T['item_' + id].toLowerCase();
 };
 
+// Loại hàng để chọn câu phụ dưới đơn (B-01): rau quả, trứng, sản phẩm vật nuôi khác, món nấu
+export function flavorKind(id) {
+  const it = ITEMS[id] || {};
+  if (it.kind === 'dish') return 'dish';
+  if (it.kind === 'produce') return 'veg';
+  if (id === 'trung_ga' || id === 'trung_bo_cau' || id === 'trung_ga_ngon') return 'egg';
+  return 'pet';
+}
+
 export class EconomyUI {
   // h: { onSell(id, qty), onBuy(id, qty), onBagUpgrade(), onDeliver(orderId), onSkipOrder(orderId), onBuyBox() }
   constructor(ui, store, h, now) {
@@ -218,7 +227,7 @@ export class EconomyUI {
     if (!list.length) { $('orderList').innerHTML = `<li class="note">${T.order_none}</li>`; return; }
     $('orderList').innerHTML = list.map(o => {
       const have = inv.count(s.inventory, o.item), ready = have >= o.qty;
-      const flavors = T['order_flavor_' + o.from];
+      const flavors = T['order_flavor_' + o.from + '_' + flavorKind(o.item)];
       return `<li class="order-card${ready ? ' ready' : ''}">
         <span class="avatar">${AVATARS[o.from]}</span>
         <span class="txt">
