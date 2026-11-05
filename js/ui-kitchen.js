@@ -49,7 +49,8 @@ export class KitchenUI {
   signature() {
     const s = this.s, st = K.status(s, this.h.now());
     const items = Object.values(RECIPES).flatMap(r => Object.keys(r.needs)).map(id => inv.count(s.inventory, id)).join(',');
-    return [st.key, st.id || '', K.unlocked(s), (s.xp || 0), items].join('|');
+    const ords = ((s.orders && s.orders.list) || []).map(o => o.id + ':' + o.item).join(',');
+    return [st.key, st.id || '', K.unlocked(s), (s.xp || 0), items, ords].join('|');
   }
 
   renderNow() {
@@ -77,9 +78,12 @@ export class KitchenUI {
         return `<li class="shop-row locked"><span class="ico">${itemIcon(id)}</span><span class="meta"><b>${dishName(id)}</b><small>${info}</small></span>
           <span class="acts one"><button class="btn small" type="button" disabled>${fmt(T.recipe_locked, { n: c.level })}</button></span></li>`;
       }
+      // Bản 0.16.1: món đang có hàng xóm đặt thì ghi rõ ai đặt, bao nhiêu
+      const wants = ((s.orders && s.orders.list) || []).filter(o => o.item === id)
+        .map(o => `<small class="ordered">${fmt(T.kitchen_ordered, { name: T['name_' + o.from], qty: o.qty, unit: T['unit_' + r.unit] })}</small>`).join('');
       const label = c.ok ? T.recipe_cook : c.reason === 'busy' ? T.recipe_busy : T.recipe_missing;
       return `<li class="shop-row"><span class="ico">${itemIcon(id)}</span>
-        <span class="meta"><b>${dishName(id)}</b><span class="needs">${needs}</span><small>${info}</small></span>
+        <span class="meta"><b>${dishName(id)}</b><span class="needs">${needs}</span><small>${info}</small>${wants}</span>
         <span class="acts one"><button class="btn small${c.ok ? ' primary' : ''}" type="button" data-cook="${id}"${c.ok ? '' : ' disabled'}>${label}</button></span></li>`;
     }).join('');
   }

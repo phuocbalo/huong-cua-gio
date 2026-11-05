@@ -6,7 +6,7 @@
 // - Hàng xóm mở dần theo level người chơi (NEIGHBORS[...].level, bản 0.10).
 // Mọi thời điểm là thời gian game (gameTime).
 
-import { CROPS, ITEMS, ORDER_SLOTS, ORDER_BONUS, ORDER_EXPIRE, NEIGHBORS, LIKE_CHANCE } from './config.js';
+import { CROPS, ITEMS, ORDER_SLOTS, ORDER_BONUS, ORDER_EXPIRE, NEIGHBORS, LIKE_CHANCE, DISH_ORDERS_MAX, DISH_ORDER_QTY } from './config.js';
 import * as inv from './inventory.js';
 import { sellPrice } from './shop.js';
 import { levelNow } from './level.js';
@@ -38,7 +38,7 @@ export function welcome(state, who, now, rand = Math.random) {
   return true;
 }
 
-// Ghi nhận món người chơi đã có: nông sản, trứng, và nông sản của hạt giống đang có hoặc đang trồng
+// Ghi nhận món người chơi đã có: nông sản, trứng, món đã nấu, và nông sản của hạt giống đang có hoặc đang trồng
 export function syncSeen(state) {
   const seen = new Set(state.seen || []);
   const before = seen.size;
@@ -46,7 +46,7 @@ export function syncSeen(state) {
     const it = ITEMS[id];
     if (!it || it.noOrder) return;
     if (it.kind === 'seed') seen.add(it.crop);
-    else if (it.kind === 'produce' || it.kind === 'animal') seen.add(id);
+    else if (it.kind === 'produce' || it.kind === 'animal' || it.kind === 'dish') seen.add(id);   // món nấu: bản 0.16.1
   });
   state.boxes.forEach(b => { if (b.crop) seen.add(b.crop); });
   if (state.coop && state.coop.chickens > 0) seen.add('trung_ga');
@@ -59,8 +59,12 @@ export function pool(state) {
   return (state.seen || []).filter(id => sellPrice(id) > 0);
 }
 
-// Số lượng hợp lý cho một đơn: theo sản lượng một lần thu, nhân hệ số của người đặt
+export const isDish = id => !!ITEMS[id] && ITEMS[id].kind === 'dish';
+
+// Số lượng hợp lý cho một đơn: theo sản lượng một lần thu, nhân hệ số của người đặt.
+// Món nấu (bản 0.16.1): 1–2 phần, vì nấu mất thời gian và mỗi lần một món.
 function qtyFor(id, who, rand) {
+  if (isDish(id)) return DISH_ORDER_QTY[0] + Math.floor(rand() * (DISH_ORDER_QTY[1] - DISH_ORDER_QTY[0] + 1));
   const y = CROPS[id] ? CROPS[id].yield : 2;
   const lo = 2, hi = Math.max(lo + 1, y * 2);
   const q = lo + Math.floor(rand() * (hi - lo + 1));
@@ -69,7 +73,9 @@ function qtyFor(id, who, rand) {
 
 // forceWho: chọn sẵn người đặt (dùng khi vừa quen một hàng xóm mới)
 export function makeOrder(state, now, rand = Math.random, forceWho = null) {
-  const p = pool(state);
+  // Đã đủ đơn món ăn trên dây phơi thì đơn mới chỉ hỏi nông sản, sản phẩm vật nuôi
+  const dishOrders = state.orders.list.filter(o => isDish(o.item)).length;
+  const p = pool(state).filter(id => dishOrders < DISH_ORDERS_MAX || !isDish(id));
   if (!p.length) return null;
   // Người đặt: ưu tiên người chưa có đơn trên dây phơi
   const people = unlocked(state);
@@ -88,7 +94,7 @@ export function makeOrder(state, now, rand = Math.random, forceWho = null) {
     id: state.orders.nextId++,
     from: who, item, qty,
     coins: Math.ceil(sellPrice(item) * qty * ORDER_BONUS),
-    hearts: qty >= 5 ? 2 : 1,
+    hearts: qty >= 5 || isDish(item) ? 2 : 1,   // đơn món nấu: 2 tim
     createdAt: now
   };
 }

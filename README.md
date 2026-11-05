@@ -99,6 +99,19 @@ Dùng "Tua +1 giờ", "Tua tới sáng mai" và "Giả lập vắng 8 giờ" tro
 - [ ] **F05** Túi đầy ("Lấp đầy túi") rồi nhặt trứng: hiện "Túi đồ đã đầy", trứng vẫn nằm trong chuồng.
 - [ ] **F20** Cho gà ăn, đóng game hơn 5 phút rồi mở lại (hoặc "Giả lập vắng 8 giờ"): bảng đi vắng có dòng "Gà đã đẻ 2 quả trứng…". Sang ngày mới thì có dòng "Gà đang đói…".
 
+## Kiểm thử bản 0.16.1 – Hàng xóm đặt món ăn
+
+Lỗi tìm thấy khi kiểm thử được ghi trong tài liệu **Bug Log – Sân Thượng Xanh** (chưa sửa, chờ quyết định).
+
+- [ ] **Chưa nấu món nào:** dây phơi chỉ có đơn nông sản, trứng, sản phẩm vật nuôi như cũ.
+- [ ] **Nấu xong một món và lấy vào túi:** từ đó hàng xóm có thể đặt món đó (bấm "Đổi đơn khác" vài lần để gặp). Ví dụ "Cô Mai cần 1 đĩa trứng chiên húng quế."
+- [ ] **Đơn món ăn:** 1–2 phần (đĩa hoặc tô), thưởng 2 tim, xu cao hơn bán ở tiệm (khoảng 1,6 lần).
+- [ ] Trên dây phơi **có nhiều nhất 1 đơn món ăn** cùng lúc (đổi đơn, đơn hết hạn cũng vậy).
+- [ ] Mỗi hàng xóm thích một món: bà Tư canh cà chua trứng, bé Na trứng chiên húng quế, cô Mai và chị Hoa dưa leo trộn, anh Tuấn rau muống xào, chú Sáu canh cải, ông Ba trứng bồ câu hấp.
+- [ ] **Bảng Bếp:** món đang được đặt có dòng xanh "Cô Mai đang đặt 1 đĩa món này".
+- [ ] **Giao đơn món ăn:** trừ đúng số món trong túi, nhận xu và tim như đơn thường.
+- [ ] Trứng gà ngon vẫn không được đặt.
+
 ## Kiểm thử bản 0.16.0 – Bếp nhỏ (F16)
 
 Dùng "+50 KN" để lên level 6, "Tua 10 phút" để chờ món chín.

@@ -434,3 +434,4 @@
   .needs { display: flex; flex-wrap: wrap; gap: 1.2cqw; }
   .needs span { font-size: 2.8cqw; padding: 0.3cqw 1.6cqw; border-radius: 999px; background: #eef4e6; color: #3f6b30; font-variant-numeric: tabular-nums; }
   .needs span.short { background: #fbe4dc; color: #b4472e; font-weight: 600; }
+  .shop-row .meta .ordered { color: #3f6b30; font-weight: 600; }

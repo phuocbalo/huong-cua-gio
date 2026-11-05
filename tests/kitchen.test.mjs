@@ -55,10 +55,43 @@ t('túi đầy: món nằm lại trên bếp, không mất', () => {
   const s = fresh(); K.cook(s, 'rau_muong_xao', 0); s.inventory.slots = I.usedSlots(s.inventory);
   assert.equal(K.collect(s, 10 * M).reason, 'full'); assert.equal(s.kitchen.ready, 'rau_muong_xao');
 });
-t('món bán được ở tiệm; hàng xóm không đặt món nấu', () => {
-  const s = fresh(); s.inventory.items.canh_cai = 1; assert.equal(Sh.sell(s, 'canh_cai', 1).coins, C.RECIPES.canh_cai.sell);
-  s.inventory.items.canh_cai = 1; O.syncSeen(s); assert.ok(!s.seen.includes('canh_cai'));
+t('món bán được ở tiệm', () => { const s = fresh(); s.inventory.items.canh_cai = 1; assert.equal(Sh.sell(s, 'canh_cai', 1).coins, C.RECIPES.canh_cai.sell); });
+
+// ----- Bản 0.16.1: hàng xóm đặt món nấu -----
+// Bốc thăm cố định để kiểm thử lặp lại được
+const seeded = seed => { let x = seed; return () => (x = (x * 16807) % 2147483647) / 2147483647; };
+const orderState = () => { const s = fresh(); s.orders = O.newOrders(); s.friends = O.newFriends(); s.seen = []; return s; };
+t('chưa nấu món nào: không có đơn món nấu', () => {
+  const s = orderState(); O.syncSeen(s); for (let i = 0; i < 50; i++) { s.orders.list = []; O.refill(s, 0, seeded(i + 1)); assert.ok(!s.orders.list.some(o => O.isDish(o.item))); }
 });
+t('đã có món trong túi (đã nấu): hàng xóm có thể đặt món đó', () => {
+  const s = orderState(); s.inventory.items.canh_cai = 1; O.syncSeen(s); assert.ok(s.seen.includes('canh_cai'));
+  let found = 0; for (let i = 0; i < 80; i++) { s.orders.list = []; O.refill(s, 0, seeded(i + 1)); found += s.orders.list.filter(o => o.item === 'canh_cai').length; }
+  assert.ok(found > 0);
+});
+t('đơn món nấu: 1–2 phần, thưởng 2 tim, xu cao hơn bán ở tiệm', () => {
+  const s = orderState(); K.IDS.forEach(id => { s.inventory.items[id] = 1; }); O.syncSeen(s);
+  let n = 0;
+  for (let i = 0; i < 200; i++) { s.orders.list = []; O.refill(s, 0, seeded(i + 7));
+    s.orders.list.filter(o => O.isDish(o.item)).forEach(o => { n++; assert.ok(o.qty >= 1 && o.qty <= 2); assert.equal(o.hearts, 2); assert.ok(o.coins > Sh.sellPrice(o.item) * o.qty); }); }
+  assert.ok(n > 20);
+});
+t('trên dây phơi có nhiều nhất 1 đơn món nấu', () => {
+  const s = orderState(); K.IDS.forEach(id => { s.inventory.items[id] = 1; }); O.syncSeen(s);
+  for (let i = 0; i < 200; i++) { s.orders.list = []; O.refill(s, 0, seeded(i + 3)); assert.ok(s.orders.list.filter(o => O.isDish(o.item)).length <= 1); }
+});
+t('đổi đơn hoặc đơn hết hạn cũng không làm thành 2 đơn món nấu', () => {
+  const s = orderState(); K.IDS.forEach(id => { s.inventory.items[id] = 1; }); O.syncSeen(s);
+  for (let i = 0; i < 100; i++) { s.orders.list = []; O.refill(s, 0, seeded(i + 11)); const o = s.orders.list[0]; O.skip(s, o.id, 0, seeded(i + 99));
+    O.expire(s, 4 * 24 * 3600e3, seeded(i + 5)); assert.ok(s.orders.list.filter(x => O.isDish(x.item)).length <= 1); }
+});
+t('giao đơn món nấu: trừ món trong túi, nhận xu', () => {
+  const s = orderState(); s.inventory.items.trung_chien_hung_que = 2; s.orders.list = [{ id: 1, from: 'be_na', item: 'trung_chien_hung_que', qty: 2, coins: 90, hearts: 2, createdAt: 0 }];
+  const c0 = s.coins, r = O.deliver(s, 1, 0, seeded(1)); assert.equal(r.ok, true);
+  assert.equal(I.count(s.inventory, 'trung_chien_hung_que'), 0); assert.ok(s.coins >= c0 + 90);
+});
+t('mỗi hàng xóm thích một món nấu', () => { Object.values(C.NEIGHBORS).forEach(n => assert.ok(n.likes.some(id => O.isDish(id)))); });
+t('trứng gà ngon vẫn không được đặt', () => { const s = orderState(); s.inventory.items.trung_ga_ngon = 2; O.syncSeen(s); assert.ok(!s.seen.includes('trung_ga_ngon')); });
 t('món nằm trong tab Nông sản của túi đồ', () => { const s = fresh(); s.inventory.items = { canh_cai: 2 }; assert.equal(I.slotList(s.inventory, 'produce').length, 1); });
 t('bản lưu cũ chưa có bếp vẫn chạy', () => { const s = fresh(); delete s.kitchen; assert.equal(K.status(s, 0).key, 'idle'); assert.equal(K.cook(s, 'canh_cai', 0).ok, true); });
 

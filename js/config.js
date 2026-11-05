@@ -1,7 +1,7 @@
 // Bảng dữ liệu của game. Muốn cân bằng lại game thì sửa số ở đây, không cần đụng vào code khác.
 // Đơn vị thời gian là mili giây; dùng các hằng PHUT, GIO cho dễ đọc.
 
-export const APP_VERSION = '0.16.0';
+export const APP_VERSION = '0.16.1';
 
 const PHUT = 60 * 1000;
 const GIO = 60 * PHUT;
@@ -123,8 +123,12 @@ export const RECIPES = {
   canh_ca_chua_trung:   { needs: { ca_chua: 2, trung_ga: 2 },   time: 6 * PHUT, sell: 52, unit: 'to' },
   trung_bo_cau_hap:     { needs: { trung_bo_cau: 3, hung_que: 1 }, time: 6 * PHUT, sell: 48, unit: 'dia' }
 };
-// Mỗi món là một vật phẩm trong túi (loại 'dish'), bán ở tiệm; hàng xóm chưa đặt món nấu
-Object.entries(RECIPES).forEach(([id, r]) => { ITEMS[id] = { kind: 'dish', unit: r.unit, sellPrice: r.sell, noOrder: true }; });
+// Mỗi món là một vật phẩm trong túi (loại 'dish'), bán ở tiệm.
+// Bản 0.16.1: hàng xóm đặt cả món nấu (sau khi người chơi đã nấu món đó ít nhất một lần), mỗi đơn 1–2 phần,
+// trên dây phơi có nhiều nhất DISH_ORDERS_MAX đơn món ăn cùng lúc để đơn nông sản vẫn là chính.
+Object.entries(RECIPES).forEach(([id, r]) => { ITEMS[id] = { kind: 'dish', unit: r.unit, sellPrice: r.sell }; });
+export const DISH_ORDERS_MAX = 1;
+export const DISH_ORDER_QTY = [1, 2];
 
 // ---------- Phân bón (F04, bản 0.12) ----------
 // Chạm cây đang lớn để bón. Mỗi lứa chỉ bón một lần (một trong hai loại); thu hoạch xong lứa mới bón tiếp được.
@@ -149,13 +153,14 @@ export const ORDER_EXPIRE = 3 * NGAY;  // đơn để quá 3 ngày: người đ�
 // Hàng xóm mở dần theo level (bản 0.10): level = level người chơi cần đạt để người đó bắt đầu ghé hỏi mua.
 // likes = món hay đặt (7 phần 10 số đơn chọn trong đây nếu người chơi đã có món đó); bulk = hệ số số lượng
 export const NEIGHBORS = {
-  ba_tu:    { level: 1,  likes: ['rau_muong', 'cai', 'ca_chua'] },
-  be_na:    { level: 1,  likes: ['trung_ga', 'dua_leo', 'ca_chua', 'ca_con'] },
-  co_mai:   { level: 4,  likes: ['hung_que', 'cai', 'long_tho'] },
-  anh_tuan: { level: 6,  likes: ['rau_muong', 'trung_ga'], bulk: 0.8 },
-  chu_sau:  { level: 8,  likes: ['trung_ga'] },
-  chi_hoa:  { level: 9,  likes: ['dua_leo', 'hung_que', 'ot'], bulk: 1.5 },
-  ong_ba:   { level: 10, likes: ['ca_chua', 'ot', 'trung_bo_cau'] }
+  // Món nấu (bản 0.16.1) đứng cuối danh sách likes: mỗi người thích một món
+  ba_tu:    { level: 1,  likes: ['rau_muong', 'cai', 'ca_chua', 'canh_ca_chua_trung'] },
+  be_na:    { level: 1,  likes: ['trung_ga', 'dua_leo', 'ca_chua', 'ca_con', 'trung_chien_hung_que'] },
+  co_mai:   { level: 4,  likes: ['hung_que', 'cai', 'long_tho', 'dua_leo_tron'] },
+  anh_tuan: { level: 6,  likes: ['rau_muong', 'trung_ga', 'rau_muong_xao'], bulk: 0.8 },
+  chu_sau:  { level: 8,  likes: ['trung_ga', 'canh_cai'] },
+  chi_hoa:  { level: 9,  likes: ['dua_leo', 'hung_que', 'ot', 'dua_leo_tron'], bulk: 1.5 },
+  ong_ba:   { level: 10, likes: ['ca_chua', 'ot', 'trung_bo_cau', 'trung_bo_cau_hap'] }
 };
 export const LIKE_CHANCE = 0.7;
 

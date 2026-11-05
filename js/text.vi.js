@@ -113,6 +113,7 @@ export const T = {
   kitchen_note: 'Món nấu bán ở tiệm anh Bảo đắt hơn bán riêng nguyên liệu.',
   recipe_info: 'Nấu {time} · bán {price} xu (nguyên liệu {value} xu)',
   recipe_cook: 'Nấu',
+  kitchen_ordered: '{name} đang đặt {qty} {unit} món này',
   recipe_missing: 'Còn thiếu nguyên liệu',
   recipe_busy: 'Bếp đang bận',
   recipe_locked: 'Mở ở level {n}',
