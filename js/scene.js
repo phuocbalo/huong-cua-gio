@@ -1,9 +1,9 @@
 // Cảnh sân thượng vẽ bằng Phaser. Toàn bộ hình ở đây là hình tạm, mang đúng phong cách của game.
-import { W, H, ZOOM, INK } from './config.js';
+import { W, H, ZOOM, INK, DECOR_SPOTS } from './config.js';
 import { skyAt, mixColor, withWeather } from './daylight.js';
 import { rng, reduceMotion } from './util.js';
 
-let hooks = { onReady() {}, onTapBox() {}, onTapCoop() {}, onTapTrough() {}, onTapDust() {}, onTapOrders() {}, onTapBuyBox() {}, onTapChicken() {}, onTapWaterer() {}, onTapLove() {}, onTapPen() {} };
+let hooks = { onReady() {}, onTapBox() {}, onTapCoop() {}, onTapTrough() {}, onTapDust() {}, onTapOrders() {}, onTapBuyBox() {}, onTapChicken() {}, onTapWaterer() {}, onTapLove() {}, onTapPen() {}, onTapDecor() {}, onPickSpot() {} };
 
 // Thùng xốp nhỏ để sân chứa được nhiều thùng. Lưới có chỗ cho tối đa 8 thùng (mua thêm ở F14):
 // hàng 1 hai thùng bên trái (bên phải là sân gà), hàng 2 và 3 mỗi hàng ba thùng. 4 thùng đầu là khối 2×2 bên trái.
@@ -13,18 +13,11 @@ const BOX_SCALE = 0.68;
 // Chuồng gà vẽ to hơn 18%, phóng quanh góc trước bên phải của sân gà
 const COOP_SCALE = 1.18;
 const COOP_ANCHOR = { x: 386, y: 436 };
-// Chỗ đặt đồ trang trí (bản 0.14.3). Mỗi món có chỗ riêng, đã kiểm tra không che chuồng, hàng tim của gà,
-// thùng xốp hay nhau. Toạ độ là chân món đồ. Các chỗ đánh dấu "dành sẵn" để cho hệ thống trang trí sau này.
-export const DECOR_SLOTS = {
-  hoa_giay:  [372, 522],   // mép phải, dưới hàng tim của gà, giữa hai hàng thùng
-  ghe_da:    [318, 487],   // chỗ trống cạnh hàng thùng trên (món thấp; cao hơn ngọn cà chua hàng giữa)
-  den_long:  [20, 548],    // mép trái, dưới hồ cá (món cao mảnh)
-  cay_canh:  [20, 628],    // mép trái, giữa hai hàng thùng dưới
-  chum_nuoc: [372, 612]    // mép phải, giữa hai hàng thùng dưới
-};
+// Chỗ đặt đồ trang trí: từ bản 0.17 (F17) nằm trong config.js (DECOR_SPOTS), người chơi tự chọn món nào đứng chỗ nào.
 // Các chỗ trên sân có thể bám bụi (F23): khe giữa các thùng và mép sân, không nằm dưới thùng hay chuồng gà
-// Bản 0.14: hai chỗ sau sân nhường cho chậu cá và chuồng thỏ (F06), dời xuống khe giữa các thùng
-export const DUST_POS = [[24, 470], [256, 470], [144, 470], [144, 534], [260, 534], [86, 534], [144, 614], [260, 614]];   // không trùng chỗ trang trí
+// Bản 0.14: hai chỗ sau sân nhường cho chậu cá và chuồng thỏ (F06), dời xuống khe giữa các thùng.
+// Bản 0.17: chỗ mép trái (24, 470) nhường cho chỗ đặt đồ trang trí a, dời sang khe dưới ghế đá
+export const DUST_POS = [[330, 534], [256, 470], [144, 470], [144, 534], [260, 534], [86, 534], [144, 614], [260, 614]];   // không trùng chỗ trang trí
 // Cây vẽ to so với thùng (1,5 × 0,68 ≈ cỡ gốc) cho dễ nhìn trên điện thoại
 const PLANT_SCALE = 1.5;
 // Màu quả chín đỏ của cà chua và ớt (đồng bộ với biểu tượng trong icons.js)
@@ -65,6 +58,7 @@ class Rooftop extends Phaser.Scene {
     // Chạm và rê chuột trên sân: thùng xốp (và sau này vệt bụi) được chọn bằng hàm boxAt/dustAt
     this.input.on('pointerup', pointer => {
       if (!this.isCanvasTap(pointer)) return;
+      if (this.placing) return;   // F17: đang chọn chỗ đặt đồ — chỉ các vòng chỗ đặt nhận chạm
       // F07: chạm vào gà để vuốt ve (gà đi lại khắp sân nên dò theo vị trí hiện tại, ưu tiên hơn máng và chuồng)
       const ch = this.chickenAt(pointer.worldX, pointer.worldY);
       if (ch >= 0) { this.petBounce(ch); hooks.onTapChicken(ch); return; }
@@ -940,18 +934,110 @@ class Rooftop extends Phaser.Scene {
   penFloat(k, msg) { const p = this.pens && this.pens[k]; if (p) this.floatAt(p, p.d.x, p.d.y - p.d.h / 2 - 10, msg); }
   penPoint(k) { const p = this.pens[k]; return { x: p.d.x, y: p.d.y }; }
 
-  // ----- Trang trí sân (level 10: chậu hoa giấy) -----
-  // Bản 0.15: mỗi món có chỗ riêng trong DECOR_SLOTS; món mới mua thì nảy ra
-  setDecor(list) {
+  // ----- Trang trí sân (bản 0.15) và bày biện (F17, bản 0.17) -----
+  // view: { id: { spot: 'c' | null, flip } } — món đã có; spot null = đang cất trong kho (ẩn khỏi sân)
+  setDecor(view) {
     this.decorArt = this.decorArt || {};
-    const MAKE = { hoa_giay: (x, y) => this.makeHoaGiay(x, y), ghe_da: (x, y) => this.makeGheDa(x, y), den_long: (x, y) => this.makeDenLong(x, y), cay_canh: (x, y) => this.makeCayCanh(x, y), chum_nuoc: (x, y) => this.makeChumNuoc(x, y) };
-    list.forEach(id => {
-      if (this.decorArt[id] || !MAKE[id] || !DECOR_SLOTS[id]) return;
-      const [x, y] = DECOR_SLOTS[id];
-      const c = MAKE[id](x, y);
-      this.decorArt[id] = c;
-      if (id === 'hoa_giay') this.hoaGiay = c;
+    this.decorAtSpot = {};
+    const MAKE = { hoa_giay: (x, y) => this.makeHoaGiay(x, y), ghe_da: (x, y) => this.makeGheDa(x, y), den_long: (x, y) => this.makeDenLong(x, y), cay_canh: (x, y) => this.makeCayCanh(x, y), chum_nuoc: (x, y) => this.makeChumNuoc(x, y), sen_da: (x, y) => this.makeSenDa(x, y), don_gom: (x, y) => this.makeDonGom(x, y) };
+    this.lantern = null;
+    Object.entries(view || {}).forEach(([id, pl]) => {
+      const sp = pl && pl.spot && DECOR_SPOTS[pl.spot];
+      let c = this.decorArt[id];
+      if (!sp) { if (c) c.setVisible(false); return; }
+      if (!c) {
+        if (!MAKE[id]) return;
+        c = MAKE[id](sp.x, sp.y);
+        c.base = id === 'hoa_giay' ? 0.88 : 1;
+        this.decorArt[id] = c;
+        if (id === 'hoa_giay') this.hoaGiay = c;
+      }
+      const moved = c.x !== sp.x || c.y !== sp.y || !c.visible;
+      c.setVisible(true).setPosition(sp.x, sp.y);
+      const sx = (pl.flip ? -1 : 1) * c.base;
+      if (Math.sign(c.scaleX) !== Math.sign(sx) || moved) {
+        this.tweens.killTweensOf(c);
+        c.setScale(sx, c.base);
+        if (moved && !reduceMotion && c.placedOnce) { c.setScale(sx * 0.6, c.base * 0.6); this.tweens.add({ targets: c, scaleX: sx, scaleY: c.base, duration: 320, ease: 'Back.easeOut' }); }
+      }
+      c.placedOnce = true;
+      this.decorAtSpot[pl.spot] = id;
+      if (id === 'den_long') this.lantern = { x: sp.x + (pl.flip ? -9 : 9), y: sp.y - 45 };
     });
+    this.makeSpotZones();
+  }
+
+  // Vùng chạm cho từng chỗ đặt đồ: thường ngày chạm món đồ để mở bảng Bày biện; lúc chọn chỗ thì chạm chỗ để đặt
+  makeSpotZones() {
+    if (this.spotZones) return;
+    this.spotZones = {};
+    Object.entries(DECOR_SPOTS).forEach(([k, sp]) => {
+      const z = this.add.zone(sp.x, sp.y - 24, 46, 56).setInteractive({ useHandCursor: false });
+      z.on('pointerup', pointer => {
+        if (!this.isCanvasTap(pointer)) return;
+        if (this.placing) { if (this.placing.spots.includes(k)) hooks.onPickSpot(k); return; }
+        if (this.boxAt(pointer.worldX, pointer.worldY) >= 0 || (this.dustAt && this.dustAt(pointer.worldX, pointer.worldY) >= 0) || this.chickenAt(pointer.worldX, pointer.worldY) >= 0) return;
+        const id = this.decorAtSpot && this.decorAtSpot[k];
+        if (id) { this.bounce(this.decorArt[id]); hooks.onTapDecor(id); }
+      });
+      this.spotZones[k] = z;
+    });
+  }
+
+  // Chế độ chọn chỗ (F17): p = { id, spots: [chỗ vừa cỡ], current } hoặc null để tắt.
+  // Vòng vàng nét đứt ở chỗ trống, vòng vàng có mũi tên đổi chỗ ở chỗ đang có món khác, vòng xanh ở chỗ hiện tại.
+  setPlacing(p) {
+    this.placing = p;
+    if (!this.spotG) { this.spotG = this.add.graphics().setDepth(50); this.spotPulse = null; }
+    const g = this.spotG; g.clear();
+    if (this.spotPulse) { this.spotPulse.stop(); this.spotPulse = null; g.setAlpha(1); }
+    if (!p) return;
+    this.children.bringToTop(g);
+    p.spots.forEach(k => {
+      const sp = DECOR_SPOTS[k], cx = sp.x, cy = sp.y - 22, cur = k === p.current;
+      const busy = this.decorAtSpot && this.decorAtSpot[k] && !cur;
+      g.fillStyle(cur ? 0x6fb84f : 0xffd84a, cur ? 0.35 : 0.3); g.fillCircle(cx, cy, 19);
+      g.lineStyle(3, cur ? 0x3f7a32 : 0xb98a10, 1);
+      for (let a = 0; a < 16; a += 2) g.beginPath(), g.arc(cx, cy, 19, a * Math.PI / 8, (a + 1) * Math.PI / 8), g.strokePath();
+      g.lineStyle(3, INK, 1);
+      if (cur) { g.lineBetween(cx - 6, cy, cx - 1, cy + 5); g.lineBetween(cx - 1, cy + 5, cx + 7, cy - 5); }
+      else if (busy) { g.lineBetween(cx - 7, cy - 3, cx + 7, cy - 3); g.lineBetween(cx + 3, cy - 7, cx + 7, cy - 3); g.lineBetween(cx + 7, cy + 3, cx - 7, cy + 3); g.lineBetween(cx - 3, cy + 7, cx - 7, cy + 3); }
+      else { g.lineBetween(cx - 7, cy, cx + 7, cy); g.lineBetween(cx, cy - 7, cx, cy + 7); }
+    });
+    if (!reduceMotion) this.spotPulse = this.tweens.add({ targets: g, alpha: 0.55, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+  }
+
+  // Chậu sen đá nhỏ (bản 0.17)
+  makeSenDa(x, y) {
+    const c = this.add.container(x, y), g = this.add.graphics();
+    g.fillStyle(0x000000, 0.18); g.fillEllipse(0, 2, 28, 6);
+    g.lineStyle(2.2, INK, 1); g.fillStyle(0xe8d9c0, 1);
+    g.fillPoints([{ x: -11, y: -12 }, { x: 11, y: -12 }, { x: 9, y: 0 }, { x: -9, y: 0 }], true);
+    g.strokePoints([{ x: -11, y: -12 }, { x: 11, y: -12 }, { x: 9, y: 0 }, { x: -9, y: 0 }], true);
+    g.lineStyle(1.2, 0xc9a77a, 1); g.lineBetween(-8, -6, 8, -6);
+    g.lineStyle(1.6, INK, 1);
+    [[-7, -15, 9, 6, 0x8cc6a0], [7, -15, 9, 6, 0x8cc6a0], [0, -19, 10, 8, 0x6fae88], [-4, -22, 7, 6, 0xa9d8b4], [4, -22, 7, 6, 0xa9d8b4], [0, -25, 6, 6, 0xc7e8c9]].forEach(([lx, ly, w, h, col]) => {
+      g.fillStyle(col, 1); g.fillEllipse(lx, ly, w, h); g.strokeEllipse(lx, ly, w, h);
+    });
+    g.fillStyle(0xe08aa0, 1); g.fillCircle(0, -25, 1.6);
+    c.add(g);
+    return this.popIn(c);
+  }
+
+  // Đôn gốm men lam (ghế đôn), hoa văn tròn (bản 0.17)
+  makeDonGom(x, y) {
+    const c = this.add.container(x, y), g = this.add.graphics();
+    g.fillStyle(0x000000, 0.18); g.fillEllipse(0, 2, 30, 7);
+    this.shape(g, [
+      this.bez([-11, -22], [-15, -16], [-15, -6], [-10, 0]),
+      this.bez([-10, 0], [-4, 2], [4, 2], [10, 0]),
+      this.bez([10, 0], [15, -6], [15, -16], [11, -22])
+    ], 0xeef3f6, 2.2);
+    g.lineStyle(2.2, INK, 1); g.fillStyle(0xdfe8ee, 1); g.fillEllipse(0, -22, 23, 7); g.strokeEllipse(0, -22, 23, 7);
+    g.lineStyle(1.8, 0x3f6fa8, 1); g.strokeCircle(0, -11, 4.2); g.lineBetween(-13, -17, 13, -17); g.lineBetween(-12, -4, 12, -4);
+    g.fillStyle(0x3f6fa8, 1); [[-9, -11], [9, -11]].forEach(([dx, dy]) => g.fillCircle(dx, dy, 1.6));
+    c.add(g);
+    return this.popIn(c);
   }
 
   // Món mới hiện ra: nảy từ nhỏ lên đúng cỡ
@@ -993,7 +1079,6 @@ class Rooftop extends Phaser.Scene {
     lg.lineStyle(1.4, 0xf2b544, 1); lg.lineBetween(-2, 19, -2, 24); lg.lineBetween(0, 19, 0, 25); lg.lineBetween(2, 19, 2, 24);
     l.add(lg); c.add(l);
     if (!reduceMotion) this.tweens.add({ targets: l, angle: { from: -5, to: 5 }, duration: 1800, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
-    this.lantern = { x: x + 9, y: y - 45 };
     return this.popIn(c);
   }
 

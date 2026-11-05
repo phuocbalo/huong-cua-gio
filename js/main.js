@@ -31,6 +31,7 @@ import { KitchenUI } from './ui-kitchen.js';
 import { PENS } from './config.js';
 import { FORECAST_AHEAD } from './config.js';
 import * as decor from './decor.js';
+import { DecorUI } from './ui-decor.js';
 import { DECOR } from './config.js';
 
 const AWAY_NOTICE_MS = 60000;         // vắng từ 1 phút: lời chào ngắn
@@ -42,6 +43,9 @@ async function boot() {
   const state = () => store.data;   // store.reset() thay cả đối tượng, nên luôn đọc qua hàm này
   // F09: thời tiết chỉ có sau khi xong hướng dẫn (trong lúc hướng dẫn trời luôn nắng, không mưa làm lệch các bước)
   weather.bind(() => (state().tutorialDone ? state().weather : null));
+  // F17: món trang trí nào đứng ở đâu, hướng nào (bản lưu cũ chưa có chỗ đặt thì giữ chỗ cũ)
+  const decorView = () => { decor.normalize(state()); return Object.fromEntries((state().decor || []).map(id => [id, decor.placeOf(state(), id)])); };
+  if (decor.normalize(state())) store.markDirty();
   let tipRef = null;   // hướng dẫn trả đơn, tạo sau khi giao diện sẵn sàng
   let gainXp = () => {};   // cộng điểm kinh nghiệm, gắn thật sau khi dựng giao diện level
 
@@ -366,14 +370,15 @@ async function boot() {
     onBuyDecor(id) {
       const r = decor.buy(state(), id);
       if (!r.ok) return;
-      if (scene) { scene.setDecor(state().decor || []); ui.forceTime(); }   // forceTime: đèn lồng sáng ngay nếu trời tối
-      ui.toast(fmt(T.decor_bought, { name: T['decor_' + id].toLowerCase(), n: DECOR[id].points }));
+      if (scene) { scene.setDecor(decorView()); ui.forceTime(); }   // forceTime: đèn lồng sáng ngay nếu trời tối
+      ui.toast(r.spot ? fmt(T.decor_bought, { name: T['decor_' + id].toLowerCase(), n: DECOR[id].points }) : fmt(T.decor_bought_stored, { name: T['decor_' + id].toLowerCase() }));
       eco.say(pickLine(T.shop_after_buy));
       sound('buy');
       r.perks.forEach((p, k) => setTimeout(() => { ui.toast(fmt(T.beauty_reached, { n: p.points, perk: T['perk_' + p.perk] })); sound('chime'); }, 2400 * (k + 1)));
       if (r.perks.some(p => p.perk === 'slot')) syncOrders();   // ghim thêm đơn thứ 4 ngay
       afterTrade();
     },
+    onArrange() { ui.closeWrap(document.getElementById('shopWrap')); sound('open'); decorUI.open(); },
     onBagUpgrade() {
       const r = shop.buyBagUpgrade(state());
       if (!r.ok) return;
@@ -651,6 +656,13 @@ async function boot() {
   tipRef = ordersTip;
 
   // ----- Level (bản 0.10) -----
+  const decorUI = new DecorUI({ store, ui, scene: () => scene, sound, onChanged: () => {
+    if (scene) scene.setDecor(decorView());
+    ui.forceTime(); levelUI.refresh(); eco.refresh();
+    if (syncOrders()) renderOrders();   // mốc sân đẹp đổi thì số ô đơn hàng có thể đổi
+    store.flush();
+  } });
+  decorUI.init();
   const levelUI = new LevelUI({ store, ui, sound, canCelebrate: () => state().tutorialDone && !document.querySelector('.wrap:not([hidden])') && document.getElementById('sheetWrap').hidden });
   levelUI.init();
   // Áp dụng một level vừa đạt: quà, hàng xóm mới gửi đơn, thêm gà, trang trí; rồi chúc mừng
@@ -658,7 +670,7 @@ async function boot() {
     const got = level.claimLevel(state(), lv);
     if (!got) return;
     (got.unlock.neighbors || []).forEach(n => orders.welcome(state(), n, now()));
-    if (scene) { scene.setChickens(state().coop.chickens); scene.setDecor(state().decor || []); }
+    if (scene) { scene.setChickens(state().coop.chickens); scene.setDecor(decorView()); }
     renderPens(); kit.refresh();
     ui.refreshCoins(true);
     renderOrders(); renderBuySlot();
@@ -735,7 +747,7 @@ async function boot() {
       renderBuySlot();
       renderPens();
       scene.setChickens(state().coop.chickens);
-      scene.setDecor(state().decor || []);
+      scene.setDecor(decorView());
       shownWeather = null; syncWeather(false);
       greet(first);
       tutor.start();
@@ -747,6 +759,8 @@ async function boot() {
     onTapWaterer: gate('waterer', onTapWaterer),
     onTapLove,
     onTapPen: gate('pen', onTapPen),
+    onTapDecor: gate('decor', () => { sound('open'); decorUI.open(); }),
+    onPickSpot: spot => decorUI.pick(spot),
     onTapDust: gate('dust', onTapDust),
     onTapOrders: gate('orders', () => { sound('open'); eco.openOrders(); ordersTip.update(); tutor.event('openOrders'); }),
     onTapBuyBox: gate('buyBox', () => { sound('open'); eco.openBuyBox(); })
@@ -756,7 +770,7 @@ async function boot() {
   pwa.register(firstInstall => { if (firstInstall) ui.toast(T.offline_ready); });
 
   // Cửa sổ kiểm thử cho người phát triển (gõ trong console): __game.store.data
-  window.__game = { store, clock, ui, pwa, farm, weather, pens, coop, dust, shop, orders, eco, audio, tutor, settings, get scene() { return scene; } };
+  window.__game = { store, clock, ui, pwa, farm, weather, pens, decor, get decorUI() { return decorUI; }, coop, dust, shop, orders, eco, audio, tutor, settings, get scene() { return scene; } };
 }
 
 boot();

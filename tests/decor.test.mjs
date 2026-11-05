@@ -8,7 +8,7 @@ const { defaultSave } = await import(R + '/js/save.js');
 let ok = 0; const t = (name, fn) => { fn(); ok++; console.log('✓', name); };
 const lv10 = () => { const s = defaultSave(0); s.xp = C.LEVELS[9].xp; s.coins = 1000; return s; };
 
-t('Đủ bộ 5 món = 18 điểm', () => { assert.equal(Dc.maxPoints(), 18); });
+t('Đủ bộ 7 món (thêm sen đá, đôn gốm ở bản 0.17) = 23 điểm', () => { assert.equal(Dc.maxPoints(), 23); });
 t('Dưới level 10 chưa mua được', () => { const s = defaultSave(0); s.coins = 999; const r = Dc.canBuy(s, 'ghe_da'); assert.equal(r.reason, 'locked'); assert.equal(r.level, 10); });
 t('Chậu hoa giấy không bán (quà level 10)', () => { assert.equal(Dc.canBuy(lv10(), 'hoa_giay').reason, 'not_for_sale'); });
 t('Mua ghế đá: trừ xu, thêm vào sân, +3 điểm; không mua lại được', () => {

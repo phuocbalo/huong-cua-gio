@@ -1,7 +1,7 @@
 // Bảng dữ liệu của game. Muốn cân bằng lại game thì sửa số ở đây, không cần đụng vào code khác.
 // Đơn vị thời gian là mili giây; dùng các hằng PHUT, GIO cho dễ đọc.
 
-export const APP_VERSION = '0.16.2';
+export const APP_VERSION = '0.17.0';
 
 const PHUT = 60 * 1000;
 const GIO = 60 * PHUT;
@@ -269,16 +269,32 @@ export const LEVELS = [
 ];
 export const MAX_LEVEL = LEVELS.length;
 
-// ---------- Trang trí sân (bản 0.15) ----------
-// Mỗi món mua một lần, đặt cố định vào chỗ riêng trên sân (DECOR_SLOTS trong scene.js) và cộng "điểm sân đẹp".
+// ---------- Trang trí sân (bản 0.15) và bày biện (F17, bản 0.17) ----------
+// Mỗi món mua một lần. Bản 0.17: người chơi tự chọn chỗ đặt trong DECOR_SPOTS, lật hướng, hoặc cất vào kho;
+// chỉ món đang bày trên sân mới cộng "điểm sân đẹp".
 // price 0 = không bán, là quà level (chậu hoa giấy ở level 10). Nhóm "Trang trí" ở tiệm mở từ DECOR_LEVEL.
+// size: cỡ món để biết đặt được ở chỗ nào — short (thấp) · mid (vừa) · tall (cao) · wide (dài, chỉ ghế đá)
+// spot: chỗ đặt mặc định khi mới có món (cũng là chỗ của món đó ở bản 0.15)
 export const DECOR_LEVEL = 10;
 export const DECOR = {
-  hoa_giay:  { points: 2, price: 0 },
-  ghe_da:    { points: 3, price: 80 },
-  den_long:  { points: 4, price: 120 },
-  cay_canh:  { points: 4, price: 150 },
-  chum_nuoc: { points: 5, price: 200 }
+  hoa_giay:  { points: 2, price: 0,   size: 'tall',  spot: 'd' },
+  ghe_da:    { points: 3, price: 80,  size: 'wide',  spot: 'c' },
+  den_long:  { points: 4, price: 120, size: 'tall',  spot: 'e' },
+  cay_canh:  { points: 4, price: 150, size: 'mid',   spot: 'f' },
+  chum_nuoc: { points: 5, price: 200, size: 'mid',   spot: 'g' },
+  sen_da:    { points: 2, price: 60,  size: 'short', spot: 'a' },   // bản 0.17
+  don_gom:   { points: 3, price: 90,  size: 'short', spot: 'b' }    // bản 0.17
+};
+// Chỗ đặt đồ trang trí trên sân (toạ độ là chân món đồ, đã kiểm tra không che thùng, chuồng, hàng tim).
+// fits: cỡ món đặt vừa. Chỗ a sát hồ cá nên chỉ đặt món thấp; chỉ chỗ c đủ dài cho ghế đá.
+export const DECOR_SPOTS = {
+  a: { x: 22,  y: 472, fits: ['short'] },
+  b: { x: 240, y: 430, fits: ['short', 'mid', 'tall'] },
+  c: { x: 318, y: 487, fits: ['short', 'mid', 'tall', 'wide'] },
+  d: { x: 372, y: 522, fits: ['short', 'mid', 'tall'] },
+  e: { x: 20,  y: 548, fits: ['short', 'mid', 'tall'] },
+  f: { x: 20,  y: 628, fits: ['short', 'mid', 'tall'] },
+  g: { x: 372, y: 612, fits: ['short', 'mid', 'tall'] }
 };
 // Mốc điểm sân đẹp và phần thưởng (giữ mãi khi đã đạt):
 //   heart: mỗi đơn hàng thêm 1 tim thân thiết · coins: đơn hàng trả thêm 10% xu · slot: thêm 1 ô đơn hàng (4 thay vì 3)

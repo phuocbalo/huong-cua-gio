@@ -26,7 +26,8 @@ Bản chơi thử: https://phuocbalo.github.io/huong-cua-gio/
 | `js/tutorial.js` | Hướng dẫn mở đầu cùng bà Tư: gieo → tưới → thu → bán → cho gà ăn; không bỏ qua được, chỉ bấm được chỗ mũi tên chỉ, mở lại giữa chừng vẫn tiếp tục |
 | `js/audio.js` | Nhạc lo-fi và tiếng động tạo bằng code (không có file âm thanh), đổi nhạc ngày/đêm |
 | `js/ui-settings.js` | Cài đặt: âm lượng, xuất/nhập file lưu, xem lại hướng dẫn, xóa dữ liệu, thống kê |
-| `js/decor.js` | Luật trang trí sân: mua món, điểm sân đẹp, các mốc thưởng cho đơn hàng |
+| `js/decor.js` | Luật trang trí sân: mua món, điểm sân đẹp, các mốc thưởng cho đơn hàng; bày biện (F17): 7 chỗ đặt cố định trong `config.js` (DECOR_SPOTS), đổi chỗ, lật, cất kho |
+| `js/ui-decor.js` | Giao diện bày biện sân: danh sách món, chọn chỗ bằng các vòng trên sân |
 | `js/level.js` | Luật level: điểm kinh nghiệm, lên level, mở khóa, quà (dữ liệu 10 level trong `config.js`) |
 | `js/ui-level.js` | Giao diện level: viên level trên thanh trạng thái, con đường level, bảng chúc mừng |
 | `js/kitchen.js` | Luật bếp nhỏ (F16): 6 công thức trong `config.js` (RECIPES), nấu mất thời gian, một món mỗi lần, món chờ lấy |
@@ -35,7 +36,7 @@ Bản chơi thử: https://phuocbalo.github.io/huong-cua-gio/
 | `js/weather.js` | Luật thời tiết (F09): lịch nắng, mây, gió, mưa theo khối 6 giờ, tính từ một con số lưu trong bản lưu; mưa tưới cây kể cả lúc tắt game |
 | `js/daylight.js` | Màu trời, phố, đèn cho từng giờ trong ngày; chuyển dần giữa các khung giờ |
 | `js/scene.js` | Cảnh sân thượng vẽ bằng Phaser (hình tạm) |
-| `tests/` | Kiểm thử luật chơi: `node tests/farm.test.mjs`, `node tests/daylight.test.mjs`, `node tests/coop.test.mjs`, `node tests/dust.test.mjs`, `node tests/economy.test.mjs`, `node tests/settings.test.mjs`, `node tests/tutorial.test.mjs`, `node tests/level.test.mjs`, `node tests/decor.test.mjs`, `node tests/weather.test.mjs`, `node tests/fertilizer.test.mjs`, `node tests/love.test.mjs`, `node tests/pens.test.mjs`, `node tests/kitchen.test.mjs`, `node tests/flavor.test.mjs` |
+| `tests/` | Kiểm thử luật chơi: `node tests/farm.test.mjs`, `node tests/daylight.test.mjs`, `node tests/coop.test.mjs`, `node tests/dust.test.mjs`, `node tests/economy.test.mjs`, `node tests/settings.test.mjs`, `node tests/tutorial.test.mjs`, `node tests/level.test.mjs`, `node tests/decor.test.mjs`, `node tests/weather.test.mjs`, `node tests/fertilizer.test.mjs`, `node tests/love.test.mjs`, `node tests/pens.test.mjs`, `node tests/kitchen.test.mjs`, `node tests/flavor.test.mjs`, `node tests/arrange.test.mjs` |
 | `js/ui.js` | Điều khiển giao diện HTML |
 | `js/pwa.js` | Bật chơi offline và theo dõi trạng thái |
 | `manifest.webmanifest` | Khai báo PWA: tên app, biểu tượng, mở toàn màn hình, màn dọc |
@@ -98,6 +99,21 @@ Dùng "Tua +1 giờ", "Tua tới sáng mai" và "Giả lập vắng 8 giờ" tro
 - [ ] **F05** Hết thức ăn (cho ăn đủ 5 ngày): chạm máng hiện "Hết thức ăn gà".
 - [ ] **F05** Túi đầy ("Lấp đầy túi") rồi nhặt trứng: hiện "Túi đồ đã đầy", trứng vẫn nằm trong chuồng.
 - [ ] **F20** Cho gà ăn, đóng game hơn 5 phút rồi mở lại (hoặc "Giả lập vắng 8 giờ"): bảng đi vắng có dòng "Gà đã đẻ 2 quả trứng…". Sang ngày mới thì có dòng "Gà đang đói…".
+
+## Kiểm thử bản 0.17.0 – Bày biện sân (F17)
+
+Lỗi tìm thấy khi kiểm thử được ghi trong tài liệu **Bug Log – Sân Thượng Xanh** (B-03, B-04: chưa sửa, chờ quyết định).
+
+- [ ] **Bản lưu cũ:** người đã có món trang trí ở bản trước, mở bản 0.17: các món vẫn nằm đúng chỗ cũ, điểm sân đẹp không đổi.
+- [ ] **Món mới ở tiệm anh Bảo (nhóm Trang trí):** Chậu sen đá (60 xu, +2 điểm) và Đôn gốm men lam (90 xu, +3 điểm). Mua xong, món tự đặt vào một chỗ trống; sân hết chỗ thì món được cất vào kho và có thông báo.
+- [ ] **Mở bảng "Bày biện sân":** bằng nút trong tiệm, hoặc chạm một món trang trí trên sân. Mỗi món ghi đang bày trên sân hay đang cất trong kho.
+- [ ] **Đổi chỗ:** bấm "Đổi chỗ": sân hiện các vòng vàng (chỗ đặt được) và vòng xanh (chỗ hiện tại). Chạm vòng vàng còn trống: món dời sang đó. Chạm vòng có món khác: hai món đổi chỗ cho nhau.
+- [ ] **Món dài (ghế đá):** chỉ đặt được ở chỗ cạnh hàng thùng trên. Món thấp đặt được mọi chỗ.
+- [ ] Trong lúc chọn chỗ, chạm thùng cây hay chuồng gà không làm gì; bấm "Xong" để thôi.
+- [ ] **Lật:** món quay mặt sang hướng kia.
+- [ ] **Cất:** món biến khỏi sân, điểm sân đẹp giảm đúng số điểm món đó. "Đặt ra sân" để bày lại.
+- [ ] Đóng hẳn game rồi mở lại: chỗ đặt, hướng lật, món cất kho còn nguyên.
+- [ ] Chuyển sang đêm: đèn lồng vẫn sáng ở chỗ mới.
 
 ## Kiểm thử bản 0.16.2 – Sửa lỗi B-01, B-02 (Bug Log)
 

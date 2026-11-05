@@ -42,6 +42,8 @@ export const DECOR_ICONS = {
   ghe_da: `<svg viewBox="0 0 40 40" aria-hidden="true"><rect x="5" y="15" width="30" height="8" rx="3" fill="#c9c3b6" ${SI}/><path d="M9 23v10h6V23M25 23v10h6V23" fill="#aaa294" ${SI}/></svg>`,
   den_long: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3v6" ${SI}/><path d="M15 9h10" ${SI}/><ellipse cx="20" cy="21" rx="10" ry="11" fill="#e4473a" ${SI}/><path d="M20 10v22M13 13c-2 5-2 11 0 16M27 13c2 5 2 11 0 16" fill="none" stroke="#a82a20" stroke-width="1.6"/><path d="M15 32h10l-2 3h-6z" fill="#f2b544" ${SI}/><path d="M20 35v3" ${SI}/></svg>`,
   cay_canh: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M10 28h20l-2 7H12z" fill="#4f7fa8" ${SI}/><path d="M20 28c0-6-3-8-1-14" fill="none" ${SI}/><ellipse cx="13" cy="15" rx="7" ry="4.5" fill="#4f9a3a" ${SI}/><ellipse cx="25" cy="11" rx="8" ry="5" fill="#5fa548" ${SI}/><ellipse cx="22" cy="20" rx="6" ry="3.6" fill="#3f8a4a" ${SI}/></svg>`,
+  sen_da: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M11 25h18l-2 10H13z" fill="#e8d9c0" ${SI}/><ellipse cx="14" cy="21" rx="5" ry="3.5" fill="#8cc6a0" ${SI}/><ellipse cx="26" cy="21" rx="5" ry="3.5" fill="#8cc6a0" ${SI}/><ellipse cx="20" cy="18" rx="6" ry="5" fill="#6fae88" ${SI}/><ellipse cx="20" cy="13" rx="4" ry="4" fill="#c7e8c9" ${SI}/></svg>`,
+  don_gom: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M11 12c-4 5-4 15 0 21h18c4-6 4-16 0-21z" fill="#eef3f6" ${SI}/><ellipse cx="20" cy="12" rx="9" ry="3" fill="#dfe8ee" ${SI}/><circle cx="20" cy="22" r="4" fill="none" stroke="#3f6fa8" stroke-width="1.8"/><path d="M10 17h20M10 29h20" stroke="#3f6fa8" stroke-width="1.6"/></svg>`,
   chum_nuoc: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M11 12c-4 4-4 16 2 21h14c6-5 6-17 2-21z" fill="#8a5a3a" ${SI}/><ellipse cx="20" cy="12" rx="9" ry="3" fill="#5aa9cc" ${SI}/><path d="M24 12l9-6" ${SI}/><ellipse cx="34" cy="5.5" rx="3.4" ry="2.4" fill="#c89a5a" ${SI}/><path d="M13 21h14" stroke="#6b4329" stroke-width="1.6"/></svg>`
 };
 
@@ -97,6 +99,7 @@ export class EconomyUI {
       else if (act === 'buy') this.h.onBuy(id, qty);
       else if (act === 'bag') this.h.onBagUpgrade();
       else if (act === 'decor') this.h.onBuyDecor(id);
+      else if (act === 'arrange') this.h.onArrange();
     });
     $('orderList').addEventListener('click', e => {
       const b = e.target.closest('button[data-act]');
@@ -199,6 +202,8 @@ export class EconomyUI {
   decorRows(s) {
     const pt = decor.points(s), next = decor.nextPerk(s);
     let html = `<li class="note beauty-line">${fmt(T.beauty_now, { n: pt, max: decor.maxPoints() })}${next ? ' · ' + fmt(T.beauty_next, { n: next.points - pt, perk: T['perk_' + next.perk] }) : ' · ' + T.beauty_all}</li>`;
+    // F17: nút mở bảng Bày biện sân khi đã có món
+    if ((s.decor || []).length) html += `<li class="arrange-row"><button class="btn primary" type="button" data-act="arrange">${T.arrange_open}</button></li>`;
     decor.DECOR_IDS.forEach(id => {
       const d = DECOR[id], have = decor.owned(s, id), c = decor.canBuy(s, id);
       const pts = fmt(T.decor_points, { n: d.points });
