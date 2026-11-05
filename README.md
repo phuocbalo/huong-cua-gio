@@ -29,11 +29,13 @@ Bản chơi thử: https://phuocbalo.github.io/huong-cua-gio/
 | `js/decor.js` | Luật trang trí sân: mua món, điểm sân đẹp, các mốc thưởng cho đơn hàng |
 | `js/level.js` | Luật level: điểm kinh nghiệm, lên level, mở khóa, quà (dữ liệu 10 level trong `config.js`) |
 | `js/ui-level.js` | Giao diện level: viên level trên thanh trạng thái, con đường level, bảng chúc mừng |
+| `js/kitchen.js` | Luật bếp nhỏ (F16): 6 công thức trong `config.js` (RECIPES), nấu mất thời gian, một món mỗi lần, món chờ lấy |
+| `js/ui-kitchen.js` | Giao diện bếp: nút "Bếp" trên thanh công cụ, bảng công thức, món đang nấu |
 | `js/pens.js` | Luật vật nuôi khác (F06): thỏ, bồ câu, bể cá — cho ăn mỗi ngày, sản phẩm chờ nhặt, mở ở level 11–13 |
 | `js/weather.js` | Luật thời tiết (F09): lịch nắng, mây, gió, mưa theo khối 6 giờ, tính từ một con số lưu trong bản lưu; mưa tưới cây kể cả lúc tắt game |
 | `js/daylight.js` | Màu trời, phố, đèn cho từng giờ trong ngày; chuyển dần giữa các khung giờ |
 | `js/scene.js` | Cảnh sân thượng vẽ bằng Phaser (hình tạm) |
-| `tests/` | Kiểm thử luật chơi: `node tests/farm.test.mjs`, `node tests/daylight.test.mjs`, `node tests/coop.test.mjs`, `node tests/dust.test.mjs`, `node tests/economy.test.mjs`, `node tests/settings.test.mjs`, `node tests/tutorial.test.mjs`, `node tests/level.test.mjs`, `node tests/decor.test.mjs`, `node tests/weather.test.mjs`, `node tests/fertilizer.test.mjs`, `node tests/love.test.mjs`, `node tests/pens.test.mjs` |
+| `tests/` | Kiểm thử luật chơi: `node tests/farm.test.mjs`, `node tests/daylight.test.mjs`, `node tests/coop.test.mjs`, `node tests/dust.test.mjs`, `node tests/economy.test.mjs`, `node tests/settings.test.mjs`, `node tests/tutorial.test.mjs`, `node tests/level.test.mjs`, `node tests/decor.test.mjs`, `node tests/weather.test.mjs`, `node tests/fertilizer.test.mjs`, `node tests/love.test.mjs`, `node tests/pens.test.mjs`, `node tests/kitchen.test.mjs` |
 | `js/ui.js` | Điều khiển giao diện HTML |
 | `js/pwa.js` | Bật chơi offline và theo dõi trạng thái |
 | `manifest.webmanifest` | Khai báo PWA: tên app, biểu tượng, mở toàn màn hình, màn dọc |
@@ -96,6 +98,21 @@ Dùng "Tua +1 giờ", "Tua tới sáng mai" và "Giả lập vắng 8 giờ" tro
 - [ ] **F05** Hết thức ăn (cho ăn đủ 5 ngày): chạm máng hiện "Hết thức ăn gà".
 - [ ] **F05** Túi đầy ("Lấp đầy túi") rồi nhặt trứng: hiện "Túi đồ đã đầy", trứng vẫn nằm trong chuồng.
 - [ ] **F20** Cho gà ăn, đóng game hơn 5 phút rồi mở lại (hoặc "Giả lập vắng 8 giờ"): bảng đi vắng có dòng "Gà đã đẻ 2 quả trứng…". Sang ngày mới thì có dòng "Gà đang đói…".
+
+## Kiểm thử bản 0.16.0 – Bếp nhỏ (F16)
+
+Dùng "+50 KN" để lên level 6, "Tua 10 phút" để chờ món chín.
+
+- [ ] **Dưới level 6:** thanh công cụ có 4 nút như cũ. **Lên level 6:** bảng chúc mừng có "Bếp nhỏ…" và "Món mới: Rau muống xào, Canh cải, Trứng chiên húng quế, Dưa leo trộn"; thanh công cụ có thêm nút **Bếp** (5 nút vừa một hàng ở màn hình 360 px).
+- [ ] **Bảng bếp:** mỗi món ghi nguyên liệu "đang có/cần" (đủ: nền xanh, thiếu: nền đỏ), thời gian nấu, giá bán và tổng giá nguyên liệu. Canh cà chua trứng khóa tới level 7, trứng bồ câu hấp khóa tới level 12.
+- [ ] **Thiếu nguyên liệu:** nút ghi "Còn thiếu nguyên liệu", không bấm được, túi không mất gì.
+- [ ] **Nấu:** bấm "Nấu": tiếng xèo xèo, túi trừ đúng nguyên liệu, khung trên cùng ghi "Đang nấu …: còn khoảng …" kèm thanh tiến độ; các món khác ghi "Bếp đang bận". Nút Bếp trên thanh công cụ có nhãn số phút còn lại (ví dụ "3′").
+- [ ] **Chín:** lúc đang chơi: thông báo "… đã chín! Mở Bếp để lấy món.", nhãn nút đổi thành "Xong" màu xanh. Bấm "Lấy món": món vào túi (tab Nông sản), bếp trống lại.
+- [ ] **Giá:** mọi món bán ở tiệm đắt hơn bán riêng nguyên liệu (rau muống xào 18 xu so với 12 xu rau; canh cà chua trứng 52 xu so với 36 xu…).
+- [ ] **Tắt game khi đang nấu:** mở lại, món đã chín nằm trên bếp; bảng đi vắng có dòng "… đã nấu xong, đang chờ trên bếp."
+- [ ] **Túi đầy:** "Lấy món" báo túi đầy, món vẫn nằm trên bếp.
+- [ ] Hàng xóm không đặt món nấu.
+- [ ] **Sửa kèm:** số level trên thanh trên cùng không còn hiện xuyên qua các bảng cao (tiệm, bếp…).
 
 ## Kiểm thử bản 0.15.0 – Trang trí sân
 

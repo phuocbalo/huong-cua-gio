@@ -32,7 +32,7 @@ export function progress(s) {
 export function unlockLevel(kind, key) {
   for (let i = 0; i < LEVELS.length; i++) {
     const u = LEVELS[i].unlock || {};
-    if (kind === 'seeds' || kind === 'neighbors' || kind === 'items') { if ((u[kind] || []).includes(key)) return i + 1; }
+    if (kind === 'seeds' || kind === 'neighbors' || kind === 'items' || kind === 'recipes') { if ((u[kind] || []).includes(key)) return i + 1; }
     else if (u[kind] && (key == null || u[kind] === key)) return i + 1;
   }
   return 1;   // không có trong bảng: mở sẵn từ đầu

@@ -53,12 +53,27 @@ const OTHER = {
   thuc_an_ga: `<path d="M10 14 h20 l-2 20 h-16z" fill="#d9b77a" ${SW}/><path d="M10 14 l3 -6 h14 l3 6" fill="#c89a5a" ${SW}/><circle cx="17" cy="24" r="1.6" fill="${INK}"/><circle cx="23" cy="27" r="1.6" fill="${INK}"/><circle cx="21" cy="21" r="1.6" fill="${INK}"/>`
 };
 
+// F16 Món ăn: đĩa hoặc tô, phần thức ăn màu theo món
+const plate = food => `<ellipse cx="20" cy="27" rx="16" ry="6" fill="#fffdf7" ${SW}/><ellipse cx="20" cy="26" rx="11" ry="3.6" fill="#efe6d6"/>${food}`;
+const bowl = (soup, top) => `<path d="M5 19h30a15 13 0 0 1-30 0z" fill="#f5efe4" ${SW}/><path d="M5 19h30" ${SW}/><ellipse cx="20" cy="19" rx="13" ry="3" fill="${soup}"/>${top || ''}<path d="M13 36h14" ${SW}/>`;
+const steam = '<path d="M15 11c0-2 2-2 2-4M22 11c0-2 2-2 2-4" fill="none" stroke="#a9b4c0" stroke-width="2" stroke-linecap="round"/>';
+const DISH = {
+  rau_muong_xao: plate(`<path d="M9 25c3-6 7-8 11-8s8 2 11 8z" fill="#5fa548" ${SW}/><path d="M13 23l4-3M20 22l2-4M25 23l3-3" stroke="#3f7a32" stroke-width="1.8" stroke-linecap="round"/><circle cx="16" cy="22" r="1.3" fill="#f3ead2"/><circle cx="24" cy="21" r="1.3" fill="#f3ead2"/>`) + steam,
+  canh_cai: bowl('#cfe3a6', `<path d="M12 18c3-3 6-3 8 0M20 18c3-3 6-3 8 0" fill="#8cc46a" stroke="${INK}" stroke-width="1.6"/>`) + steam,
+  trung_chien_hung_que: plate(`<path d="M8 25c1-6 6-9 12-9s11 3 12 9z" fill="#f6d25a" ${SW}/><circle cx="20" cy="20" r="3.4" fill="#f2a33a"/><path d="M13 22l2-1M25 21l2 1M18 24l2-1" stroke="#3f8a4a" stroke-width="2" stroke-linecap="round"/>`),
+  dua_leo_tron: plate(`<circle cx="14" cy="23" r="4" fill="#a9d68a" ${SW}/><circle cx="21" cy="21" r="4" fill="#a9d68a" ${SW}/><circle cx="27" cy="24" r="4" fill="#a9d68a" ${SW}/><circle cx="14" cy="23" r="1.4" fill="#4f9a3a"/><circle cx="21" cy="21" r="1.4" fill="#4f9a3a"/><path d="M24 19l3-2" stroke="#e0452f" stroke-width="2.4" stroke-linecap="round"/>`),
+  canh_ca_chua_trung: bowl('#f08a5a', `<path d="M11 18c2-2 4-2 6 0M22 18c2-2 5-2 7 0" fill="#f6d25a" stroke="${INK}" stroke-width="1.4"/><circle cx="19" cy="18" r="2" fill="#e5533c"/>`) + steam,
+  trung_bo_cau_hap: plate(`<ellipse cx="15" cy="22" rx="4" ry="5" fill="#fbf6ee" ${SW}/><ellipse cx="21" cy="21" rx="4" ry="5" fill="#fbf6ee" ${SW}/><ellipse cx="27" cy="22" rx="4" ry="5" fill="#fbf6ee" ${SW}/><path d="M11 25l3-1M27 25l3-1" stroke="#3f8a4a" stroke-width="2" stroke-linecap="round"/>`) + steam
+};
+export const KITCHEN_ART = `<svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="22" fill="#f6dcc4"/><path d="M12 30h24l-3 12H15z" fill="#b0683e" ${SW}/><path d="M14 34h20" stroke="#8a4f2e" stroke-width="2"/><path d="M19 38c1-3 3-3 5-6 1 3 4 3 5 6z" fill="#f28a3a" stroke="${INK}" stroke-width="1.6" stroke-linejoin="round"/><path d="M13 22h22v3a11 6 0 0 1-22 0z" fill="#6b5a52" ${SW}/><path d="M10 22h28" ${SW}/><path d="M19 17c0-2 2-2 2-4M26 17c0-2 2-2 2-4" fill="none" stroke="#9aa6b4" stroke-width="2.2" stroke-linecap="round"/></svg>`;
+
 export function itemIcon(id) {
   const it = ITEMS[id];
   let body = '';
   if (!it) body = '';
   else if (it.kind === 'seed') body = seedPacket(it.crop);
   else if (PRODUCE[id]) body = PRODUCE[id];
+  else if (DISH[id]) body = DISH[id];
   else body = OTHER[id] || '';
   return `<svg viewBox="0 0 40 40" aria-hidden="true">${body}</svg>`;
 }

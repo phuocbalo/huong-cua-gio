@@ -26,6 +26,8 @@ import * as level from './level.js';
 import { LevelUI } from './ui-level.js';
 import * as weather from './weather.js';
 import * as pens from './pens.js';
+import * as kitchen from './kitchen.js';
+import { KitchenUI } from './ui-kitchen.js';
 import { PENS } from './config.js';
 import { FORECAST_AHEAD } from './config.js';
 import * as decor from './decor.js';
@@ -92,6 +94,7 @@ async function boot() {
     boxes.eggs = state().coop.eggs;
     boxes.hungry = coop.status(state(), t).key === 'hungry';
     boxes.dust = state().dust.spots.length;
+    boxes.cooked = kitchen.kitchen(state()).ready || null;
     boxes.pens = Object.fromEntries(pens.KINDS.map(k => [k, (state().pens && state().pens[k] && state().pens[k].items) || 0]));
     return boxes;
   }
@@ -100,6 +103,9 @@ async function boot() {
     s.eggs = Math.max(0, state().coop.eggs - (before.eggs || 0));
     s.hungry = coop.status(state(), t).key === 'hungry' && !before.hungry;
     s.dust = state().dust.spots.length > 0 && !before.dust;
+    // F16: món nấu xong trong lúc vắng
+    const ready = kitchen.kitchen(state()).ready;
+    s.cooked = ready && ready !== before.cooked ? ready : null;
     // F06: sản phẩm mới của thỏ, bồ câu, cá trong lúc vắng
     s.pens = pens.KINDS.map(k => ({ k, n: ((state().pens && state().pens[k] && state().pens[k].items) || 0) - ((before.pens && before.pens[k]) || 0) })).filter(x => x.n > 0);
     s.expired = expiredSince; expiredSince = 0;
@@ -123,7 +129,7 @@ async function boot() {
     if (r.away < AWAY_NOTICE_MS) return;
     const s = awaySummary(lastSnapshot, r.away);
     lastSnapshot = snapshot();
-    if (r.away >= AWAY_SUMMARY_MS && (s.ripe.length || s.grew.length || s.dry.length || s.eggs || s.hungry || s.dust || s.expired || s.rain || s.pens.length)) ui.showAway(s);
+    if (r.away >= AWAY_SUMMARY_MS && (s.ripe.length || s.grew.length || s.dry.length || s.eggs || s.hungry || s.dust || s.expired || s.rain || s.pens.length || s.cooked)) ui.showAway(s);
     else ui.toast(fmt(T.welcome_back, { time: duration(r.away) }));
   }
 
@@ -176,6 +182,26 @@ async function boot() {
     }
     renderCoop();
     ui.refreshOpenSheets();
+  }
+
+  // ----- F16 Bếp nhỏ -----
+  const dishOf = id => T['item_' + id];
+  function onCook(id) {
+    const r = kitchen.cook(state(), id, now());
+    if (!r.ok) { sound('deny'); return; }
+    sound('sizzle');
+    ui.toast(fmt(T.cook_started, { dish: dishOf(id).toLowerCase(), time: duration(r.end - now()) }));
+    store.flush();
+    kit.refresh(); eco.refresh(); ui.refreshOpenSheets();
+  }
+  function onTake() {
+    const r = kitchen.collect(state(), now());
+    if (!r.ok) { sound('deny'); if (r.reason === 'full') ui.toast(T.cook_full); return; }
+    sound('harvest');
+    ui.toast(fmt(T.cook_taken, { unit: unitOf(r.id), dish: dishOf(r.id).toLowerCase() }));
+    gainXp(level.xpFor('cook'));
+    store.flush();
+    kit.refresh(); eco.refresh(); ui.refreshOpenSheets();
   }
 
   // ----- F06 Vật nuôi khác -----
@@ -581,6 +607,8 @@ async function boot() {
   ui.init();
   const eco = new EconomyUI(ui, store, ecoHandlers, now);
   eco.init();
+  const kit = new KitchenUI(ui, store, { onCook, onTake, now, sound });
+  kit.init();
   // Bảng nào đang mở thì cập nhật theo túi đồ mới (thu hoạch, nhặt trứng…)
   const baseRefresh = ui.refreshOpenSheets.bind(ui);
   ui.refreshOpenSheets = () => { baseRefresh(); eco.refresh(); renderOrders(); if (tipRef) tipRef.update(); };
@@ -588,6 +616,8 @@ async function boot() {
 
   // Tiệm, đơn hàng, chuồng gà, bụi: chặn trong lúc hướng dẫn, có tiếng mở bảng
   const gate = (action, fn) => (...args) => { if (!tutor.allows(action)) return; fn(...args); };
+  // F16: nút Bếp trên thanh công cụ
+  document.getElementById('toolKitchen').addEventListener('click', gate('kitchen', () => { sound('open'); kit.open(); }));
   const baseOpenShop = eco.openShop.bind(eco);
   eco.openShop = gate('shop', () => {
     sound('open');
@@ -629,7 +659,7 @@ async function boot() {
     if (!got) return;
     (got.unlock.neighbors || []).forEach(n => orders.welcome(state(), n, now()));
     if (scene) { scene.setChickens(state().coop.chickens); scene.setDecor(state().decor || []); }
-    renderPens();
+    renderPens(); kit.refresh();
     ui.refreshCoins(true);
     renderOrders(); renderBuySlot();
     levelUI.celebrate(got);
@@ -660,6 +690,13 @@ async function boot() {
     if (coop.update(state(), now())) store.markDirty();
     if (dust.update(state(), now())) store.markDirty();
     if (Object.keys(pens.updateAll(state(), now())).length) store.markDirty();
+    const cooked = kitchen.update(state(), now());
+    if (cooked) {
+      store.markDirty();
+      // Chín lúc đang chơi: báo ngay. Chín lúc vắng: bảng "Trong lúc bạn vắng…" kể
+      if (r && r.delta < AWAY_NOTICE_MS) { ui.toast(fmt(T.cook_done, { dish: dishOf(cooked) })); sound('chime'); }
+    }
+    kit.refresh();
     if (syncOrders(r ? r.delta : 0)) store.markDirty();
     // Báo mưa/tạnh khi đang chơi; vắng mặt hay tua thì bảng đi vắng kể
     syncWeather(!!r && r.delta < AWAY_NOTICE_MS);

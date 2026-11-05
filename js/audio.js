@@ -335,6 +335,12 @@ export class AudioEngine {
       case 'feed':                        // thóc rơi lách tách
         for (let k = 0; k < 6; k++) this.noiseHit(bus, t + k * 0.045 + Math.random() * 0.02, { dur: 0.03, vol: 0.08, type: 'highpass', freq: 4000 }); break;
       case 'egg': tone(600, t, 0.12, 0.14, 'sine', 950); tone(950, t + 0.09, 0.15, 0.08); break;
+      case 'sizzle': {                    // dầu xèo xèo trên bếp
+        const h = this.noiseHit(bus, t, { dur: 0.7, vol: 0.09, type: 'highpass', freq: 3000 });
+        h.f.frequency.linearRampToValueAtTime(5000, t + 0.6);
+        for (let k = 0; k < 5; k++) this.noiseHit(bus, t + 0.05 + Math.random() * 0.5, { dur: 0.03, vol: 0.06, type: 'highpass', freq: 6000 });
+        break;
+      }
       case 'pet':                         // gà kêu "cục cục" khe khẽ, rồi một nốt ấm
         tone(420, t, 0.08, 0.07, 'triangle', 330); tone(440, t + 0.12, 0.08, 0.06, 'triangle', 340); tone(mtof(79), t + 0.24, 0.3, 0.05); break;
       case 'sweep':                       // chổi quét soạt soạt

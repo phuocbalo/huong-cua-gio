@@ -82,8 +82,16 @@
   /* ---------- Thanh công cụ ---------- */
   .toolbar {
     position: absolute; left: 3.5cqw; right: 3.5cqw; bottom: 3.5cqw;
-    display: grid; grid-template-columns: repeat(4, 1fr); gap: 2.4cqw;
+    display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 2.4cqw;   /* 4 nút, thêm nút Bếp từ level 6 (F16) */
   }
+  .toolbar:has(#toolKitchen:not([hidden])) { gap: 1.8cqw; }
+  .toolbar:has(#toolKitchen:not([hidden])) .tool { font-size: 2.8cqw; }
+  .tool { position: relative; }
+  .tool .badge {
+    position: absolute; top: -2cqw; right: -1cqw; padding: 0.4cqw 1.6cqw; border-radius: 999px;
+    background: #f2b544; border: 0.6cqw solid var(--ink); font: 700 2.6cqw/1.2 var(--font-display); font-style: normal; color: var(--ink);
+  }
+  .tool .badge.ready { background: var(--leaf); color: #fff; }
   .tool {
     appearance: none; cursor: pointer;
     display: grid; justify-items: center; gap: 0.8cqw;
@@ -120,9 +128,10 @@
   .toast.show { opacity: 1; transform: translate(-50%, 0); }
 
   /* ---------- Bảng thông tin kiểm thử ---------- */
-  .sheet-backdrop { position: absolute; inset: 0; background: rgba(38, 44, 64, 0.45); }
+  /* z-index 2: nằm trên số level (z-index 1) của thanh trên cùng, dưới mũi tên hướng dẫn (30) và chữ +KN (40) */
+  .sheet-backdrop { position: absolute; inset: 0; background: rgba(38, 44, 64, 0.45); z-index: 2; }
   .sheet {
-    position: absolute; left: 3.5cqw; right: 3.5cqw; bottom: 3.5cqw;
+    position: absolute; left: 3.5cqw; right: 3.5cqw; bottom: 3.5cqw; z-index: 2;
     background: var(--paper);
     border: 0.8cqw solid var(--ink);
     border-radius: 6cqw;
@@ -415,3 +424,13 @@
   .beauty-perks li.done span::after { content: ' ✓'; color: var(--leaf); }
   .beauty-line { font-weight: 600; color: #b23c79 !important; }
   .shop-row.owned { opacity: 0.75; }
+
+  /* ---------- Bếp nhỏ (F16) ---------- */
+  .cook-now { margin: 3cqw 0; padding: 2.6cqw 3cqw; border: 0.6cqw solid var(--paper-2); border-radius: 4cqw; background: #fffdf7; display: grid; gap: 1.6cqw; }
+  .cook-now .line { display: grid; grid-template-columns: 10cqw 1fr; gap: 2.6cqw; align-items: center; font-size: 3.2cqw; }
+  .cook-now .line svg { width: 100%; height: auto; display: block; }
+  .cook-now.ready { border-color: var(--leaf); }
+  .cook-now .note { margin: 0; }
+  .needs { display: flex; flex-wrap: wrap; gap: 1.2cqw; }
+  .needs span { font-size: 2.8cqw; padding: 0.3cqw 1.6cqw; border-radius: 999px; background: #eef4e6; color: #3f6b30; font-variant-numeric: tabular-nums; }
+  .needs span.short { background: #fbe4dc; color: #b4472e; font-weight: 600; }

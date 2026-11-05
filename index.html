@@ -70,6 +70,12 @@
         <svg viewBox="0 0 40 40" aria-hidden="true"><path d="M8 17h24v16H8z" fill="#fff8ec" stroke="#3b2f2a" stroke-width="2.5" stroke-linejoin="round"/><path d="M6 10h28l-2 7H8z" fill="#e57d5a" stroke="#3b2f2a" stroke-width="2.5" stroke-linejoin="round"/><path d="M17 33v-8h6v8" fill="#d9a46b" stroke="#3b2f2a" stroke-width="2.5" stroke-linejoin="round"/></svg>
         <span data-t="tool_shop"></span>
       </button>
+      <!-- F16: bếp nhỏ, hiện từ level 6 -->
+      <button class="tool" type="button" id="toolKitchen" aria-haspopup="dialog" hidden>
+        <svg viewBox="0 0 40 40" aria-hidden="true"><path d="M9 20h22v4a11 11 0 0 1-22 0z" fill="#8a5a3c" stroke="#3b2f2a" stroke-width="2.5" stroke-linejoin="round"/><path d="M6 20h28" stroke="#3b2f2a" stroke-width="2.5" stroke-linecap="round"/><path d="M15 15c0-2 2-2 2-4M21 15c0-2 2-2 2-4" fill="none" stroke="#9aa6b4" stroke-width="2.2" stroke-linecap="round"/><path d="M13 35h14" stroke="#e57d5a" stroke-width="3" stroke-linecap="round"/></svg>
+        <span data-t="tool_kitchen"></span>
+        <i class="badge" id="kitchenBadge" hidden></i>
+      </button>
       <button class="tool" type="button" id="toolSettings" aria-haspopup="dialog">
         <svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="9" fill="#c9d3b8" stroke="#3b2f2a" stroke-width="2.5"/><circle cx="20" cy="20" r="3.5" fill="#fff8ec" stroke="#3b2f2a" stroke-width="2.5"/><path d="M20 6v5M20 29v5M6 20h5M29 20h5M10 10l3.5 3.5M26.5 26.5L30 30M30 10l-3.5 3.5M13.5 26.5L10 30" stroke="#3b2f2a" stroke-width="2.5" stroke-linecap="round"/></svg>
         <span data-t="tool_settings"></span>
@@ -158,6 +164,23 @@
         <h2 id="seedTitle" data-t="seed_title"></h2>
         <p class="note" data-t="seed_hint"></p>
         <ul class="seed-list" id="seedList"></ul>
+        <button class="close" type="button" data-close data-t="close"></button>
+      </div>
+    </div>
+
+    <!-- F16: bếp nhỏ -->
+    <div id="kitchenWrap" class="wrap" hidden>
+      <div class="sheet-backdrop" data-close></div>
+      <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="kitchenTitle">
+        <div class="keeper">
+          <span class="avatar" id="kitchenArt"></span>
+          <div class="keeper-text">
+            <h2 id="kitchenTitle" data-t="kitchen_title"></h2>
+            <p class="say" id="kitchenSay"></p>
+          </div>
+        </div>
+        <div class="cook-now" id="kitchenNow"></div>
+        <ul class="shop-list" id="recipeList"></ul>
         <button class="close" type="button" data-close data-t="close"></button>
       </div>
     </div>

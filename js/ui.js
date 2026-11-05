@@ -267,6 +267,7 @@ export class UI {
     if (s.eggs) rows.push([itemIcon('trung_ga'), fmt(T.away_eggs, { n: s.eggs })]);
     if (s.hungry) rows.push([itemIcon('thuc_an_ga'), T.away_hungry]);
     if (s.expired) rows.push(['<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M10 8h20v26H10z" fill="#fffaf0" stroke="#3b2f2a" stroke-width="2.4" stroke-linejoin="round"/><path d="M14 16h12M14 21h12M14 26h8" stroke="#9a8a7a" stroke-width="2"/><rect x="18" y="4" width="4" height="8" fill="#c89a5a" stroke="#3b2f2a" stroke-width="2"/></svg>', fmt(T.away_orders, { n: s.expired })]);
+    if (s.cooked) rows.push([itemIcon(s.cooked), fmt(T.away_cooked, { dish: T['item_' + s.cooked] })]);
     (s.pens || []).forEach(x => rows.push([itemIcon(PENS[x.k].product), fmt(T.away_pen, { animal: T['animal_' + x.k], n: x.n, unit: T['unit_' + ITEMS[PENS[x.k].product].unit], noun: T['item_' + PENS[x.k].product].toLowerCase() })]));
     if (s.dust) rows.push(['<svg viewBox="0 0 40 40" aria-hidden="true"><rect x="18" y="5" width="4" height="17" fill="#c89a5a" stroke="#3b2f2a" stroke-width="2.2"/><path d="M15 21h10l7 14H8z" fill="#e2b65a" stroke="#3b2f2a" stroke-width="2.2" stroke-linejoin="round"/><path d="M15 23h10" stroke="#d8352a" stroke-width="2.4"/></svg>', T.away_dust]);
     if (s.rain) rows.push(['<svg viewBox="0 0 32 32" aria-hidden="true">' + WEATHER_ICONS.rain + '</svg>', fmt(T.away_rain, { time: duration(s.rain) })]);

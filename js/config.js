@@ -1,7 +1,7 @@
 // Bảng dữ liệu của game. Muốn cân bằng lại game thì sửa số ở đây, không cần đụng vào code khác.
 // Đơn vị thời gian là mili giây; dùng các hằng PHUT, GIO cho dễ đọc.
 
-export const APP_VERSION = '0.15.0';
+export const APP_VERSION = '0.16.0';
 
 const PHUT = 60 * 1000;
 const GIO = 60 * PHUT;
@@ -111,6 +111,21 @@ export const ITEMS = {
   phan_sai_qua:   { kind: 'supply', unit: 'goi', price: 8 }
 };
 
+// ---------- Bếp nhỏ (F16, bản 0.16) ----------
+// Mở ở level 6 (nút "Bếp" trên thanh công cụ). Một bếp nấu một món mỗi lần; nấu xong món nằm trên bếp chờ lấy.
+// needs: nguyên liệu trong túi · time: thời gian nấu · sell: giá anh Bảo mua (luôn cao hơn tổng giá nguyên liệu)
+// unit: đĩa hoặc tô. Món nào mở ở level nào ghi trong LEVELS (unlock.recipes).
+export const RECIPES = {
+  rau_muong_xao:        { needs: { rau_muong: 3 },              time: 3 * PHUT, sell: 18, unit: 'dia' },
+  canh_cai:             { needs: { cai: 3 },                    time: 3 * PHUT, sell: 26, unit: 'to' },
+  trung_chien_hung_que: { needs: { trung_ga: 2, hung_que: 1 },  time: 4 * PHUT, sell: 28, unit: 'dia' },
+  dua_leo_tron:         { needs: { dua_leo: 2, ot: 1 },         time: 4 * PHUT, sell: 34, unit: 'dia' },
+  canh_ca_chua_trung:   { needs: { ca_chua: 2, trung_ga: 2 },   time: 6 * PHUT, sell: 52, unit: 'to' },
+  trung_bo_cau_hap:     { needs: { trung_bo_cau: 3, hung_que: 1 }, time: 6 * PHUT, sell: 48, unit: 'dia' }
+};
+// Mỗi món là một vật phẩm trong túi (loại 'dish'), bán ở tiệm; hàng xóm chưa đặt món nấu
+Object.entries(RECIPES).forEach(([id, r]) => { ITEMS[id] = { kind: 'dish', unit: r.unit, sellPrice: r.sell, noOrder: true }; });
+
 // ---------- Phân bón (F04, bản 0.12) ----------
 // Chạm cây đang lớn để bón. Mỗi lứa chỉ bón một lần (một trong hai loại); thu hoạch xong lứa mới bón tiếp được.
 //   grow:  cây lớn nhanh gấp `speed` lần cho tới khi chín (cả lúc đã tưới lẫn lúc khô đất)
@@ -123,7 +138,7 @@ export const FERTILIZERS = {
 
 // ---------- Tiệm tạp hóa anh Bảo (F11) ----------
 export const SHOP_BUY = ['hat_rau_muong', 'hat_cai', 'hat_hung_que', 'hat_dua_leo', 'hat_ot', 'hat_ca_chua', 'thuc_an_ga', 'phan_lon_nhanh', 'phan_sai_qua', 'co_kho', 'hat_ke', 'cam_ca'];
-export const SHOP_SELL_KINDS = ['produce', 'animal'];
+export const SHOP_SELL_KINDS = ['produce', 'animal', 'dish'];
 // Mỗi lần nâng cấp túi đồ thêm 4 ô; giá tăng dần
 export const BAG_UPGRADES = [{ slots: 4, price: 60 }, { slots: 4, price: 120 }, { slots: 4, price: 200 }];
 
@@ -222,6 +237,7 @@ export const XP = {
   pet: 1,                           // vuốt ve một con gà (F07)
   penFeed: 3,                       // cho thỏ, bồ câu, cá ăn (F06)
   penCollect: 3,                    // nhặt sản phẩm của thỏ, bồ câu, cá (F06)
+  cook: 5,                          // lấy một món vừa nấu xong (F16)
   water: 2                          // đổ nước cho gà (F07)
 };
 
@@ -229,21 +245,21 @@ export const XP = {
 // unlock: mở khóa · reward: quà khi lên level (xu và vật phẩm; túi đầy thì đổi vật phẩm ra xu)
 //   seeds: hạt bán ở tiệm · neighbor: hàng xóm bắt đầu đặt đơn · boxes: mua thêm thùng xốp
 //   bag: nâng cấp túi đồ · chickens: thêm gà · decor: món trang trí sân · items: món khác bán ở tiệm (phân bón, thức ăn)
-//   pen: chuồng vật nuôi mới (F06)
+//   pen: chuồng vật nuôi mới (F06) · kitchen: bếp nhỏ · recipes: món nấu được (F16)
 export const LEVELS = [
   { xp: 0,   unlock: { seeds: ['hat_rau_muong', 'hat_cai'], neighbors: ['ba_tu', 'be_na'] } },
   { xp: 20,  unlock: { seeds: ['hat_hung_que'], boxes: true },              reward: { coins: 20, items: { hat_hung_que: 2 } } },
   { xp: 50,  unlock: { seeds: ['hat_dua_leo'], items: ['phan_lon_nhanh'] }, reward: { coins: 25, items: { hat_dua_leo: 2, phan_lon_nhanh: 2 } } },
   { xp: 90,  unlock: { neighbors: ['co_mai'], items: ['phan_sai_qua'] },    reward: { coins: 30, items: { phan_sai_qua: 2 } } },
   { xp: 140, unlock: { seeds: ['hat_ot'], bag: true },                      reward: { coins: 35, items: { hat_ot: 2 } } },
-  { xp: 200, unlock: { neighbors: ['anh_tuan'] },                           reward: { coins: 40, items: { thuc_an_ga: 5 } } },
-  { xp: 270, unlock: { seeds: ['hat_ca_chua'] },                            reward: { coins: 45, items: { hat_ca_chua: 2 } } },
+  { xp: 200, unlock: { neighbors: ['anh_tuan'], kitchen: true, recipes: ['rau_muong_xao', 'canh_cai', 'trung_chien_hung_que', 'dua_leo_tron'] }, reward: { coins: 40, items: { thuc_an_ga: 5 } } },
+  { xp: 270, unlock: { seeds: ['hat_ca_chua'], recipes: ['canh_ca_chua_trung'] }, reward: { coins: 45, items: { hat_ca_chua: 2 } } },
   { xp: 350, unlock: { neighbors: ['chu_sau'], chickens: 1 },               reward: { coins: 50 } },
   { xp: 440, unlock: { neighbors: ['chi_hoa'] },                            reward: { coins: 55 } },
   { xp: 540, unlock: { neighbors: ['ong_ba'], decor: 'hoa_giay' },          reward: { coins: 60 } },
   // Bản 0.14: thêm level 11–13 cho vật nuôi mới (F06)
   { xp: 650, unlock: { pen: 'tho', items: ['co_kho'] },                     reward: { coins: 65, items: { co_kho: 5 } } },
-  { xp: 770, unlock: { pen: 'bo_cau', items: ['hat_ke'] },                  reward: { coins: 70, items: { hat_ke: 5 } } },
+  { xp: 770, unlock: { pen: 'bo_cau', items: ['hat_ke'], recipes: ['trung_bo_cau_hap'] }, reward: { coins: 70, items: { hat_ke: 5 } } },
   { xp: 900, unlock: { pen: 'ca', items: ['cam_ca'] },                      reward: { coins: 80, items: { cam_ca: 5 } } }
 ];
 export const MAX_LEVEL = LEVELS.length;

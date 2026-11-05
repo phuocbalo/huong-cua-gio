@@ -3,7 +3,7 @@
 
 import { LEVELS, XP, ITEMS, PENS, FERTILIZERS } from './config.js';
 import { T, fmt } from './text.vi.js';
-import { itemIcon } from './icons.js';
+import { itemIcon, KITCHEN_ART } from './icons.js';
 import { AVATARS, unitOf, nounOf } from './ui-economy.js';
 import * as level from './level.js';
 import * as decor from './decor.js';
@@ -28,6 +28,10 @@ export function unlockLines(u) {
   (u.seeds || []).forEach(id => out.push({ ico: itemIcon(id), text: fmt(T.unlock_seed, { item: T['item_' + id] }) }));
   (u.items || []).forEach(id => out.push({ ico: itemIcon(id), text: fmt(FERTILIZERS[id] ? T.unlock_item : T.unlock_seed, { item: T['item_' + id] }) }));
   (u.neighbors || []).forEach(n => out.push({ ico: ICON.neighbor(n), text: fmt(T.unlock_neighbor, { name: T['name_' + n] }) }));
+  if (u.kitchen) out.push({ ico: KITCHEN_ART, text: T.unlock_kitchen });
+  const rec = u.recipes || [];
+  if (rec.length > 2) out.push({ ico: itemIcon(rec[0]), text: fmt(T.unlock_recipe, { dish: rec.map(id => T['item_' + id]).join(', ') }) });
+  else rec.forEach(id => out.push({ ico: itemIcon(id), text: fmt(T.unlock_recipe, { dish: T['item_' + id] }) }));
   if (u.pen) out.push({ ico: itemIcon(PENS[u.pen].product), text: T['unlock_pen_' + u.pen] });
   if (u.boxes) out.push({ ico: ICON.boxes, text: T.unlock_boxes });
   if (u.bag) out.push({ ico: ICON.bag, text: T.unlock_bag });

@@ -41,7 +41,7 @@ export function remove(inv, id, n = 1) {
 const KIND_ORDER = ['seed', 'produce', 'animal', 'supply'];
 export function slotList(inv, kind = 'all') {
   const ids = Object.keys(inv.items)
-    .filter(id => ITEMS[id] && (kind === 'all' || ITEMS[id].kind === kind || (kind === 'produce' && ITEMS[id].kind === 'animal')))
+    .filter(id => ITEMS[id] && (kind === 'all' || ITEMS[id].kind === kind || (kind === 'produce' && (ITEMS[id].kind === 'animal' || ITEMS[id].kind === 'dish'))))
     .sort((a, b) => KIND_ORDER.indexOf(ITEMS[a].kind) - KIND_ORDER.indexOf(ITEMS[b].kind) || Object.keys(ITEMS).indexOf(a) - Object.keys(ITEMS).indexOf(b));
   const out = [];
   for (const id of ids) {
